@@ -6,6 +6,7 @@
 import DB from './db.js';
 import EventBus from './eventBus.js';
 import Utils from './utils.js';
+import ConfigService from './configService.js';
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -46,7 +47,7 @@ function triggerDownload(filename, blob) {
 
 async function exportArchive() {
   try {
-    const [config, entries, session] = await Promise.all([DB.getConfig(), DB.getAllEntries(), DB.getSession()]);
+    const [config, entries, session] = await Promise.all([ConfigService.getLiveConfig(), DB.getAllEntries(), DB.getSession()]);
 
     const entriesWithPhotoData = await Promise.all(
       entries.map(async (entry) => ({

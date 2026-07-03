@@ -8,7 +8,8 @@ const DB_NAME = 'LocusDB';
 const DB_VERSION = 1;
 const STORE_ENTRIES = 'entries';
 const STORE_META = 'meta';
-const CONFIG_KEY = 'config';
+const LIVE_CONFIG_CACHE_KEY = 'liveConfigCache';
+const DRAFT_CONFIG_KEY = 'configDraft';
 const PIN_KEY = 'adminPinHash';
 const SESSION_KEY = 'session';
 
@@ -167,26 +168,51 @@ async function deleteEntry(id) {
   return id;
 }
 
-async function saveConfig(config) {
+async function saveLiveConfigCache(config) {
   const clone = Utils.deepClone(config);
   await runTransaction(STORE_META, 'readwrite', (store) => {
-    store.put({ key: CONFIG_KEY, value: clone });
+    store.put({ key: LIVE_CONFIG_CACHE_KEY, value: clone });
   });
   return Utils.deepClone(clone);
 }
 
-async function getConfig() {
+async function getLiveConfigCache() {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_META, 'readonly');
     const store = tx.objectStore(STORE_META);
-    const request = store.get(CONFIG_KEY);
+    const request = store.get(LIVE_CONFIG_CACHE_KEY);
 
     request.onsuccess = () => {
       resolve(request.result ? Utils.deepClone(request.result.value) : null);
     };
     request.onerror = (event) => {
-      console.error('[DB] getConfig failed', event.target.error);
+      console.error('[DB] getLiveConfigCache failed', event.target.error);
+      reject(event.target.error);
+    };
+  });
+}
+
+async function saveDraftConfig(config) {
+  const clone = Utils.deepClone(config);
+  await runTransaction(STORE_META, 'readwrite', (store) => {
+    store.put({ key: DRAFT_CONFIG_KEY, value: clone });
+  });
+  return Utils.deepClone(clone);
+}
+
+async function getDraftConfig() {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_META, 'readonly');
+    const store = tx.objectStore(STORE_META);
+    const request = store.get(DRAFT_CONFIG_KEY);
+
+    request.onsuccess = () => {
+      resolve(request.result ? Utils.deepClone(request.result.value) : null);
+    };
+    request.onerror = (event) => {
+      console.error('[DB] getDraftConfig failed', event.target.error);
       reject(event.target.error);
     };
   });
@@ -259,8 +285,10 @@ const DB = {
   getEntry,
   deleteEntry,
   clearEntries,
-  saveConfig,
-  getConfig,
+  saveLiveConfigCache,
+  getLiveConfigCache,
+  saveDraftConfig,
+  getDraftConfig,
   savePin,
   getPin,
   saveSession,

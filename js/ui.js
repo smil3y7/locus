@@ -279,6 +279,7 @@ const UI = {
   closeModal,
   banner,
   printHtml,
+  tabify,
 };
 
 export default UI;

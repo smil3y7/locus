@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "groups": [
+    { "id": "group_basic", "label": "Osnovni podatki" },
+    { "id": "group_physical", "label": "Fizične lastnosti" },
+    { "id": "group_status", "label": "Stanje in lokacija" },
+    { "id": "group_media", "label": "Dokumentacija" }
+  ],
+  "fields": [
+    { "id": "inventory_number", "label": "Inventarna številka", "type": "text", "required": true, "options": [], "color": "#A65A3A", "group": "group_basic" },
+    { "id": "title", "label": "Naziv predmeta", "type": "text", "required": true, "options": [], "color": "#A65A3A", "group": "group_basic" },
+    { "id": "period", "label": "Obdobje", "type": "text", "required": false, "options": [], "color": "#A65A3A", "group": "group_basic" },
+    { "id": "material", "label": "Material", "type": "text", "required": false, "options": [], "color": "#6F7D5C", "group": "group_physical" },
+    { "id": "dimensions", "label": "Mere", "type": "text", "required": false, "options": [], "color": "#6F7D5C", "group": "group_physical" },
+    { "id": "condition", "label": "Stanje ohranjenosti", "type": "select", "required": true, "options": ["Odlično", "Dobro", "Zmerno", "Slabo", "Za restavracijo"], "color": "#A63A2E", "group": "group_status" },
+    { "id": "location", "label": "Lokacija", "type": "text", "required": false, "options": [], "color": "#A63A2E", "group": "group_status" },
+    { "id": "photo", "label": "Fotografija", "type": "image", "required": false, "options": [], "color": "#A65A3A", "group": "group_media" }
+  ]
+}

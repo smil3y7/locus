@@ -1,8 +1,14 @@
 // /js/formBuilder.js
 // Renders a dynamic form from ConfigService's config and collects raw input.
-// Does NOT validate. Does NOT save. Emits 'form:submitted' with raw data.
+// Does NOT validate authoritatively (Validator does that downstream) — but
+// does a lightweight pre-submit check so that, when fields are split across
+// tabs, a missing required field switches to the right tab and focuses it
+// instead of failing silently or relying on native validation of hidden
+// (display:none) inputs, which browsers skip entirely.
+// Does NOT save. Emits 'form:submitted' with raw data.
 
 import EventBus from './eventBus.js';
+import UI from './ui.js';
 
 let currentContainer = null;
 let currentForm = null;
@@ -67,7 +73,7 @@ function fieldHtml(field, existingValues, existingPhoto) {
          <div class="mf-image-preview" aria-hidden="true"><img src="${existingPhoto}" alt="" /></div>`
       : '';
   return `
-    <div class="mf-field" data-type="${field.type}" style="--field-accent:${field.color || '#B8934A'}">
+    <div class="mf-field" data-type="${field.type}" style="--field-accent:${field.color || '#A65A3A'}">
       <label for="f_${field.id}">${escapeHtml(field.label)}${field.required ? ' <span class="mf-required">*</span>' : ''}</label>
       ${fieldInputHtml(field, value)}
       ${currentPhotoHint}
@@ -75,7 +81,9 @@ function fieldHtml(field, existingValues, existingPhoto) {
   `;
 }
 
-function groupedFieldsHtml(config, existingValues, existingPhoto) {
+// Groups fields into "sections" (one per config.groups entry that actually
+// has fields, plus a trailing "Splošno" section for ungrouped fields).
+function computeSections(config) {
   const groups = Array.isArray(config.groups) ? config.groups : [];
   const fieldsByGroup = new Map(groups.map((g) => [g.id, []]));
   const ungrouped = [];
@@ -88,30 +96,65 @@ function groupedFieldsHtml(config, existingValues, existingPhoto) {
     }
   }
 
-  const render = (field) => fieldHtml(field, existingValues, existingPhoto);
-
-  const groupSections = groups
+  const sections = groups
     .filter((g) => fieldsByGroup.get(g.id).length > 0)
-    .map(
-      (g) => `
-      <fieldset class="mf-group">
-        <legend>${escapeHtml(g.label)}</legend>
-        ${fieldsByGroup.get(g.id).map(render).join('')}
-      </fieldset>
-    `
-    )
-    .join('');
+    .map((g) => ({ id: g.id, label: g.label, fields: fieldsByGroup.get(g.id) }));
 
-  const ungroupedSection = ungrouped.length
-    ? `
-      <fieldset class="mf-group mf-group-plain">
-        ${groups.length ? '<legend>Splošno</legend>' : ''}
-        ${ungrouped.map(render).join('')}
-      </fieldset>
-    `
-    : '';
+  if (ungrouped.length) {
+    sections.push({ id: '__ungrouped', label: 'Splošno', fields: ungrouped });
+  }
 
-  return groupSections + ungroupedSection;
+  return sections;
+}
+
+function updateTabDots(container, sections) {
+  sections.forEach((section) => {
+    const dot = container.querySelector(`[data-tab-dot="${section.id}"]`);
+    if (!dot) return;
+    const incomplete = section.fields.some((field) => {
+      if (!field.required || field.type === 'image') return false;
+      const el = container.querySelector(`#f_${field.id}`);
+      if (!el) return false;
+      return !el.value || !el.value.trim();
+    });
+    dot.hidden = !incomplete;
+  });
+}
+
+function wireTabNav(container, sections, tabController) {
+  const prevBtn = container.querySelector('#mf-tab-prev');
+  const nextBtn = container.querySelector('#mf-tab-next');
+  const positionEl = container.querySelector('#mf-tab-position');
+
+  function currentIndex() {
+    const activeBtn = container.querySelector('.mf-tab-btn-active');
+    return activeBtn ? sections.findIndex((s) => s.id === activeBtn.dataset.tab) : 0;
+  }
+
+  function updatePositionUi() {
+    const idx = currentIndex();
+    if (positionEl) positionEl.textContent = `${idx + 1} / ${sections.length}`;
+    if (prevBtn) prevBtn.disabled = idx <= 0;
+    if (nextBtn) nextBtn.disabled = idx >= sections.length - 1;
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      const idx = currentIndex();
+      if (idx > 0) tabController.activate(sections[idx - 1].id);
+      updatePositionUi();
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      const idx = currentIndex();
+      if (idx < sections.length - 1) tabController.activate(sections[idx + 1].id);
+      updatePositionUi();
+    });
+  }
+
+  updatePositionUi();
+  return updatePositionUi;
 }
 
 function build(container, config, options) {
@@ -139,9 +182,52 @@ function build(container, config, options) {
     }
   }
 
+  const existingValues = isEdit ? existingEntry.values : null;
+  const renderField = (field) => fieldHtml(field, existingValues, existingPhotoUrl);
+
+  const sections = computeSections(config);
+  const useTabs = sections.length > 1;
+
+  let fieldsMarkup;
+  if (useTabs) {
+    const tabButtons = sections
+      .map(
+        (s) => `
+        <button type="button" class="mf-tab-btn" data-tab="${s.id}" role="tab">
+          ${escapeHtml(s.label)}<span class="mf-tab-dot" data-tab-dot="${s.id}" hidden></span>
+        </button>
+      `
+      )
+      .join('');
+
+    const panels = sections
+      .map(
+        (s) => `
+        <div class="mf-tab-panel" data-tab-panel="${s.id}">
+          ${s.fields.map(renderField).join('')}
+        </div>
+      `
+      )
+      .join('');
+
+    fieldsMarkup = `
+      <div class="mf-tabs">
+        <div class="mf-tab-list" role="tablist">${tabButtons}</div>
+        <div class="mf-tab-nav">
+          <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-tab-prev">← Prejšnja skupina</button>
+          <span class="mf-tab-position" id="mf-tab-position"></span>
+          <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-tab-next">Naslednja skupina →</button>
+        </div>
+        <div class="mf-tab-panels">${panels}</div>
+      </div>
+    `;
+  } else {
+    fieldsMarkup = sections.map((s) => s.fields.map(renderField).join('')).join('');
+  }
+
   container.innerHTML = `
     <form id="mf-entry-form" novalidate>
-      ${groupedFieldsHtml(config, isEdit ? existingEntry.values : null, existingPhotoUrl)}
+      ${fieldsMarkup}
       <div class="mf-form-actions">
         <button type="submit" class="mf-btn mf-btn-primary">${isEdit ? 'Shrani spremembe' : 'Shrani predmet'}</button>
         <button type="button" class="mf-btn mf-btn-ghost" id="mf-form-cancel">Prekliči</button>
@@ -152,6 +238,18 @@ function build(container, config, options) {
   currentForm = container.querySelector('#mf-entry-form');
 
   config.fields.forEach((field) => attachImagePreview(field, currentForm));
+
+  let tabController = null;
+  let updateTabPositionUi = null;
+  if (useTabs) {
+    tabController = UI.tabify(container);
+    updateTabPositionUi = wireTabNav(container, sections, tabController);
+    updateTabDots(container, sections);
+    currentForm.addEventListener('input', () => {
+      updateTabDots(container, sections);
+      if (updateTabPositionUi) updateTabPositionUi();
+    });
+  }
 
   currentForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -166,6 +264,25 @@ function build(container, config, options) {
         photo = isEdit ? chosenFile || undefined : chosenFile;
       } else {
         values[field.id] = formData.get(field.id);
+      }
+    }
+
+    if (useTabs) {
+      const missing = sections
+        .flatMap((s) => s.fields.map((f) => ({ ...f, sectionId: s.id })))
+        .find((f) => f.required && f.type !== 'image' && (!values[f.id] || !String(values[f.id]).trim()));
+
+      if (missing) {
+        tabController.activate(missing.sectionId);
+        if (updateTabPositionUi) updateTabPositionUi();
+        const input = currentForm.querySelector(`#f_${missing.id}`);
+        if (input) input.focus();
+        const sectionLabel = sections.find((s) => s.id === missing.sectionId)?.label || '';
+        EventBus.emit('ui:notify', {
+          type: 'error',
+          message: `Manjka obvezno polje "${missing.label}" v skupini "${sectionLabel}".`,
+        });
+        return;
       }
     }
 

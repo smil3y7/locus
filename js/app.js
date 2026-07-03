@@ -23,7 +23,7 @@ function escapeHtml(str) {
 }
 
 async function openAddEntryModal() {
-  const [config, session] = await Promise.all([ConfigService.getConfig(), SessionService.getSession()]);
+  const [config, session] = await Promise.all([ConfigService.getLiveConfig(), SessionService.getSession()]);
   const container = document.createElement('div');
   UI.openModal({ title: 'Dodaj predmet', content: container });
   FormBuilder.build(container, config);
@@ -72,7 +72,7 @@ function fieldTypeOptions() {
 }
 
 async function renderConfigEditorBody() {
-  const config = await ConfigService.getConfig();
+  const config = await ConfigService.getDraftConfig();
   const groups = config.groups || [];
 
   const groupRows = groups
@@ -96,7 +96,7 @@ async function renderConfigEditorBody() {
 
   function fieldRowHtml(f) {
     return `
-      <li class="mf-config-row" data-id="${f.id}" style="--field-accent:${f.color || '#B8934A'}">
+      <li class="mf-config-row" data-id="${f.id}" style="--field-accent:${f.color || '#A65A3A'}">
         <span class="mf-config-row-label">${escapeHtml(f.label)}</span>
         <span class="mf-config-row-type">${escapeHtml(f.type)}${f.required ? ' · obvezno' : ''}</span>
         <button type="button" class="mf-icon-btn mf-edit-field" data-id="${f.id}" aria-label="Uredi polje" title="Uredi">&#9998;</button>
@@ -105,23 +105,34 @@ async function renderConfigEditorBody() {
     `;
   }
 
-  const fieldSections = groups
-    .map(
-      (g) => `
-      <div class="mf-config-group-block">
-        <span class="mf-config-group-heading">${escapeHtml(g.label)}</span>
-        <ul class="mf-config-list">${fieldsByGroup.get(g.id).map(fieldRowHtml).join('') || '<li class="mf-empty">Ni polj v tej skupini.</li>'}</ul>
+  const fieldSectionEntries = [
+    ...groups.map((g) => ({
+      id: g.id,
+      label: g.label,
+      html: fieldsByGroup.get(g.id).map(fieldRowHtml).join('') || '<li class="mf-empty">Ni polj v tej skupini.</li>',
+    })),
+    {
+      id: '__ungrouped',
+      label: 'Brez skupine',
+      html: ungroupedFields.map(fieldRowHtml).join('') || '<li class="mf-empty">Ni polj.</li>',
+    },
+  ];
+
+  const useFieldTabs = fieldSectionEntries.length > 1;
+  const fieldSectionsMarkup = useFieldTabs
+    ? `
+      <div class="mf-tabs">
+        <div class="mf-tab-list" role="tablist">
+          ${fieldSectionEntries.map((s) => `<button type="button" class="mf-tab-btn" data-tab="${s.id}" role="tab">${escapeHtml(s.label)}</button>`).join('')}
+        </div>
+        <div class="mf-tab-panels">
+          ${fieldSectionEntries.map((s) => `<div class="mf-tab-panel" data-tab-panel="${s.id}"><ul class="mf-config-list">${s.html}</ul></div>`).join('')}
+        </div>
       </div>
     `
-    )
-    .join('');
-
-  const ungroupedSection = `
-    <div class="mf-config-group-block">
-      <span class="mf-config-group-heading">Brez skupine</span>
-      <ul class="mf-config-list">${ungroupedFields.map(fieldRowHtml).join('') || '<li class="mf-empty">Ni polj.</li>'}</ul>
-    </div>
-  `;
+    : fieldSectionEntries
+        .map((s) => `<div class="mf-config-group-block"><span class="mf-config-group-heading">${escapeHtml(s.label)}</span><ul class="mf-config-list">${s.html}</ul></div>`)
+        .join('');
 
   const groupOptions = groups.map((g) => `<option value="${g.id}">${escapeHtml(g.label)}</option>`).join('');
 
@@ -132,6 +143,18 @@ async function renderConfigEditorBody() {
       <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-change-pin-btn">Spremeni admin PIN</button>
     </div>
 
+    <p class="mf-draft-notice">
+      Tu urejaš <strong>osnutek</strong> sheme — spremembe ne vplivajo na obrazec, ki ga trenutno vidijo uporabniki,
+      dokler osnutka ne izvoziš kot <code>config.json</code> in ga ne objaviš (zamenjaj datoteko v repozitoriju,
+      <code>git push</code>, Vercel samodejno objavi).
+    </p>
+    <div class="mf-form-actions">
+      <button type="button" class="mf-btn mf-btn-primary" id="mf-export-schema-btn">Izvozi shemo obrazca (config.json)</button>
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-reset-draft-btn">Ponastavi osnutek na objavljeno shemo</button>
+    </div>
+
+    <hr class="mf-divider" />
+
     <p class="mf-config-section-title">Upravljanje podatkov</p>
     <div class="mf-form-actions">
       <button type="button" class="mf-btn mf-btn-ghost" id="mf-export-btn">Izvozi bazo</button>
@@ -139,11 +162,11 @@ async function renderConfigEditorBody() {
       <button type="button" class="mf-btn mf-btn-danger" id="mf-reset-btn">Ponastavi bazo</button>
       <input type="file" id="mf-import-input" accept="application/json" style="display:none" />
     </div>
-    <p class="mf-field-hint">Izvoz vključuje vse vnose, slike in konfiguracijo obrazca. Ponastavitev izbriše vnose in podatke seje na tem računalniku — konfiguracija in PIN ostaneta.</p>
+    <p class="mf-field-hint">Izvoz vključuje vse vnose, slike in trenutno objavljeno konfiguracijo obrazca. Ponastavitev izbriše vnose in podatke seje na tem računalniku — objavljena shema in PIN ostaneta.</p>
 
     <hr class="mf-divider" />
 
-    <p class="mf-config-section-title">Skupine polj</p>
+    <p class="mf-config-section-title">Skupine polj (osnutek)</p>
     <ul class="mf-config-list">${groupRows || '<li class="mf-empty">Ni skupin — polja bodo prikazana brez razvrstitve.</li>'}</ul>
     <form id="mf-add-group-form" class="mf-add-field-form">
       <div class="mf-field">
@@ -158,8 +181,7 @@ async function renderConfigEditorBody() {
     <hr class="mf-divider" />
 
     <p class="mf-config-section-title">Polja obrazca</p>
-    ${fieldSections}
-    ${ungroupedSection}
+    ${fieldSectionsMarkup}
 
     <hr class="mf-divider" />
 
@@ -202,6 +224,8 @@ async function renderConfigEditorBody() {
     optionsWrap.style.display = typeSelect.value === 'select' ? '' : 'none';
   });
 
+  UI.tabify(wrapper);
+
   const formTitle = wrapper.querySelector('#cf-form-title');
   const editIdInput = wrapper.querySelector('#cf-edit-id');
   const submitBtn = wrapper.querySelector('#cf-submit-btn');
@@ -235,6 +259,20 @@ async function renderConfigEditorBody() {
   }
 
   cancelEditBtn.addEventListener('click', exitEditMode);
+
+  wrapper.querySelector('#mf-export-schema-btn').addEventListener('click', () => {
+    ConfigService.exportDraftFile();
+  });
+
+  wrapper.querySelector('#mf-reset-draft-btn').addEventListener('click', async () => {
+    const confirmed = await UI.confirm(
+      'To bo prepisalo trenutni osnutek z zadnjo objavljeno shemo. Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?',
+      'Ponastavi osnutek'
+    );
+    if (!confirmed) return;
+    await ConfigService.resetDraftToLive();
+    await refreshConfigEditor(wrapper);
+  });
 
   wrapper.querySelector('#mf-change-pin-btn').addEventListener('click', changeAdminPin);
 
@@ -459,7 +497,7 @@ async function openSessionSettingsModal() {
 async function printCatalog() {
   const [entries, config, session] = await Promise.all([
     DB.getAllEntries(),
-    ConfigService.getConfig(),
+    ConfigService.getLiveConfig(),
     SessionService.getSession(),
   ]);
 
@@ -545,7 +583,7 @@ async function bootstrap() {
   UI.init();
 
   try {
-    await ConfigService.getConfig(); // seeds default config on first run; emits ui:fatal itself on failure
+    await ConfigService.getLiveConfig(); // warms the fetched/cached form schema; emits ui:fatal/ui:notify itself on failure
   } catch (err) {
     console.error('[App] Failed to initialize config — app will run in a degraded state', err);
   }

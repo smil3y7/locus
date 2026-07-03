@@ -1,17 +1,24 @@
 // /js/configService.js
-// Owns the form schema (Config). Talks to DB directly (its own dependency),
-// and to everyone else only via EventBus.
+// Two distinct concepts, deliberately kept separate:
 //
-// Config shape:
-// {
-//   version: 1,
-//   groups: [{ id, label }],         // user-defined sections, in display order
-//   fields:  [{ id, label, type, required, options, color, group }] // group: id | null (ungrouped)
-// }
+//  - LIVE config: fetched from the static /config.json shipped with the
+//    deployment (same for every visitor of this site — that's the whole
+//    point). This is what the entry form, validator, and viewer use.
+//    Cached locally as a fallback for offline resilience.
+//
+//  - DRAFT config: a local design workspace used only inside the
+//    PIN-protected admin editor. Editing the draft NEVER changes what
+//    other users see. To actually publish a new form, the curator exports
+//    the draft as config.json and replaces the file in the repository
+//    (git push -> Vercel redeploys -> every visitor gets the new schema).
+//
+// Config shape: { version, groups: [{id,label}], fields: [{id,label,type,required,options,color,group}] }
 
 import DB from './db.js';
 import EventBus from './eventBus.js';
 import Utils from './utils.js';
+
+const CONFIG_URL = './config.json';
 
 const DEFAULT_CONFIG = {
   version: 1,
@@ -22,86 +29,21 @@ const DEFAULT_CONFIG = {
     { id: 'group_media', label: 'Dokumentacija' },
   ],
   fields: [
-    {
-      id: 'inventory_number',
-      label: 'Inventarna številka',
-      type: 'text',
-      required: true,
-      options: [],
-      color: '#B8934A',
-      group: 'group_basic',
-    },
-    {
-      id: 'title',
-      label: 'Naziv predmeta',
-      type: 'text',
-      required: true,
-      options: [],
-      color: '#B8934A',
-      group: 'group_basic',
-    },
-    {
-      id: 'period',
-      label: 'Obdobje',
-      type: 'text',
-      required: false,
-      options: [],
-      color: '#B8934A',
-      group: 'group_basic',
-    },
-    {
-      id: 'material',
-      label: 'Material',
-      type: 'text',
-      required: false,
-      options: [],
-      color: '#6B7A5E',
-      group: 'group_physical',
-    },
-    {
-      id: 'dimensions',
-      label: 'Mere',
-      type: 'text',
-      required: false,
-      options: [],
-      color: '#6B7A5E',
-      group: 'group_physical',
-    },
-    {
-      id: 'condition',
-      label: 'Stanje ohranjenosti',
-      type: 'select',
-      required: true,
-      options: ['Odlično', 'Dobro', 'Zmerno', 'Slabo', 'Za restavracijo'],
-      color: '#9B4A3F',
-      group: 'group_status',
-    },
-    {
-      id: 'location',
-      label: 'Lokacija',
-      type: 'text',
-      required: false,
-      options: [],
-      color: '#9B4A3F',
-      group: 'group_status',
-    },
-    {
-      id: 'photo',
-      label: 'Fotografija',
-      type: 'image',
-      required: false,
-      options: [],
-      color: '#B8934A',
-      group: 'group_media',
-    },
+    { id: 'inventory_number', label: 'Inventarna številka', type: 'text', required: true, options: [], color: '#A65A3A', group: 'group_basic' },
+    { id: 'title', label: 'Naziv predmeta', type: 'text', required: true, options: [], color: '#A65A3A', group: 'group_basic' },
+    { id: 'period', label: 'Obdobje', type: 'text', required: false, options: [], color: '#A65A3A', group: 'group_basic' },
+    { id: 'material', label: 'Material', type: 'text', required: false, options: [], color: '#6F7D5C', group: 'group_physical' },
+    { id: 'dimensions', label: 'Mere', type: 'text', required: false, options: [], color: '#6F7D5C', group: 'group_physical' },
+    { id: 'condition', label: 'Stanje ohranjenosti', type: 'select', required: true, options: ['Odlično', 'Dobro', 'Zmerno', 'Slabo', 'Za restavracijo'], color: '#A63A2E', group: 'group_status' },
+    { id: 'location', label: 'Lokacija', type: 'text', required: false, options: [], color: '#A63A2E', group: 'group_status' },
+    { id: 'photo', label: 'Fotografija', type: 'image', required: false, options: [], color: '#A65A3A', group: 'group_media' },
   ],
 };
 
-let cachedConfig = null;
+let cachedLiveConfig = null;
+let cachedDraftConfig = null;
 
 function normalizeConfig(config) {
-  // Defensive normalization for configs saved before groups existed,
-  // or where a field references a group that was since removed.
   const groups = Array.isArray(config.groups) ? config.groups : [];
   const groupIds = new Set(groups.map((g) => g.id));
   const fields = (config.fields || []).map((f) => ({
@@ -111,56 +53,112 @@ function normalizeConfig(config) {
   return { ...config, groups, fields };
 }
 
-async function getConfig() {
-  if (cachedConfig) return Utils.deepClone(cachedConfig);
+// ---------------------------------------------------------------------
+// LIVE config — what the entry form actually uses
+// ---------------------------------------------------------------------
 
-  let config;
-  try {
-    config = await DB.getConfig();
-    if (!config) {
-      config = Utils.deepClone(DEFAULT_CONFIG);
-      await DB.saveConfig(config);
-    }
-  } catch (err) {
-    console.error('[ConfigService] Failed to load/seed config from DB', err);
-    EventBus.emit('ui:fatal', {
-      message: err && err.message ? err.message : 'Konfiguracije ni bilo mogoče naložiti iz baze.',
-    });
-    throw err;
+async function fetchLiveConfigFromServer() {
+  const response = await fetch(CONFIG_URL, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Strežnik je pri nalaganju config.json vrnil napako ${response.status}.`);
   }
-
-  config = normalizeConfig(config);
-  cachedConfig = config;
-  return Utils.deepClone(config);
+  const json = await response.json();
+  return normalizeConfig(json);
 }
 
-async function updateConfig(newConfig) {
-  if (!newConfig || !Array.isArray(newConfig.fields)) {
-    const err = new Error('updateConfig: neveljavna konfiguracija (manjka fields[])');
-    console.error('[ConfigService]', err);
-    EventBus.emit('ui:notify', { type: 'error', message: 'Napaka pri posodabljanju konfiguracije.' });
+async function getLiveConfig() {
+  if (cachedLiveConfig) return Utils.deepClone(cachedLiveConfig);
+
+  try {
+    const fromServer = await fetchLiveConfigFromServer();
+    cachedLiveConfig = fromServer;
+    DB.saveLiveConfigCache(fromServer).catch((err) => {
+      console.error('[ConfigService] Failed to cache live config locally', err);
+    });
+    return Utils.deepClone(fromServer);
+  } catch (err) {
+    console.warn('[ConfigService] Could not fetch config.json, trying local cache', err);
+  }
+
+  try {
+    const cached = await DB.getLiveConfigCache();
+    if (cached) {
+      cachedLiveConfig = normalizeConfig(cached);
+      EventBus.emit('ui:notify', {
+        type: 'info',
+        message: 'Obrazec je naložen iz lokalne varnostne kopije (brez povezave do strežnika).',
+      });
+      return Utils.deepClone(cachedLiveConfig);
+    }
+  } catch (err) {
+    console.error('[ConfigService] Failed to read local config cache', err);
+  }
+
+  cachedLiveConfig = normalizeConfig(Utils.deepClone(DEFAULT_CONFIG));
+  EventBus.emit('ui:notify', {
+    type: 'info',
+    message: 'Uporabljena je vgrajena privzeta shema (config.json ni bilo mogoče naložiti).',
+  });
+  return Utils.deepClone(cachedLiveConfig);
+}
+
+// ---------------------------------------------------------------------
+// DRAFT config — the curator's local design workspace (admin editor only)
+// ---------------------------------------------------------------------
+
+async function getDraftConfig() {
+  if (cachedDraftConfig) return Utils.deepClone(cachedDraftConfig);
+
+  let draft;
+  try {
+    draft = await DB.getDraftConfig();
+  } catch (err) {
+    console.error('[ConfigService] Failed to load draft config', err);
+    EventBus.emit('ui:fatal', { message: err && err.message ? err.message : 'Osnutka sheme ni bilo mogoče naložiti.' });
     throw err;
   }
 
-  const current = await getConfig();
-  const updated = normalizeConfig({
-    ...Utils.deepClone(newConfig),
+  if (!draft) {
+    // First time opening the editor — start the draft from whatever is
+    // currently live, rather than from an empty form.
+    draft = await getLiveConfig();
+  }
+
+  draft = normalizeConfig(draft);
+  cachedDraftConfig = draft;
+  return Utils.deepClone(draft);
+}
+
+async function saveDraft(newDraft) {
+  if (!newDraft || !Array.isArray(newDraft.fields)) {
+    const err = new Error('saveDraft: neveljavna konfiguracija (manjka fields[])');
+    console.error('[ConfigService]', err);
+    EventBus.emit('ui:notify', { type: 'error', message: 'Napaka pri posodabljanju osnutka.' });
+    throw err;
+  }
+
+  const current = await getDraftConfig();
+  const normalized = normalizeConfig({
+    ...Utils.deepClone(newDraft),
     version: (current.version || 0) + 1,
   });
 
   try {
-    await DB.saveConfig(updated);
+    await DB.saveDraftConfig(normalized);
   } catch (err) {
-    console.error('[ConfigService] Failed to save config to DB', err);
-    EventBus.emit('ui:fatal', {
-      message: err && err.message ? err.message : 'Konfiguracije ni bilo mogoče shraniti v bazo.',
-    });
+    console.error('[ConfigService] Failed to save draft config', err);
+    EventBus.emit('ui:fatal', { message: err && err.message ? err.message : 'Osnutka ni bilo mogoče shraniti.' });
     throw err;
   }
 
-  cachedConfig = updated;
-  EventBus.emit('config:updated', Utils.deepClone(updated));
-  return Utils.deepClone(updated);
+  cachedDraftConfig = normalized;
+  EventBus.emit('draft:updated', Utils.deepClone(normalized));
+  return Utils.deepClone(normalized);
+}
+
+async function resetDraftToLive() {
+  const live = await getLiveConfig();
+  return saveDraft(live);
 }
 
 async function addField(field) {
@@ -171,7 +169,7 @@ async function addField(field) {
     throw err;
   }
 
-  const current = await getConfig();
+  const current = await getDraftConfig();
   if (current.fields.some((f) => f.id === field.id)) {
     const err = new Error(`addField: polje z id "${field.id}" že obstaja`);
     console.error('[ConfigService]', err);
@@ -187,20 +185,15 @@ async function addField(field) {
     type: field.type,
     required: Boolean(field.required),
     options: Array.isArray(field.options) ? field.options : [],
-    color: field.color || '#B8934A',
+    color: field.color || '#A65A3A',
     group: groupId,
   };
 
-  const updated = {
-    ...current,
-    fields: [...current.fields, normalized],
-  };
-
-  return updateConfig(updated);
+  return saveDraft({ ...current, fields: [...current.fields, normalized] });
 }
 
 async function updateField(fieldId, updates) {
-  const current = await getConfig();
+  const current = await getDraftConfig();
   const existing = current.fields.find((f) => f.id === fieldId);
 
   if (!existing) {
@@ -220,30 +213,21 @@ async function updateField(fieldId, updates) {
   const groupId = updates.group && current.groups.some((g) => g.id === updates.group) ? updates.group : null;
 
   const merged = {
-    id: fieldId, // never changes — this is how existing entries stay linked to the field
+    id: fieldId,
     label: updates.label,
     type: updates.type,
     required: Boolean(updates.required),
     options: Array.isArray(updates.options) ? updates.options : [],
-    color: updates.color || existing.color || '#B8934A',
+    color: updates.color || existing.color || '#A65A3A',
     group: groupId,
   };
 
-  const updated = {
-    ...current,
-    fields: current.fields.map((f) => (f.id === fieldId ? merged : f)),
-  };
-
-  return updateConfig(updated);
+  return saveDraft({ ...current, fields: current.fields.map((f) => (f.id === fieldId ? merged : f)) });
 }
 
 async function removeField(fieldId) {
-  const current = await getConfig();
-  const updated = {
-    ...current,
-    fields: current.fields.filter((f) => f.id !== fieldId),
-  };
-  return updateConfig(updated);
+  const current = await getDraftConfig();
+  return saveDraft({ ...current, fields: current.fields.filter((f) => f.id !== fieldId) });
 }
 
 async function addGroup(group) {
@@ -254,7 +238,7 @@ async function addGroup(group) {
     throw err;
   }
 
-  const current = await getConfig();
+  const current = await getDraftConfig();
   const id = group.id || Utils.slugify(group.label) + '_' + Date.now().toString(36).slice(-4);
 
   if (current.groups.some((g) => g.id === id)) {
@@ -264,23 +248,16 @@ async function addGroup(group) {
     throw err;
   }
 
-  const updated = {
-    ...current,
-    groups: [...current.groups, { id, label: group.label.trim() }],
-  };
-
-  return updateConfig(updated);
+  return saveDraft({ ...current, groups: [...current.groups, { id, label: group.label.trim() }] });
 }
 
 async function removeGroup(groupId) {
-  const current = await getConfig();
-  const updated = {
+  const current = await getDraftConfig();
+  return saveDraft({
     ...current,
     groups: current.groups.filter((g) => g.id !== groupId),
-    // fields in the removed group become ungrouped rather than being deleted
     fields: current.fields.map((f) => (f.group === groupId ? { ...f, group: null } : f)),
-  };
-  return updateConfig(updated);
+  });
 }
 
 async function renameGroup(groupId, newLabel) {
@@ -290,23 +267,44 @@ async function renameGroup(groupId, newLabel) {
     EventBus.emit('ui:notify', { type: 'error', message: 'Ime skupine ne more biti prazno.' });
     throw err;
   }
-  const current = await getConfig();
-  const updated = {
+  const current = await getDraftConfig();
+  return saveDraft({
     ...current,
     groups: current.groups.map((g) => (g.id === groupId ? { ...g, label: newLabel.trim() } : g)),
-  };
-  return updateConfig(updated);
+  });
+}
+
+function exportDraftFile() {
+  return getDraftConfig().then((draft) => {
+    const publishable = { version: draft.version, groups: draft.groups, fields: draft.fields };
+    const blob = new Blob([JSON.stringify(publishable, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'config.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    EventBus.emit('ui:notify', {
+      type: 'success',
+      message: 'Shema izvožena kot config.json — zamenjaj datoteko v repozitoriju in objavi (git push).',
+    });
+  });
 }
 
 const ConfigService = {
-  getConfig,
-  updateConfig,
+  getLiveConfig,
+  getDraftConfig,
+  saveDraft,
+  resetDraftToLive,
   addField,
   updateField,
   removeField,
   addGroup,
   removeGroup,
   renameGroup,
+  exportDraftFile,
   DEFAULT_CONFIG,
 };
 

@@ -60,7 +60,7 @@ function renderCard(entry, config) {
 async function renderList() {
   if (!listContainer) return;
   try {
-    const [entries, config] = await Promise.all([DB.getAllEntries(), ConfigService.getConfig()]);
+    const [entries, config] = await Promise.all([DB.getAllEntries(), ConfigService.getLiveConfig()]);
     listContainer.innerHTML = '';
 
     if (entries.length === 0) {
@@ -85,9 +85,64 @@ async function renderList() {
 function detailRowHtml(field, entry) {
   const value = entry.values[field.id];
   return `
-    <div class="mf-detail-row" style="--field-accent:${field.color || '#B8934A'}">
+    <div class="mf-detail-row" style="--field-accent:${field.color || '#A65A3A'}">
       <span class="mf-detail-label">${escapeHtml(field.label)}</span>
       <span class="mf-detail-value">${escapeHtml(value) || '—'}</span>
+    </div>
+  `;
+}
+
+function computeDetailSections(entry, config) {
+  const nonImageFields = config.fields.filter((f) => f.type !== 'image');
+  const groups = Array.isArray(config.groups) ? config.groups : [];
+  const fieldsByGroup = new Map(groups.map((g) => [g.id, []]));
+  const ungrouped = [];
+
+  for (const field of nonImageFields) {
+    if (field.group && fieldsByGroup.has(field.group)) {
+      fieldsByGroup.get(field.group).push(field);
+    } else {
+      ungrouped.push(field);
+    }
+  }
+
+  const sections = groups
+    .filter((g) => fieldsByGroup.get(g.id).length > 0)
+    .map((g) => ({ id: g.id, label: g.label, fields: fieldsByGroup.get(g.id) }));
+
+  if (ungrouped.length) {
+    sections.push({ id: '__ungrouped', label: 'Splošno', fields: ungrouped });
+  }
+
+  return sections;
+}
+
+// On-screen detail view — tabbed, so a museum profession with many groups
+// and long field lists doesn't turn the modal into an endless scroll.
+function tabbedDetailHtml(entry, config) {
+  const sections = computeDetailSections(entry, config);
+  if (sections.length <= 1) {
+    return sections.map((s) => s.fields.map((f) => detailRowHtml(f, entry)).join('')).join('');
+  }
+
+  const tabButtons = sections
+    .map((s) => `<button type="button" class="mf-tab-btn" data-tab="${s.id}" role="tab">${escapeHtml(s.label)}</button>`)
+    .join('');
+
+  const panels = sections
+    .map(
+      (s) => `
+      <div class="mf-tab-panel" data-tab-panel="${s.id}">
+        ${s.fields.map((f) => detailRowHtml(f, entry)).join('')}
+      </div>
+    `
+    )
+    .join('');
+
+  return `
+    <div class="mf-tabs">
+      <div class="mf-tab-list" role="tablist">${tabButtons}</div>
+      <div class="mf-tab-panels">${panels}</div>
     </div>
   `;
 }
@@ -152,7 +207,7 @@ function printCardHtml(entry, config) {
 
 function openDetail(entry, config) {
   const imgUrl = photoObjectUrl(entry.photo);
-  const rows = groupedDetailHtml(entry, config);
+  const rows = tabbedDetailHtml(entry, config);
 
   const content = document.createElement('div');
   content.className = 'mf-detail';
@@ -171,6 +226,7 @@ function openDetail(entry, config) {
 
   const title = primaryFieldValue(entry, config, ['title', 'naziv']) || 'Podrobnosti predmeta';
   UI.openModal({ title: escapeHtml(title), content });
+  UI.tabify(content);
 
   content.querySelector('#mf-delete-entry').addEventListener('click', async () => {
     const confirmed = await UI.confirm('Ali res želiš trajno izbrisati ta predmet?', 'Izbriši predmet');
@@ -199,7 +255,6 @@ function init(container) {
   EventBus.on('entry:created', renderList);
   EventBus.on('entry:deleted', renderList);
   EventBus.on('entry:updated', renderList);
-  EventBus.on('config:updated', renderList);
 
   renderList();
 }

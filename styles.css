@@ -435,6 +435,67 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   margin: 4px 0 0;
 }
 
+/* ---------------- Tabs ---------------- */
+
+[hidden] { display: none !important; }
+
+.mf-tabs { margin-bottom: 6px; }
+
+.mf-tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--mf-hairline-strong);
+  margin-bottom: 18px;
+}
+
+.mf-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--mf-muted);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  padding: 9px 12px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.mf-tab-btn:hover { color: var(--mf-parchment); }
+.mf-tab-btn-active {
+  color: var(--mf-brass-bright);
+  border-bottom-color: var(--mf-brass);
+  font-weight: 600;
+}
+
+.mf-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mf-rust);
+  display: inline-block;
+}
+
+.mf-tab-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.mf-tab-position {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mf-muted);
+}
+
+.mf-tab-panel { animation: mf-tab-fade 0.12s ease; }
+@keyframes mf-tab-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* ---------------- Fatal banner ---------------- */
 
 .mf-fatal-banner {
@@ -510,6 +571,24 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   font-size: 12.5px;
   color: var(--mf-brass-bright);
   margin-bottom: 6px;
+}
+
+.mf-draft-notice {
+  background: var(--mf-bg-elevated);
+  border-left: 3px solid var(--mf-brass);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mf-parchment);
+  margin: 0 0 14px;
+}
+.mf-draft-notice code {
+  background: rgba(58, 46, 39, 0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 12px;
 }
 
 .mf-config-toolbar {

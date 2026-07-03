@@ -23,6 +23,7 @@ in upravljanje muzejskih predmetov.
 ```
 index.html
 styles.css
+config.json          – objavljena shema obrazca (enaka za vse obiskovalce)
 assets/
   logo-on-light.png  – (dodaj sam/a) logotip za svetlo glavo strani
   logo-on-dark.png   – (dodaj sam/a) rezerva za temna ozadja
@@ -41,6 +42,30 @@ js/
   viewer.js         – prikaz seznama in podrobnosti predmetov
   app.js            – bootstrap, veže module skupaj
 ```
+
+## Shema obrazca: objavljena vs. osnutek
+
+Ker je aplikacija servirana prek Vercel/GitHub, vsi obiskovalci strani dobijo
+**isto** shemo obrazca — bere se iz `config.json` v korenu repozitorija
+(ne iz IndexedDB posameznega brskalnika kot prej).
+
+- **Objavljena (live) shema** — `config.json`, del deploya, enaka za vse. To
+  uporablja obrazec za vnos predmetov. Če ob nalaganju strani ni povezave do
+  strežnika, se uporabi zadnja lokalno predpomnjena kopija, nato pa vgrajena
+  privzeta shema — obrazec torej nikoli ne odpove.
+- **Osnutek (draft)** — lokalna delovna kopija znotraj PIN-zaščitenega
+  urejevalnika ("Uredi obrazec"). Urejanje osnutka **ne vpliva** na to, kar
+  vidijo drugi uporabniki.
+
+### Kako kustos objavi nov obrazec
+
+1. V urejevalniku ("Uredi obrazec") si obrazec sestavi kot doslej (dodaja
+   polja, skupine).
+2. Klikne "Izvozi shemo obrazca (config.json)" — prenese se datoteka.
+3. To datoteko zamenja z obstoječo `config.json` v repozitoriju (npr. prek
+   GitHub spletnega vmesnika z "Upload file", ali lokalno + `git push`).
+4. Vercel samodejno objavi novo verzijo — vsi računalniki ob naslednjem
+   nalaganju strani dobijo novo shemo.
 
 ## Lokalni zagon
 

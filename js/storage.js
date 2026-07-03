@@ -10,7 +10,7 @@ import Utils from './utils.js';
 const FALLBACK_CREATED_BY = 'Neznan vnašalec';
 
 async function saveEntry(rawData) {
-  const config = await ConfigService.getConfig();
+  const config = await ConfigService.getLiveConfig();
 
   const candidate = {
     values: rawData.values || {},
@@ -50,7 +50,7 @@ async function saveEntry(rawData) {
 }
 
 async function updateEntry(entryId, rawData) {
-  const config = await ConfigService.getConfig();
+  const config = await ConfigService.getLiveConfig();
 
   let existing;
   try {
