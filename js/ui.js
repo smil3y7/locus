@@ -46,12 +46,19 @@ function toast({ type = 'info', message = '', duration = 3800 } = {}) {
   });
 }
 
+let closeCleanupTimer = null;
+
 function closeModal() {
   if (!modalRoot) return;
+  if (closeCleanupTimer) {
+    clearTimeout(closeCleanupTimer);
+    closeCleanupTimer = null;
+  }
   modalRoot.classList.remove('mf-modal-open');
   modalRoot.setAttribute('aria-hidden', 'true');
-  setTimeout(() => {
+  closeCleanupTimer = setTimeout(() => {
     if (modalRoot) modalRoot.innerHTML = '';
+    closeCleanupTimer = null;
   }, 180);
   document.removeEventListener('keydown', handleEscape);
 }
@@ -62,6 +69,13 @@ function handleEscape(event) {
 
 function openModal({ title = '', content = '', closeOnBackdrop = true } = {}) {
   ensureRoots();
+  // A modal opened right after another one closed must not let that prior
+  // close's delayed cleanup (see closeModal) wipe out THIS modal's content
+  // a moment later — cancel it, since we're about to rebuild modalRoot anyway.
+  if (closeCleanupTimer) {
+    clearTimeout(closeCleanupTimer);
+    closeCleanupTimer = null;
+  }
   modalRoot.innerHTML = '';
 
   const backdrop = document.createElement('div');
@@ -215,6 +229,33 @@ function printHtml(html) {
   }
   printArea.innerHTML = html;
   window.print();
+}
+
+function tabify(container, { onChange } = {}) {
+  const tabList = container.querySelector('.mf-tab-list');
+  const panels = container.querySelectorAll('.mf-tab-panel');
+  if (!tabList || panels.length === 0) return null;
+
+  function activate(tabId) {
+    tabList.querySelectorAll('.mf-tab-btn').forEach((btn) => {
+      const isActive = btn.dataset.tab === tabId;
+      btn.classList.toggle('mf-tab-btn-active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    panels.forEach((panel) => {
+      panel.hidden = panel.dataset.tabPanel !== tabId;
+    });
+    if (onChange) onChange(tabId);
+  }
+
+  tabList.querySelectorAll('.mf-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => activate(btn.dataset.tab));
+  });
+
+  const firstBtn = tabList.querySelector('.mf-tab-btn');
+  if (firstBtn) activate(firstBtn.dataset.tab);
+
+  return { activate };
 }
 
 function init() {
