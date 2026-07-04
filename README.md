@@ -12,6 +12,8 @@ in upravljanje muzejskih predmetov.
 - PIN zaščita za urejanje obrazca (deterrent za nenamerne klike, ni prava avtentikacija)
 - Izvoz/uvoz celotne baze kot `.json` (vključno s slikami) — za arhiviranje in pregled na drugem računalniku
 - Ponastavitev baze (izbriše vnose in sejo, ohrani konfiguracijo in PIN) — priprava na naslednjo skupino
+- Tip polja "Mere" po CDWA standardu (vrsta mere + vrednost + enota, npr. Višina: 15 cm) — admin določi dovoljene vrste in enote, uporabnik pri vnosu doda poljubno število mer
+- Namigi (placeholder) v vnosnih poljih obrazca
 - Tiskanje/PDF: posamezna "muzejska kartica" predmeta ali celoten katalog
 
 - Vanilla JS (ES moduli), brez frameworkov, brez build koraka

@@ -16,27 +16,38 @@ let currentForm = null;
 function fieldInputHtml(field, value) {
   const req = field.required ? 'required' : '';
   const val = value !== undefined && value !== null ? String(value) : '';
+  const placeholder = field.placeholder ? ` placeholder="${escapeHtml(field.placeholder)}"` : '';
   switch (field.type) {
     case 'text':
-      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} autocomplete="off" value="${escapeHtml(val)}" />`;
+      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} autocomplete="off" value="${escapeHtml(val)}"${placeholder} />`;
     case 'number':
-      return `<input type="number" id="f_${field.id}" name="${field.id}" ${req} step="any" value="${escapeHtml(val)}" />`;
+      return `<input type="number" id="f_${field.id}" name="${field.id}" ${req} step="any" value="${escapeHtml(val)}"${placeholder} />`;
     case 'date':
-      return `<input type="date" id="f_${field.id}" name="${field.id}" ${req} value="${escapeHtml(val)}" />`;
+      return `<input type="date" id="f_${field.id}" name="${field.id}" ${req} value="${escapeHtml(val)}"${placeholder} />`;
     case 'select': {
       const opts = (field.options || [])
         .map((opt) => `<option value="${escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${escapeHtml(opt)}</option>`)
         .join('');
+      const placeholderLabel = field.placeholder ? escapeHtml(field.placeholder) : 'Izberi …';
       return `<select id="f_${field.id}" name="${field.id}" ${req}>
-        <option value="" disabled${value ? '' : ' selected'}>Izberi …</option>
+        <option value="" disabled${value ? '' : ' selected'}>${placeholderLabel}</option>
         ${opts}
       </select>`;
     }
     case 'image':
       return `<input type="file" id="f_${field.id}" name="${field.id}" accept="image/*" />
         <div class="mf-image-preview" id="preview_${field.id}" aria-hidden="true"></div>`;
+    case 'measurements':
+      // Real widget is attached after render (attachMeasurementsWidget) — this
+      // hidden input is what FormData actually reads on submit (JSON string).
+      return `
+        <input type="hidden" id="f_${field.id}" name="${field.id}" value="[]" />
+        <div class="mf-measurements-chips" id="chips_${field.id}"></div>
+        <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="addmeasure_${field.id}">+ Dodaj mero</button>
+        <div class="mf-measurement-add-form" id="addform_${field.id}" hidden></div>
+      `;
     default:
-      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} value="${escapeHtml(val)}" />`;
+      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} value="${escapeHtml(val)}"${placeholder} />`;
   }
 }
 
@@ -63,6 +74,111 @@ function attachImagePreview(field, form) {
     img.onload = () => URL.revokeObjectURL(img.src);
     preview.appendChild(img);
   });
+}
+
+function attachMeasurementsWidget(field, form, existingValues) {
+  if (field.type !== 'measurements') return;
+
+  const hiddenInput = form.querySelector(`#f_${field.id}`);
+  const chipsEl = form.querySelector(`#chips_${field.id}`);
+  const addBtn = form.querySelector(`#addmeasure_${field.id}`);
+  const addFormEl = form.querySelector(`#addform_${field.id}`);
+  if (!hiddenInput || !chipsEl || !addBtn || !addFormEl) return;
+
+  const types = field.measurementTypes || [];
+  let rows = Array.isArray(existingValues && existingValues[field.id]) ? [...existingValues[field.id]] : [];
+
+  function sync() {
+    hiddenInput.value = JSON.stringify(rows);
+    renderChips();
+  }
+
+  function renderChips() {
+    if (rows.length === 0) {
+      chipsEl.innerHTML = '<span class="mf-field-hint">Še ni dodanih mer.</span>';
+      return;
+    }
+    chipsEl.innerHTML = rows
+      .map((row, index) => {
+        const typeDef = types.find((t) => t.id === row.type);
+        const label = typeDef ? typeDef.label : row.type;
+        const extent = row.extent ? ` (${escapeHtml(row.extent)})` : '';
+        return `
+          <span class="mf-measurement-chip">
+            ${escapeHtml(label)}: ${escapeHtml(row.value)} ${escapeHtml(row.unit)}${extent}
+            <button type="button" class="mf-chip-remove" data-index="${index}" aria-label="Odstrani mero">&times;</button>
+          </span>
+        `;
+      })
+      .join('');
+
+    chipsEl.querySelectorAll('.mf-chip-remove').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        rows.splice(Number(btn.dataset.index), 1);
+        sync();
+      });
+    });
+  }
+
+  function renderAddForm() {
+    if (types.length === 0) {
+      addFormEl.innerHTML = '<p class="mf-field-hint">Admin za to polje še ni določil dovoljenih vrst mer.</p>';
+      return;
+    }
+    const typeOptions = types.map((t) => `<option value="${t.id}">${escapeHtml(t.label)}</option>`).join('');
+    addFormEl.innerHTML = `
+      <div class="mf-measurement-inline-fields">
+        <select class="mf-mtype-select" aria-label="Vrsta mere">${typeOptions}</select>
+        <input type="number" step="any" class="mf-mvalue-input" placeholder="Vrednost" aria-label="Vrednost" />
+        <select class="mf-munit-select" aria-label="Enota"></select>
+        <input type="text" class="mf-mextent-input" placeholder="Del predmeta (neobvezno)" aria-label="Del predmeta" />
+      </div>
+      <div class="mf-form-actions">
+        <button type="button" class="mf-btn mf-btn-primary mf-btn-small mf-madd-confirm">Dodaj</button>
+        <button type="button" class="mf-btn mf-btn-ghost mf-btn-small mf-madd-cancel">Prekliči</button>
+      </div>
+    `;
+
+    const typeSelect = addFormEl.querySelector('.mf-mtype-select');
+    const unitSelect = addFormEl.querySelector('.mf-munit-select');
+    const valueInput = addFormEl.querySelector('.mf-mvalue-input');
+    const extentInput = addFormEl.querySelector('.mf-mextent-input');
+
+    function refreshUnits() {
+      const typeDef = types.find((t) => t.id === typeSelect.value) || types[0];
+      const units = (typeDef && typeDef.units) || [];
+      unitSelect.innerHTML = units.map((u) => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('');
+    }
+    typeSelect.addEventListener('change', refreshUnits);
+    refreshUnits();
+
+    addFormEl.querySelector('.mf-madd-cancel').addEventListener('click', () => {
+      addFormEl.hidden = true;
+    });
+
+    addFormEl.querySelector('.mf-madd-confirm').addEventListener('click', () => {
+      const value = valueInput.value.trim();
+      if (!value || Number.isNaN(Number(value))) {
+        EventBus.emit('ui:notify', { type: 'error', message: 'Vnesi veljavno številsko vrednost mere.' });
+        return;
+      }
+      rows.push({
+        type: typeSelect.value,
+        value: Number(value),
+        unit: unitSelect.value,
+        extent: extentInput.value.trim() || undefined,
+      });
+      sync();
+      addFormEl.hidden = true;
+    });
+  }
+
+  addBtn.addEventListener('click', () => {
+    renderAddForm();
+    addFormEl.hidden = !addFormEl.hidden;
+  });
+
+  sync();
 }
 
 function fieldHtml(field, existingValues, existingPhoto) {
@@ -237,7 +353,10 @@ function build(container, config, options) {
 
   currentForm = container.querySelector('#mf-entry-form');
 
-  config.fields.forEach((field) => attachImagePreview(field, currentForm));
+  config.fields.forEach((field) => {
+    attachImagePreview(field, currentForm);
+    attachMeasurementsWidget(field, currentForm, existingValues);
+  });
 
   let tabController = null;
   let updateTabPositionUi = null;
@@ -262,6 +381,14 @@ function build(container, config, options) {
         const file = formData.get(field.id);
         const chosenFile = file && file.size > 0 ? file : null;
         photo = isEdit ? chosenFile || undefined : chosenFile;
+      } else if (field.type === 'measurements') {
+        const raw = formData.get(field.id);
+        try {
+          values[field.id] = raw ? JSON.parse(raw) : [];
+        } catch (err) {
+          console.error('[FormBuilder] Failed to parse measurements JSON', err);
+          values[field.id] = [];
+        }
       } else {
         values[field.id] = formData.get(field.id);
       }
@@ -270,7 +397,11 @@ function build(container, config, options) {
     if (useTabs) {
       const missing = sections
         .flatMap((s) => s.fields.map((f) => ({ ...f, sectionId: s.id })))
-        .find((f) => f.required && f.type !== 'image' && (!values[f.id] || !String(values[f.id]).trim()));
+        .find((f) => {
+          if (!f.required || f.type === 'image') return false;
+          if (f.type === 'measurements') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
+          return !values[f.id] || !String(values[f.id]).trim();
+        });
 
       if (missing) {
         tabController.activate(missing.sectionId);

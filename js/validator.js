@@ -41,6 +41,27 @@ function validateField(field, rawValue) {
       }
       break;
     }
+    case 'measurements': {
+      if (!Array.isArray(rawValue)) {
+        errors.push(`Polje "${field.label}" ima neveljavno obliko podatkov.`);
+        break;
+      }
+      const typesById = new Map((field.measurementTypes || []).map((t) => [t.id, t]));
+      for (const row of rawValue) {
+        const typeDef = typesById.get(row.type);
+        if (!typeDef) {
+          errors.push(`Polje "${field.label}" vsebuje neveljavno vrsto mere.`);
+          continue;
+        }
+        if (row.value === undefined || row.value === '' || Number.isNaN(Number(row.value))) {
+          errors.push(`Polje "${field.label}" (${typeDef.label}) mora imeti veljavno številsko vrednost.`);
+        }
+        if (typeDef.units.length > 0 && !typeDef.units.includes(row.unit)) {
+          errors.push(`Polje "${field.label}" (${typeDef.label}) ima neveljavno enoto.`);
+        }
+      }
+      break;
+    }
     default:
       break; // text, image: presence already checked above
   }

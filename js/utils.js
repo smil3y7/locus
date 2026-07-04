@@ -56,6 +56,18 @@ function isoDate(timestamp) {
   return d.toISOString().slice(0, 10);
 }
 
-const Utils = { deepClone, generateId, formatDate, formatDateTime, slugify, isoDate };
+function formatMeasurements(rows, field) {
+  if (!Array.isArray(rows) || rows.length === 0) return '';
+  const typesById = new Map(((field && field.measurementTypes) || []).map((t) => [t.id, t.label]));
+  return rows
+    .map((row) => {
+      const label = typesById.get(row.type) || row.type;
+      const extent = row.extent ? ` (${row.extent})` : '';
+      return `${label}: ${row.value} ${row.unit}${extent}`;
+    })
+    .join(', ');
+}
+
+const Utils = { deepClone, generateId, formatDate, formatDateTime, slugify, isoDate, formatMeasurements };
 
 export default Utils;

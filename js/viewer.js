@@ -83,7 +83,7 @@ async function renderList() {
 }
 
 function detailRowHtml(field, entry) {
-  const value = entry.values[field.id];
+  const value = field.type === 'measurements' ? Utils.formatMeasurements(entry.values[field.id], field) : entry.values[field.id];
   return `
     <div class="mf-detail-row" style="--field-accent:${field.color || '#A65A3A'}">
       <span class="mf-detail-label">${escapeHtml(field.label)}</span>

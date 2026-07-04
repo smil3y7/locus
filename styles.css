@@ -435,6 +435,65 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   margin: 4px 0 0;
 }
 
+::placeholder { color: var(--mf-muted); opacity: 0.8; }
+
+/* Measurements field (CDWA Type/Value/Unit) */
+
+.mf-measurements-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mf-measurement-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--mf-bg-elevated);
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: 20px;
+  padding: 5px 6px 5px 12px;
+  font-size: 13px;
+  color: var(--mf-parchment);
+}
+
+.mf-chip-remove {
+  background: none;
+  border: none;
+  color: var(--mf-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px;
+}
+.mf-chip-remove:hover { color: var(--mf-rust); }
+
+.mf-measurement-add-form {
+  background: var(--mf-bg-elevated);
+  border: 1px dashed var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.mf-measurement-inline-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.mf-measurement-inline-fields input,
+.mf-measurement-inline-fields select {
+  background: var(--mf-surface);
+  border: 1px solid var(--mf-hairline-strong);
+  color: var(--mf-parchment);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+}
+
 /* ---------------- Tabs ---------------- */
 
 [hidden] { display: none !important; }

@@ -68,6 +68,7 @@ function fieldTypeOptions() {
     <option value="date">Datum</option>
     <option value="select">Izbira (select)</option>
     <option value="image">Slika</option>
+    <option value="measurements">Mere (CDWA: vrsta + vrednost + enota)</option>
   `;
 }
 
@@ -207,6 +208,23 @@ async function renderConfigEditorBody() {
         <label for="cf-options">Možnosti (ločene z vejico)</label>
         <input type="text" id="cf-options" autocomplete="off" placeholder="npr. Dobro, Slabo" />
       </div>
+      <div class="mf-field" id="cf-placeholder-wrap">
+        <label for="cf-placeholder">Namig (placeholder)</label>
+        <input type="text" id="cf-placeholder" autocomplete="off" placeholder="npr. npr. 2023.145" />
+        <p class="mf-field-hint">Sivo besedilo v praznem polju, ki nakaže pričakovan format. Ni nadomestilo za ime polja.</p>
+      </div>
+      <div class="mf-field" id="cf-measurement-types-wrap" style="display:none">
+        <label>Dovoljene vrste mer</label>
+        <ul class="mf-config-list" id="cf-measurement-types-list"></ul>
+        <div class="mf-measurement-inline-fields">
+          <input type="text" id="cf-mtype-label" placeholder="npr. Višina" autocomplete="off" />
+          <input type="text" id="cf-mtype-units" placeholder="Enote, ločene z vejico (npr. cm, mm, m)" autocomplete="off" />
+        </div>
+        <div class="mf-form-actions">
+          <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="cf-mtype-add">+ Dodaj vrsto mere</button>
+        </div>
+        <p class="mf-field-hint">Uporabnik bo pri vnosu izbral eno od teh vrst (npr. Višina, Teža, Premer) in vnesel vrednost v eni od dovoljenih enot.</p>
+      </div>
       <div class="mf-field mf-field-inline">
         <label for="cf-required">Obvezno polje</label>
         <input type="checkbox" id="cf-required" />
@@ -220,8 +238,59 @@ async function renderConfigEditorBody() {
 
   const typeSelect = wrapper.querySelector('#cf-type');
   const optionsWrap = wrapper.querySelector('#cf-options-wrap');
-  typeSelect.addEventListener('change', () => {
-    optionsWrap.style.display = typeSelect.value === 'select' ? '' : 'none';
+  const placeholderWrap = wrapper.querySelector('#cf-placeholder-wrap');
+  const measurementTypesWrap = wrapper.querySelector('#cf-measurement-types-wrap');
+  const measurementTypesList = wrapper.querySelector('#cf-measurement-types-list');
+  const placeholderInput = wrapper.querySelector('#cf-placeholder');
+
+  let currentMeasurementTypes = [];
+
+  function renderMeasurementTypesList() {
+    measurementTypesList.innerHTML =
+      currentMeasurementTypes
+        .map(
+          (t, i) => `
+        <li class="mf-config-row" data-index="${i}">
+          <span class="mf-config-row-label">${escapeHtml(t.label)}</span>
+          <span class="mf-config-row-type">${escapeHtml((t.units || []).join(', ')) || 'brez enot'}</span>
+          <button type="button" class="mf-icon-btn mf-remove-mtype" data-index="${i}" aria-label="Odstrani vrsto mere">&times;</button>
+        </li>
+      `
+        )
+        .join('') || '<li class="mf-empty">Ni še dodanih vrst mer.</li>';
+
+    measurementTypesList.querySelectorAll('.mf-remove-mtype').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentMeasurementTypes.splice(Number(btn.dataset.index), 1);
+        renderMeasurementTypesList();
+      });
+    });
+  }
+
+  function updateVisibilityForType() {
+    const type = typeSelect.value;
+    optionsWrap.style.display = type === 'select' ? '' : 'none';
+    measurementTypesWrap.style.display = type === 'measurements' ? '' : 'none';
+    placeholderWrap.style.display = type === 'image' || type === 'measurements' ? 'none' : '';
+  }
+
+  typeSelect.addEventListener('change', updateVisibilityForType);
+  updateVisibilityForType();
+  renderMeasurementTypesList();
+
+  wrapper.querySelector('#cf-mtype-add').addEventListener('click', () => {
+    const labelInputEl = wrapper.querySelector('#cf-mtype-label');
+    const unitsInputEl = wrapper.querySelector('#cf-mtype-units');
+    const label = labelInputEl.value.trim();
+    if (!label) return;
+    const units = unitsInputEl.value
+      .split(',')
+      .map((u) => u.trim())
+      .filter(Boolean);
+    currentMeasurementTypes.push({ label, units });
+    renderMeasurementTypesList();
+    labelInputEl.value = '';
+    unitsInputEl.value = '';
   });
 
   UI.tabify(wrapper);
@@ -240,8 +309,11 @@ async function renderConfigEditorBody() {
     labelInput.value = field.label;
     groupSelect.value = field.group || '';
     typeSelect.value = field.type;
-    optionsWrap.style.display = field.type === 'select' ? '' : 'none';
+    updateVisibilityForType();
     optionsInput.value = (field.options || []).join(', ');
+    placeholderInput.value = field.placeholder || '';
+    currentMeasurementTypes = field.measurementTypes ? Utils.deepClone(field.measurementTypes) : [];
+    renderMeasurementTypesList();
     requiredInput.checked = Boolean(field.required);
     formTitle.textContent = `Urejaš polje: ${field.label}`;
     submitBtn.textContent = 'Shrani spremembe';
@@ -252,7 +324,9 @@ async function renderConfigEditorBody() {
   function exitEditMode() {
     editIdInput.value = '';
     wrapper.querySelector('#mf-add-field-form').reset();
-    optionsWrap.style.display = 'none';
+    currentMeasurementTypes = [];
+    renderMeasurementTypesList();
+    updateVisibilityForType();
     formTitle.textContent = 'Novo polje';
     submitBtn.textContent = 'Dodaj polje';
     cancelEditBtn.style.display = 'none';
@@ -350,22 +424,25 @@ async function renderConfigEditorBody() {
     const options = optionsRaw
       ? optionsRaw.split(',').map((o) => o.trim()).filter(Boolean)
       : [];
+    const placeholder = placeholderInput.value.trim();
 
     if (!label) return;
 
+    if (type === 'measurements' && currentMeasurementTypes.length === 0) {
+      UI.toast({ type: 'error', message: 'Dodaj vsaj eno vrsto mere (npr. Višina), preden shraniš polje.' });
+      return;
+    }
+
     const editingId = editIdInput.value;
+    const fieldPayload = { label, type, required, options, group, placeholder, measurementTypes: currentMeasurementTypes };
 
     try {
       if (editingId) {
-        await ConfigService.updateField(editingId, { label, type, required, options, group });
+        await ConfigService.updateField(editingId, fieldPayload);
       } else {
         await ConfigService.addField({
           id: Utils.slugify(label) + '_' + Date.now().toString(36).slice(-4),
-          label,
-          type,
-          required,
-          options,
-          group,
+          ...fieldPayload,
         });
       }
       await refreshConfigEditor(wrapper);
@@ -521,7 +598,12 @@ async function printCatalog() {
     .map((entry) => {
       const inv = entry.values.inventory_number || '—';
       const title = entry.values.title || '—';
-      const cells = previewFields.map((f) => `<td>${escapeHtml(entry.values[f.id]) || '—'}</td>`).join('');
+      const cells = previewFields
+        .map((f) => {
+          const val = f.type === 'measurements' ? Utils.formatMeasurements(entry.values[f.id], f) : entry.values[f.id];
+          return `<td>${escapeHtml(val) || '—'}</td>`;
+        })
+        .join('');
       return `<tr><td>${escapeHtml(inv)}</td><td>${escapeHtml(title)}</td>${cells}<td>${Utils.formatDate(entry.created)}</td></tr>`;
     })
     .join('');

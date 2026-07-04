@@ -32,8 +32,25 @@ const DEFAULT_CONFIG = {
     { id: 'inventory_number', label: 'Inventarna številka', type: 'text', required: true, options: [], color: '#A65A3A', group: 'group_basic' },
     { id: 'title', label: 'Naziv predmeta', type: 'text', required: true, options: [], color: '#A65A3A', group: 'group_basic' },
     { id: 'period', label: 'Obdobje', type: 'text', required: false, options: [], color: '#A65A3A', group: 'group_basic' },
-    { id: 'material', label: 'Material', type: 'text', required: false, options: [], color: '#6F7D5C', group: 'group_physical' },
-    { id: 'dimensions', label: 'Mere', type: 'text', required: false, options: [], color: '#6F7D5C', group: 'group_physical' },
+    { id: 'material', label: 'Material', type: 'text', required: false, options: [], color: '#6F7D5C', group: 'group_physical', placeholder: '' },
+    {
+      id: 'measurements',
+      label: 'Mere',
+      type: 'measurements',
+      required: false,
+      options: [],
+      color: '#6F7D5C',
+      group: 'group_physical',
+      measurementTypes: [
+        { id: 'visina', label: 'Višina', units: ['cm', 'mm', 'm'] },
+        { id: 'sirina', label: 'Širina', units: ['cm', 'mm', 'm'] },
+        { id: 'dolzina', label: 'Dolžina', units: ['cm', 'mm', 'm'] },
+        { id: 'globina', label: 'Globina', units: ['cm', 'mm', 'm'] },
+        { id: 'premer', label: 'Premer', units: ['cm', 'mm', 'm'] },
+        { id: 'obseg', label: 'Obseg', units: ['cm', 'mm', 'm'] },
+        { id: 'teza', label: 'Teža', units: ['g', 'kg'] },
+      ],
+    },
     { id: 'condition', label: 'Stanje ohranjenosti', type: 'select', required: true, options: ['Odlično', 'Dobro', 'Zmerno', 'Slabo', 'Za restavracijo'], color: '#A63A2E', group: 'group_status' },
     { id: 'location', label: 'Lokacija', type: 'text', required: false, options: [], color: '#A63A2E', group: 'group_status' },
     { id: 'photo', label: 'Fotografija', type: 'image', required: false, options: [], color: '#A65A3A', group: 'group_media' },
@@ -51,6 +68,21 @@ function normalizeConfig(config) {
     group: f.group && groupIds.has(f.group) ? f.group : null,
   }));
   return { ...config, groups, fields };
+}
+
+// For the "measurements" field type (CDWA Type/Value/Unit pattern): the
+// curator defines which measurement types are allowed (e.g. height, weight)
+// and which units apply to each, so users pick from a controlled list
+// rather than typing free text.
+function normalizeMeasurementTypes(types) {
+  if (!Array.isArray(types)) return [];
+  return types
+    .filter((t) => t && t.label)
+    .map((t) => ({
+      id: t.id || t.label.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+      label: String(t.label),
+      units: Array.isArray(t.units) ? t.units.filter(Boolean).map(String) : [],
+    }));
 }
 
 // ---------------------------------------------------------------------
@@ -187,6 +219,8 @@ async function addField(field) {
     options: Array.isArray(field.options) ? field.options : [],
     color: field.color || '#A65A3A',
     group: groupId,
+    placeholder: field.placeholder ? String(field.placeholder) : '',
+    measurementTypes: normalizeMeasurementTypes(field.measurementTypes),
   };
 
   return saveDraft({ ...current, fields: [...current.fields, normalized] });
@@ -220,6 +254,8 @@ async function updateField(fieldId, updates) {
     options: Array.isArray(updates.options) ? updates.options : [],
     color: updates.color || existing.color || '#A65A3A',
     group: groupId,
+    placeholder: updates.placeholder ? String(updates.placeholder) : '',
+    measurementTypes: normalizeMeasurementTypes(updates.measurementTypes),
   };
 
   return saveDraft({ ...current, fields: current.fields.map((f) => (f.id === fieldId ? merged : f)) });
