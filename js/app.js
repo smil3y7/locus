@@ -14,45 +14,19 @@ import SessionService from './sessionService.js';
 import ExportImport from './exportImport.js';
 import DB from './db.js';
 
-function escapeHtml(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 async function openAddEntryModal() {
-  const [config, session] = await Promise.all([ConfigService.getLiveConfig(), SessionService.getSession()]);
+  const session = await SessionService.getSession();
+
+  if (!session || !session.userName) {
+    UI.toast({ type: 'info', message: 'Najprej nastavi ime vnašalca za to sejo.' });
+    openSessionSettingsModal();
+    return;
+  }
+
+  const config = await ConfigService.getLiveConfig();
   const container = document.createElement('div');
   UI.openModal({ title: 'Dodaj predmet', content: container });
   FormBuilder.build(container, config);
-  injectEnteredByField(container, session);
-}
-
-function injectEnteredByField(container, session) {
-  const form = container.querySelector('#mf-entry-form');
-  if (!form) return;
-
-  const locked = Boolean(session && session.userName);
-  const currentValue = locked ? session.userName : '';
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'mf-field';
-  wrapper.innerHTML = `
-    <label for="entered_by">Ime vnašalca <span class="mf-required">*</span></label>
-    <input
-      type="text"
-      id="entered_by"
-      name="entered_by"
-      required
-      autocomplete="off"
-      value="${escapeHtml(currentValue)}"
-      ${locked ? 'readonly' : ''}
-    />
-    ${locked ? '<p class="mf-field-hint">Za spremembo pojdi v "Nastavitve seje" v glavi strani.</p>' : ''}
-  `;
-  form.insertBefore(wrapper, form.firstChild);
 }
 
 async function openEditEntryModal(entry, config) {
@@ -80,7 +54,7 @@ async function renderConfigEditorBody() {
     .map(
       (g) => `
       <li class="mf-config-row" data-group-id="${g.id}">
-        <span class="mf-config-row-label">${escapeHtml(g.label)}</span>
+        <span class="mf-config-row-label">${Utils.escapeHtml(g.label)}</span>
         <span class="mf-config-row-type">${config.fields.filter((f) => f.group === g.id).length} polj</span>
         <button type="button" class="mf-icon-btn mf-remove-group" data-id="${g.id}" aria-label="Odstrani skupino">&times;</button>
       </li>
@@ -88,54 +62,36 @@ async function renderConfigEditorBody() {
     )
     .join('');
 
-  const fieldsByGroup = new Map(groups.map((g) => [g.id, []]));
-  const ungroupedFields = [];
-  for (const f of config.fields) {
-    if (f.group && fieldsByGroup.has(f.group)) fieldsByGroup.get(f.group).push(f);
-    else ungroupedFields.push(f);
-  }
-
-  function fieldRowHtml(f) {
+  function fieldRowHtml(f, isFirst, isLast) {
     return `
-      <li class="mf-config-row" data-id="${f.id}" style="--field-accent:${f.color || '#A65A3A'}">
-        <span class="mf-config-row-label">${escapeHtml(f.label)}</span>
-        <span class="mf-config-row-type">${escapeHtml(f.type)}${f.required ? ' · obvezno' : ''}</span>
+      <li class="mf-config-row" data-id="${f.id}" style="--field-accent:${f.color || Utils.DEFAULT_FIELD_COLOR}">
+        <button type="button" class="mf-icon-btn mf-move-field" data-id="${f.id}" data-dir="up" ${isFirst ? 'disabled' : ''} aria-label="Premakni navzgor">&uarr;</button>
+        <button type="button" class="mf-icon-btn mf-move-field" data-id="${f.id}" data-dir="down" ${isLast ? 'disabled' : ''} aria-label="Premakni navzdol">&darr;</button>
+        <span class="mf-config-row-label">${Utils.escapeHtml(f.label)}</span>
+        <span class="mf-config-row-type">${Utils.escapeHtml(f.type)}${f.required ? ' · obvezno' : ''}</span>
         <button type="button" class="mf-icon-btn mf-edit-field" data-id="${f.id}" aria-label="Uredi polje" title="Uredi">&#9998;</button>
         <button type="button" class="mf-icon-btn mf-remove-field" data-id="${f.id}" aria-label="Odstrani polje">&times;</button>
       </li>
     `;
   }
 
-  const fieldSectionEntries = [
-    ...groups.map((g) => ({
-      id: g.id,
-      label: g.label,
-      html: fieldsByGroup.get(g.id).map(fieldRowHtml).join('') || '<li class="mf-empty">Ni polj v tej skupini.</li>',
-    })),
-    {
-      id: '__ungrouped',
-      label: 'Brez skupine',
-      html: ungroupedFields.map(fieldRowHtml).join('') || '<li class="mf-empty">Ni polj.</li>',
-    },
-  ];
+  function fieldRowsHtml(fields) {
+    return fields.map((f, i) => fieldRowHtml(f, i === 0, i === fields.length - 1)).join('') || '<li class="mf-empty">Ni polj.</li>';
+  }
+
+  const fieldSectionEntries = Utils.groupFieldsIntoSections(config, {
+    includeEmptyGroups: true,
+    alwaysIncludeUngrouped: true,
+  }).map((s) => (s.id === '__ungrouped' ? { ...s, label: 'Brez skupine' } : s));
 
   const useFieldTabs = fieldSectionEntries.length > 1;
   const fieldSectionsMarkup = useFieldTabs
-    ? `
-      <div class="mf-tabs">
-        <div class="mf-tab-list" role="tablist">
-          ${fieldSectionEntries.map((s) => `<button type="button" class="mf-tab-btn" data-tab="${s.id}" role="tab">${escapeHtml(s.label)}</button>`).join('')}
-        </div>
-        <div class="mf-tab-panels">
-          ${fieldSectionEntries.map((s) => `<div class="mf-tab-panel" data-tab-panel="${s.id}"><ul class="mf-config-list">${s.html}</ul></div>`).join('')}
-        </div>
-      </div>
-    `
+    ? UI.renderTabsHtml(fieldSectionEntries, (s) => `<ul class="mf-config-list">${fieldRowsHtml(s.fields)}</ul>`)
     : fieldSectionEntries
-        .map((s) => `<div class="mf-config-group-block"><span class="mf-config-group-heading">${escapeHtml(s.label)}</span><ul class="mf-config-list">${s.html}</ul></div>`)
+        .map((s) => `<div class="mf-config-group-block"><span class="mf-config-group-heading">${Utils.escapeHtml(s.label)}</span><ul class="mf-config-list">${fieldRowsHtml(s.fields)}</ul></div>`)
         .join('');
 
-  const groupOptions = groups.map((g) => `<option value="${g.id}">${escapeHtml(g.label)}</option>`).join('');
+  const groupOptions = groups.map((g) => `<option value="${g.id}">${Utils.escapeHtml(g.label)}</option>`).join('');
 
   const wrapper = document.createElement('div');
   wrapper.className = 'mf-config-editor';
@@ -152,6 +108,9 @@ async function renderConfigEditorBody() {
     <div class="mf-form-actions">
       <button type="button" class="mf-btn mf-btn-primary" id="mf-export-schema-btn">Izvozi shemo obrazca (config.json)</button>
       <button type="button" class="mf-btn mf-btn-ghost" id="mf-reset-draft-btn">Ponastavi osnutek na objavljeno shemo</button>
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-import-schema-btn">Uvozi shemo (JSON)</button>
+      <input type="file" id="mf-import-schema-input" accept="application/json" style="display:none" />
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-load-spectrum-btn">Naloži predlogo: SPECTRUM jedro</button>
     </div>
 
     <hr class="mf-divider" />
@@ -213,6 +172,11 @@ async function renderConfigEditorBody() {
         <input type="text" id="cf-placeholder" autocomplete="off" placeholder="npr. npr. 2023.145" />
         <p class="mf-field-hint">Sivo besedilo v praznem polju, ki nakaže pričakovan format. Ni nadomestilo za ime polja.</p>
       </div>
+      <div class="mf-field mf-field-inline">
+        <label for="cf-color">Barva oznake</label>
+        <input type="color" id="cf-color" value="${Utils.DEFAULT_FIELD_COLOR}" />
+      </div>
+      <p class="mf-field-hint">Poljem, ki spadajo skupaj (ne glede na skupino/zavihek), lahko dodeliš isto barvo, da jih uporabnik prepozna na prvi pogled.</p>
       <div class="mf-field" id="cf-measurement-types-wrap" style="display:none">
         <label>Dovoljene vrste mer</label>
         <ul class="mf-config-list" id="cf-measurement-types-list"></ul>
@@ -251,8 +215,8 @@ async function renderConfigEditorBody() {
         .map(
           (t, i) => `
         <li class="mf-config-row" data-index="${i}">
-          <span class="mf-config-row-label">${escapeHtml(t.label)}</span>
-          <span class="mf-config-row-type">${escapeHtml((t.units || []).join(', ')) || 'brez enot'}</span>
+          <span class="mf-config-row-label">${Utils.escapeHtml(t.label)}</span>
+          <span class="mf-config-row-type">${Utils.escapeHtml((t.units || []).join(', ')) || 'brez enot'}</span>
           <button type="button" class="mf-icon-btn mf-remove-mtype" data-index="${i}" aria-label="Odstrani vrsto mere">&times;</button>
         </li>
       `
@@ -303,6 +267,7 @@ async function renderConfigEditorBody() {
   const groupSelect = wrapper.querySelector('#cf-group');
   const requiredInput = wrapper.querySelector('#cf-required');
   const optionsInput = wrapper.querySelector('#cf-options');
+  const colorInput = wrapper.querySelector('#cf-color');
 
   function enterEditMode(field) {
     editIdInput.value = field.id;
@@ -312,6 +277,7 @@ async function renderConfigEditorBody() {
     updateVisibilityForType();
     optionsInput.value = (field.options || []).join(', ');
     placeholderInput.value = field.placeholder || '';
+    colorInput.value = field.color || Utils.DEFAULT_FIELD_COLOR;
     currentMeasurementTypes = field.measurementTypes ? Utils.deepClone(field.measurementTypes) : [];
     renderMeasurementTypesList();
     requiredInput.checked = Boolean(field.required);
@@ -348,6 +314,41 @@ async function renderConfigEditorBody() {
     await refreshConfigEditor(wrapper);
   });
 
+  const importSchemaInput = wrapper.querySelector('#mf-import-schema-input');
+  wrapper.querySelector('#mf-import-schema-btn').addEventListener('click', () => importSchemaInput.click());
+  importSchemaInput.addEventListener('change', async () => {
+    const file = importSchemaInput.files && importSchemaInput.files[0];
+    importSchemaInput.value = '';
+    if (!file) return;
+    const confirmed = await UI.confirm(
+      `To bo prepisalo trenutni osnutek z vsebino datoteke "${file.name}". Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?`,
+      'Uvozi shemo'
+    );
+    if (!confirmed) return;
+    try {
+      const text = await file.text();
+      await ConfigService.importDraftFromObject(JSON.parse(text));
+      await refreshConfigEditor(wrapper);
+    } catch (err) {
+      console.error('[App] Schema import failed', err);
+      UI.toast({ type: 'error', message: 'Datoteke ni bilo mogoče prebrati kot veljavno shemo (JSON).' });
+    }
+  });
+
+  wrapper.querySelector('#mf-load-spectrum-btn').addEventListener('click', async () => {
+    const confirmed = await UI.confirm(
+      'To bo prepisalo trenutni osnutek s predlogo SPECTRUM jedro (~24 polj po standardu SPECTRUM). Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?',
+      'Naloži predlogo'
+    );
+    if (!confirmed) return;
+    try {
+      await ConfigService.loadTemplate('./templates/spectrum-core.json');
+      await refreshConfigEditor(wrapper);
+    } catch (err) {
+      console.error('[App] Template load failed', err);
+    }
+  });
+
   wrapper.querySelector('#mf-change-pin-btn').addEventListener('click', changeAdminPin);
 
   wrapper.querySelector('#mf-export-btn').addEventListener('click', () => {
@@ -378,6 +379,13 @@ async function renderConfigEditorBody() {
     btn.addEventListener('click', () => {
       const field = config.fields.find((f) => f.id === btn.dataset.id);
       if (field) enterEditMode(field);
+    });
+  });
+
+  wrapper.querySelectorAll('.mf-move-field').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await ConfigService.moveField(btn.dataset.id, btn.dataset.dir);
+      await refreshConfigEditor(wrapper);
     });
   });
 
@@ -425,6 +433,7 @@ async function renderConfigEditorBody() {
       ? optionsRaw.split(',').map((o) => o.trim()).filter(Boolean)
       : [];
     const placeholder = placeholderInput.value.trim();
+    const color = colorInput.value;
 
     if (!label) return;
 
@@ -434,7 +443,7 @@ async function renderConfigEditorBody() {
     }
 
     const editingId = editIdInput.value;
-    const fieldPayload = { label, type, required, options, group, placeholder, measurementTypes: currentMeasurementTypes };
+    const fieldPayload = { label, type, required, options, group, placeholder, color, measurementTypes: currentMeasurementTypes };
 
     try {
       if (editingId) {
@@ -540,11 +549,11 @@ async function openSessionSettingsModal() {
     <form id="mf-session-form" novalidate>
       <div class="mf-field">
         <label for="ss-training-title">Naslov izobraževanja</label>
-        <input type="text" id="ss-training-title" autocomplete="off" value="${escapeHtml(session?.trainingTitle || '')}" placeholder="npr. Osnove katalogizacije" />
+        <input type="text" id="ss-training-title" autocomplete="off" value="${Utils.escapeHtml(session?.trainingTitle || '')}" placeholder="npr. Osnove katalogizacije" />
       </div>
       <div class="mf-field">
         <label for="ss-user-name">Ime vnašalca</label>
-        <input type="text" id="ss-user-name" autocomplete="off" value="${escapeHtml(session?.userName || '')}" placeholder="npr. Janez Novak" />
+        <input type="text" id="ss-user-name" autocomplete="off" value="${Utils.escapeHtml(session?.userName || '')}" placeholder="npr. Janez Novak" />
       </div>
       <p class="mf-field-hint">To ime se bo prikazovalo na obrazcu za vnos predmetov za celotno sejo in se uporabi za poimenovanje izvožene datoteke.</p>
       <div class="mf-form-actions">
@@ -590,7 +599,7 @@ async function printCatalog() {
     .slice(0, 3);
 
   const headerCells = ['Inv. št.', 'Naziv', ...previewFields.map((f) => f.label), 'Datum vnosa']
-    .map((h) => `<th>${escapeHtml(h)}</th>`)
+    .map((h) => `<th>${Utils.escapeHtml(h)}</th>`)
     .join('');
 
   const rows = entries
@@ -601,10 +610,10 @@ async function printCatalog() {
       const cells = previewFields
         .map((f) => {
           const val = f.type === 'measurements' ? Utils.formatMeasurements(entry.values[f.id], f) : entry.values[f.id];
-          return `<td>${escapeHtml(val) || '—'}</td>`;
+          return `<td>${Utils.escapeHtml(val) || '—'}</td>`;
         })
         .join('');
-      return `<tr><td>${escapeHtml(inv)}</td><td>${escapeHtml(title)}</td>${cells}<td>${Utils.formatDate(entry.created)}</td></tr>`;
+      return `<tr><td>${Utils.escapeHtml(inv)}</td><td>${Utils.escapeHtml(title)}</td>${cells}<td>${Utils.formatDate(entry.created)}</td></tr>`;
     })
     .join('');
 
@@ -612,8 +621,8 @@ async function printCatalog() {
     <div class="mf-print-catalog">
       <div class="mf-print-header">
         <span class="mf-print-eyebrow">LOCUS · Muzejska dokumentacijska platforma</span>
-        <h2>${escapeHtml(session?.trainingTitle || 'Katalog predmetov')}</h2>
-        <span class="mf-print-inventory">${entries.length} predmetov ${session?.userName ? '· ' + escapeHtml(session.userName) : ''}</span>
+        <h2>${Utils.escapeHtml(session?.trainingTitle || 'Katalog predmetov')}</h2>
+        <span class="mf-print-inventory">${entries.length} predmetov ${session?.userName ? '· ' + Utils.escapeHtml(session.userName) : ''}</span>
       </div>
       <table>
         <thead><tr>${headerCells}</tr></thead>
@@ -646,14 +655,7 @@ function wireGlobalFormSubmission() {
     }
 
     const result = await Storage.saveEntry(payload);
-    if (result.success) {
-      UI.closeModal();
-      try {
-        await SessionService.setUserNameIfEmpty(result.entry.createdBy);
-      } catch (err) {
-        console.error('[App] Failed to lock in session userName', err);
-      }
-    }
+    if (result.success) UI.closeModal();
   });
 
   EventBus.on('entry:editRequested', ({ entry, config }) => {

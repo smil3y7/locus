@@ -11,13 +11,6 @@ import Utils from './utils.js';
 
 let listContainer = null;
 
-function escapeHtml(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 function primaryFieldValue(entry, config, preferredIds) {
   for (const id of preferredIds) {
     if (entry.values && entry.values[id]) return entry.values[id];
@@ -48,8 +41,8 @@ function renderCard(entry, config) {
       ${imgUrl ? `<img src="${imgUrl}" alt="" />` : `<span class="mf-tag-thumb-empty">brez slike</span>`}
     </div>
     <div class="mf-tag-body">
-      <span class="mf-tag-inventory">${escapeHtml(inventory) || '—'}</span>
-      <h3 class="mf-tag-title">${escapeHtml(title) || 'Neimenovan predmet'}</h3>
+      <span class="mf-tag-inventory">${Utils.escapeHtml(inventory) || '—'}</span>
+      <h3 class="mf-tag-title">${Utils.escapeHtml(title) || 'Neimenovan predmet'}</h3>
       <span class="mf-tag-date">${Utils.formatDate(entry.created)}</span>
     </div>
   `;
@@ -85,104 +78,37 @@ async function renderList() {
 function detailRowHtml(field, entry) {
   const value = field.type === 'measurements' ? Utils.formatMeasurements(entry.values[field.id], field) : entry.values[field.id];
   return `
-    <div class="mf-detail-row" style="--field-accent:${field.color || '#A65A3A'}">
-      <span class="mf-detail-label">${escapeHtml(field.label)}</span>
-      <span class="mf-detail-value">${escapeHtml(value) || '—'}</span>
+    <div class="mf-detail-row" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR}">
+      <span class="mf-detail-label">${Utils.escapeHtml(field.label)}</span>
+      <span class="mf-detail-value">${Utils.escapeHtml(value) || '—'}</span>
     </div>
   `;
-}
-
-function computeDetailSections(entry, config) {
-  const nonImageFields = config.fields.filter((f) => f.type !== 'image');
-  const groups = Array.isArray(config.groups) ? config.groups : [];
-  const fieldsByGroup = new Map(groups.map((g) => [g.id, []]));
-  const ungrouped = [];
-
-  for (const field of nonImageFields) {
-    if (field.group && fieldsByGroup.has(field.group)) {
-      fieldsByGroup.get(field.group).push(field);
-    } else {
-      ungrouped.push(field);
-    }
-  }
-
-  const sections = groups
-    .filter((g) => fieldsByGroup.get(g.id).length > 0)
-    .map((g) => ({ id: g.id, label: g.label, fields: fieldsByGroup.get(g.id) }));
-
-  if (ungrouped.length) {
-    sections.push({ id: '__ungrouped', label: 'Splošno', fields: ungrouped });
-  }
-
-  return sections;
 }
 
 // On-screen detail view — tabbed, so a museum profession with many groups
 // and long field lists doesn't turn the modal into an endless scroll.
 function tabbedDetailHtml(entry, config) {
-  const sections = computeDetailSections(entry, config);
+  const sections = Utils.groupFieldsIntoSections(config, { excludeTypes: ['image'] });
   if (sections.length <= 1) {
     return sections.map((s) => s.fields.map((f) => detailRowHtml(f, entry)).join('')).join('');
   }
+  return UI.renderTabsHtml(sections, (s) => s.fields.map((f) => detailRowHtml(f, entry)).join(''));
+}
 
-  const tabButtons = sections
-    .map((s) => `<button type="button" class="mf-tab-btn" data-tab="${s.id}" role="tab">${escapeHtml(s.label)}</button>`)
-    .join('');
-
-  const panels = sections
+// Flat, fully-expanded rendering for print — a printed page has no concept
+// of "switch tabs", so every group must show at once, headed by its label.
+function groupedDetailHtml(entry, config) {
+  const sections = Utils.groupFieldsIntoSections(config, { excludeTypes: ['image'] });
+  return sections
     .map(
       (s) => `
-      <div class="mf-tab-panel" data-tab-panel="${s.id}">
+      <div class="mf-detail-group">
+        <h4 class="mf-detail-group-title">${Utils.escapeHtml(s.label)}</h4>
         ${s.fields.map((f) => detailRowHtml(f, entry)).join('')}
       </div>
     `
     )
     .join('');
-
-  return `
-    <div class="mf-tabs">
-      <div class="mf-tab-list" role="tablist">${tabButtons}</div>
-      <div class="mf-tab-panels">${panels}</div>
-    </div>
-  `;
-}
-
-function groupedDetailHtml(entry, config) {
-  const nonImageFields = config.fields.filter((f) => f.type !== 'image');
-  const groups = Array.isArray(config.groups) ? config.groups : [];
-  const fieldsByGroup = new Map(groups.map((g) => [g.id, []]));
-  const ungrouped = [];
-
-  for (const field of nonImageFields) {
-    if (field.group && fieldsByGroup.has(field.group)) {
-      fieldsByGroup.get(field.group).push(field);
-    } else {
-      ungrouped.push(field);
-    }
-  }
-
-  const groupSections = groups
-    .filter((g) => fieldsByGroup.get(g.id).length > 0)
-    .map(
-      (g) => `
-      <div class="mf-detail-group">
-        <h4 class="mf-detail-group-title">${escapeHtml(g.label)}</h4>
-        ${fieldsByGroup.get(g.id).map((f) => detailRowHtml(f, entry)).join('')}
-      </div>
-    `
-    )
-    .join('');
-
-  const ungroupedSection = ungrouped.length
-    ? `
-      <div class="mf-detail-group">
-        ${groups.length ? '<h4 class="mf-detail-group-title">Splošno</h4>' : ''}
-        ${ungrouped.map((f) => detailRowHtml(f, entry)).join('')}
-      </div>
-    `
-    : '';
-
-  return groupSections + ungroupedSection;
 }
 
 function printCardHtml(entry, config) {
@@ -195,12 +121,12 @@ function printCardHtml(entry, config) {
     <div class="mf-print-card">
       <div class="mf-print-header">
         <span class="mf-print-eyebrow">LOCUS · Muzejska dokumentacijska platforma</span>
-        <h2>${escapeHtml(title)}</h2>
-        ${inventory ? `<span class="mf-print-inventory">${escapeHtml(inventory)}</span>` : ''}
+        <h2>${Utils.escapeHtml(title)}</h2>
+        ${inventory ? `<span class="mf-print-inventory">${Utils.escapeHtml(inventory)}</span>` : ''}
       </div>
       ${imgUrl ? `<div class="mf-print-photo"><img src="${imgUrl}" alt="" /></div>` : ''}
       <div class="mf-detail-rows">${rows}</div>
-      <div class="mf-print-meta">Vnesel: ${escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}</div>
+      <div class="mf-print-meta">Vnesel: ${Utils.escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}</div>
     </div>
   `;
 }
@@ -214,7 +140,7 @@ function openDetail(entry, config) {
   content.innerHTML = `
     ${imgUrl ? `<div class="mf-detail-photo"><img src="${imgUrl}" alt="" /></div>` : ''}
     <div class="mf-detail-meta">
-      Vnesel: ${escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}
+      Vnesel: ${Utils.escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}
     </div>
     <div class="mf-detail-rows">${rows}</div>
     <div class="mf-form-actions">
@@ -225,7 +151,7 @@ function openDetail(entry, config) {
   `;
 
   const title = primaryFieldValue(entry, config, ['title', 'naziv']) || 'Podrobnosti predmeta';
-  UI.openModal({ title: escapeHtml(title), content });
+  UI.openModal({ title: Utils.escapeHtml(title), content });
   UI.tabify(content);
 
   content.querySelector('#mf-delete-entry').addEventListener('click', async () => {

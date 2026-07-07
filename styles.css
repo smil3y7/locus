@@ -494,6 +494,19 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   border-radius: var(--radius);
 }
 
+.mf-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.mf-icon-btn:disabled:hover { color: var(--mf-muted); border-color: var(--mf-hairline-strong); }
+
+.mf-field-inline input[type="color"] {
+  width: 44px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  background: var(--mf-surface);
+  cursor: pointer;
+}
+
 /* ---------------- Tabs ---------------- */
 
 [hidden] { display: none !important; }

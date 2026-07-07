@@ -9,6 +9,7 @@
 
 import EventBus from './eventBus.js';
 import UI from './ui.js';
+import Utils from './utils.js';
 
 let currentContainer = null;
 let currentForm = null;
@@ -16,19 +17,19 @@ let currentForm = null;
 function fieldInputHtml(field, value) {
   const req = field.required ? 'required' : '';
   const val = value !== undefined && value !== null ? String(value) : '';
-  const placeholder = field.placeholder ? ` placeholder="${escapeHtml(field.placeholder)}"` : '';
+  const placeholder = field.placeholder ? ` placeholder="${Utils.escapeHtml(field.placeholder)}"` : '';
   switch (field.type) {
     case 'text':
-      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} autocomplete="off" value="${escapeHtml(val)}"${placeholder} />`;
+      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} autocomplete="off" value="${Utils.escapeHtml(val)}"${placeholder} />`;
     case 'number':
-      return `<input type="number" id="f_${field.id}" name="${field.id}" ${req} step="any" value="${escapeHtml(val)}"${placeholder} />`;
+      return `<input type="number" id="f_${field.id}" name="${field.id}" ${req} step="any" value="${Utils.escapeHtml(val)}"${placeholder} />`;
     case 'date':
-      return `<input type="date" id="f_${field.id}" name="${field.id}" ${req} value="${escapeHtml(val)}"${placeholder} />`;
+      return `<input type="date" id="f_${field.id}" name="${field.id}" ${req} value="${Utils.escapeHtml(val)}"${placeholder} />`;
     case 'select': {
       const opts = (field.options || [])
-        .map((opt) => `<option value="${escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${escapeHtml(opt)}</option>`)
+        .map((opt) => `<option value="${Utils.escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${Utils.escapeHtml(opt)}</option>`)
         .join('');
-      const placeholderLabel = field.placeholder ? escapeHtml(field.placeholder) : 'Izberi …';
+      const placeholderLabel = field.placeholder ? Utils.escapeHtml(field.placeholder) : 'Izberi …';
       return `<select id="f_${field.id}" name="${field.id}" ${req}>
         <option value="" disabled${value ? '' : ' selected'}>${placeholderLabel}</option>
         ${opts}
@@ -47,16 +48,8 @@ function fieldInputHtml(field, value) {
         <div class="mf-measurement-add-form" id="addform_${field.id}" hidden></div>
       `;
     default:
-      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} value="${escapeHtml(val)}"${placeholder} />`;
+      return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} value="${Utils.escapeHtml(val)}"${placeholder} />`;
   }
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 function attachImagePreview(field, form) {
@@ -102,10 +95,10 @@ function attachMeasurementsWidget(field, form, existingValues) {
       .map((row, index) => {
         const typeDef = types.find((t) => t.id === row.type);
         const label = typeDef ? typeDef.label : row.type;
-        const extent = row.extent ? ` (${escapeHtml(row.extent)})` : '';
+        const extent = row.extent ? ` (${Utils.escapeHtml(row.extent)})` : '';
         return `
           <span class="mf-measurement-chip">
-            ${escapeHtml(label)}: ${escapeHtml(row.value)} ${escapeHtml(row.unit)}${extent}
+            ${Utils.escapeHtml(label)}: ${Utils.escapeHtml(row.value)} ${Utils.escapeHtml(row.unit)}${extent}
             <button type="button" class="mf-chip-remove" data-index="${index}" aria-label="Odstrani mero">&times;</button>
           </span>
         `;
@@ -125,7 +118,7 @@ function attachMeasurementsWidget(field, form, existingValues) {
       addFormEl.innerHTML = '<p class="mf-field-hint">Admin za to polje še ni določil dovoljenih vrst mer.</p>';
       return;
     }
-    const typeOptions = types.map((t) => `<option value="${t.id}">${escapeHtml(t.label)}</option>`).join('');
+    const typeOptions = types.map((t) => `<option value="${t.id}">${Utils.escapeHtml(t.label)}</option>`).join('');
     addFormEl.innerHTML = `
       <div class="mf-measurement-inline-fields">
         <select class="mf-mtype-select" aria-label="Vrsta mere">${typeOptions}</select>
@@ -147,7 +140,7 @@ function attachMeasurementsWidget(field, form, existingValues) {
     function refreshUnits() {
       const typeDef = types.find((t) => t.id === typeSelect.value) || types[0];
       const units = (typeDef && typeDef.units) || [];
-      unitSelect.innerHTML = units.map((u) => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('');
+      unitSelect.innerHTML = units.map((u) => `<option value="${Utils.escapeHtml(u)}">${Utils.escapeHtml(u)}</option>`).join('');
     }
     typeSelect.addEventListener('change', refreshUnits);
     refreshUnits();
@@ -156,17 +149,30 @@ function attachMeasurementsWidget(field, form, existingValues) {
       addFormEl.hidden = true;
     });
 
-    addFormEl.querySelector('.mf-madd-confirm').addEventListener('click', () => {
+    addFormEl.querySelector('.mf-madd-confirm').addEventListener('click', async () => {
       const value = valueInput.value.trim();
       if (!value || Number.isNaN(Number(value))) {
         EventBus.emit('ui:notify', { type: 'error', message: 'Vnesi veljavno številsko vrednost mere.' });
         return;
       }
+
+      const newType = typeSelect.value;
+      const newExtent = extentInput.value.trim();
+      const isDuplicate = !newExtent && rows.some((r) => r.type === newType && !r.extent);
+      if (isDuplicate) {
+        const typeDef = types.find((t) => t.id === newType);
+        const confirmed = await UI.confirm(
+          `Mera "${typeDef ? typeDef.label : newType}" je že dodana. Če gre za drug del predmeta, vpiši opis dela predmeta (npr. "ustje"). Ali vseeno dodam še eno enako mero?`,
+          'Podvojena vrsta mere'
+        );
+        if (!confirmed) return;
+      }
+
       rows.push({
-        type: typeSelect.value,
+        type: newType,
         value: Number(value),
         unit: unitSelect.value,
-        extent: extentInput.value.trim() || undefined,
+        extent: newExtent || undefined,
       });
       sync();
       addFormEl.hidden = true;
@@ -189,38 +195,12 @@ function fieldHtml(field, existingValues, existingPhoto) {
          <div class="mf-image-preview" aria-hidden="true"><img src="${existingPhoto}" alt="" /></div>`
       : '';
   return `
-    <div class="mf-field" data-type="${field.type}" style="--field-accent:${field.color || '#A65A3A'}">
-      <label for="f_${field.id}">${escapeHtml(field.label)}${field.required ? ' <span class="mf-required">*</span>' : ''}</label>
+    <div class="mf-field" data-type="${field.type}" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR}">
+      <label for="f_${field.id}">${Utils.escapeHtml(field.label)}${field.required ? ' <span class="mf-required">*</span>' : ''}</label>
       ${fieldInputHtml(field, value)}
       ${currentPhotoHint}
     </div>
   `;
-}
-
-// Groups fields into "sections" (one per config.groups entry that actually
-// has fields, plus a trailing "Splošno" section for ungrouped fields).
-function computeSections(config) {
-  const groups = Array.isArray(config.groups) ? config.groups : [];
-  const fieldsByGroup = new Map(groups.map((g) => [g.id, []]));
-  const ungrouped = [];
-
-  for (const field of config.fields) {
-    if (field.group && fieldsByGroup.has(field.group)) {
-      fieldsByGroup.get(field.group).push(field);
-    } else {
-      ungrouped.push(field);
-    }
-  }
-
-  const sections = groups
-    .filter((g) => fieldsByGroup.get(g.id).length > 0)
-    .map((g) => ({ id: g.id, label: g.label, fields: fieldsByGroup.get(g.id) }));
-
-  if (ungrouped.length) {
-    sections.push({ id: '__ungrouped', label: 'Splošno', fields: ungrouped });
-  }
-
-  return sections;
 }
 
 function updateTabDots(container, sections) {
@@ -301,42 +281,26 @@ function build(container, config, options) {
   const existingValues = isEdit ? existingEntry.values : null;
   const renderField = (field) => fieldHtml(field, existingValues, existingPhotoUrl);
 
-  const sections = computeSections(config);
+  const sections = Utils.groupFieldsIntoSections(config);
   const useTabs = sections.length > 1;
 
   let fieldsMarkup;
   if (useTabs) {
-    const tabButtons = sections
-      .map(
-        (s) => `
-        <button type="button" class="mf-tab-btn" data-tab="${s.id}" role="tab">
-          ${escapeHtml(s.label)}<span class="mf-tab-dot" data-tab-dot="${s.id}" hidden></span>
-        </button>
-      `
-      )
-      .join('');
-
-    const panels = sections
-      .map(
-        (s) => `
-        <div class="mf-tab-panel" data-tab-panel="${s.id}">
-          ${s.fields.map(renderField).join('')}
-        </div>
-      `
-      )
-      .join('');
-
-    fieldsMarkup = `
-      <div class="mf-tabs">
-        <div class="mf-tab-list" role="tablist">${tabButtons}</div>
-        <div class="mf-tab-nav">
-          <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-tab-prev">← Prejšnja skupina</button>
-          <span class="mf-tab-position" id="mf-tab-position"></span>
-          <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-tab-next">Naslednja skupina →</button>
-        </div>
-        <div class="mf-tab-panels">${panels}</div>
+    const navHtml = `
+      <div class="mf-tab-nav">
+        <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-tab-prev">← Prejšnja skupina</button>
+        <span class="mf-tab-position" id="mf-tab-position"></span>
+        <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-tab-next">Naslednja skupina →</button>
       </div>
     `;
+    fieldsMarkup = UI.renderTabsHtml(
+      sections,
+      (s) => s.fields.map(renderField).join(''),
+      {
+        tabButtonExtra: (s) => `<span class="mf-tab-dot" data-tab-dot="${s.id}" hidden></span>`,
+        afterTabList: navHtml,
+      }
+    );
   } else {
     fieldsMarkup = sections.map((s) => s.fields.map(renderField).join('')).join('');
   }
@@ -419,9 +383,6 @@ function build(container, config, options) {
 
     const payload = { values, photo, configVersion: config.version };
     if (isEdit) payload.entryId = existingEntry.id;
-
-    const enteredByInput = currentForm.querySelector('[name="entered_by"]');
-    if (enteredByInput) payload.enteredBy = enteredByInput.value.trim();
 
     EventBus.emit('form:submitted', payload);
   });

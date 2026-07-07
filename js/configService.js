@@ -29,9 +29,9 @@ const DEFAULT_CONFIG = {
     { id: 'group_media', label: 'Dokumentacija' },
   ],
   fields: [
-    { id: 'inventory_number', label: 'Inventarna številka', type: 'text', required: true, options: [], color: '#A65A3A', group: 'group_basic' },
-    { id: 'title', label: 'Naziv predmeta', type: 'text', required: true, options: [], color: '#A65A3A', group: 'group_basic' },
-    { id: 'period', label: 'Obdobje', type: 'text', required: false, options: [], color: '#A65A3A', group: 'group_basic' },
+    { id: 'inventory_number', label: 'Inventarna številka', type: 'text', required: true, options: [], color: Utils.DEFAULT_FIELD_COLOR, group: 'group_basic' },
+    { id: 'title', label: 'Naziv predmeta', type: 'text', required: true, options: [], color: Utils.DEFAULT_FIELD_COLOR, group: 'group_basic' },
+    { id: 'period', label: 'Obdobje', type: 'text', required: false, options: [], color: Utils.DEFAULT_FIELD_COLOR, group: 'group_basic' },
     { id: 'material', label: 'Material', type: 'text', required: false, options: [], color: '#6F7D5C', group: 'group_physical', placeholder: '' },
     {
       id: 'measurements',
@@ -53,7 +53,7 @@ const DEFAULT_CONFIG = {
     },
     { id: 'condition', label: 'Stanje ohranjenosti', type: 'select', required: true, options: ['Odlično', 'Dobro', 'Zmerno', 'Slabo', 'Za restavracijo'], color: '#A63A2E', group: 'group_status' },
     { id: 'location', label: 'Lokacija', type: 'text', required: false, options: [], color: '#A63A2E', group: 'group_status' },
-    { id: 'photo', label: 'Fotografija', type: 'image', required: false, options: [], color: '#A65A3A', group: 'group_media' },
+    { id: 'photo', label: 'Fotografija', type: 'image', required: false, options: [], color: Utils.DEFAULT_FIELD_COLOR, group: 'group_media' },
   ],
 };
 
@@ -217,13 +217,34 @@ async function addField(field) {
     type: field.type,
     required: Boolean(field.required),
     options: Array.isArray(field.options) ? field.options : [],
-    color: field.color || '#A65A3A',
+    color: field.color || Utils.DEFAULT_FIELD_COLOR,
     group: groupId,
     placeholder: field.placeholder ? String(field.placeholder) : '',
     measurementTypes: normalizeMeasurementTypes(field.measurementTypes),
   };
 
   return saveDraft({ ...current, fields: [...current.fields, normalized] });
+}
+
+async function moveField(fieldId, direction) {
+  const current = await getDraftConfig();
+  const field = current.fields.find((f) => f.id === fieldId);
+  if (!field) return current;
+
+  // Reorder relative to siblings in the same group only — moving a field
+  // shouldn't jump it into an unrelated group's position in the array.
+  const siblingIds = current.fields.filter((f) => f.group === field.group).map((f) => f.id);
+  const idx = siblingIds.indexOf(fieldId);
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= siblingIds.length) return current; // already at the edge — no-op
+
+  const swapId = siblingIds[swapIdx];
+  const fields = [...current.fields];
+  const i1 = fields.findIndex((f) => f.id === fieldId);
+  const i2 = fields.findIndex((f) => f.id === swapId);
+  [fields[i1], fields[i2]] = [fields[i2], fields[i1]];
+
+  return saveDraft({ ...current, fields });
 }
 
 async function updateField(fieldId, updates) {
@@ -252,7 +273,7 @@ async function updateField(fieldId, updates) {
     type: updates.type,
     required: Boolean(updates.required),
     options: Array.isArray(updates.options) ? updates.options : [],
-    color: updates.color || existing.color || '#A65A3A',
+    color: updates.color || existing.color || Utils.DEFAULT_FIELD_COLOR,
     group: groupId,
     placeholder: updates.placeholder ? String(updates.placeholder) : '',
     measurementTypes: normalizeMeasurementTypes(updates.measurementTypes),
@@ -310,6 +331,43 @@ async function renameGroup(groupId, newLabel) {
   });
 }
 
+// Loads an arbitrary schema JSON (uploaded file, or a bundled template) into
+// the draft workspace — the curator can then keep refining it with the
+// normal field/group editor before publishing. Overwrites the current
+// draft; does not touch the live/published schema.
+async function importDraftFromObject(rawConfig) {
+  if (!rawConfig || !Array.isArray(rawConfig.fields)) {
+    const err = new Error('Neveljavna datoteka sheme (manjka seznam polj).');
+    console.error('[ConfigService]', err);
+    EventBus.emit('ui:notify', { type: 'error', message: err.message });
+    throw err;
+  }
+  const normalized = normalizeConfig({
+    version: rawConfig.version || 1,
+    groups: Array.isArray(rawConfig.groups) ? rawConfig.groups : [],
+    fields: rawConfig.fields,
+  });
+  return saveDraft(normalized);
+}
+
+async function loadTemplate(templateUrl) {
+  let response;
+  try {
+    response = await fetch(templateUrl, { cache: 'no-store' });
+  } catch (err) {
+    console.error('[ConfigService] Failed to fetch template', err);
+    EventBus.emit('ui:notify', { type: 'error', message: 'Predloge ni bilo mogoče naložiti.' });
+    throw err;
+  }
+  if (!response.ok) {
+    const err = new Error(`Predloga ni na voljo (${response.status}).`);
+    EventBus.emit('ui:notify', { type: 'error', message: err.message });
+    throw err;
+  }
+  const json = await response.json();
+  return importDraftFromObject(json);
+}
+
 function exportDraftFile() {
   return getDraftConfig().then((draft) => {
     const publishable = { version: draft.version, groups: draft.groups, fields: draft.fields };
@@ -337,10 +395,13 @@ const ConfigService = {
   addField,
   updateField,
   removeField,
+  moveField,
   addGroup,
   removeGroup,
   renameGroup,
   exportDraftFile,
+  importDraftFromObject,
+  loadTemplate,
   DEFAULT_CONFIG,
 };
 

@@ -44,18 +44,6 @@ async function startSession({ trainingTitle, userName }) {
   return Utils.deepClone(session);
 }
 
-// Called when someone saves their first entry without having explicitly
-// opened "Nastavitve seje" — quietly establishes userName so the field
-// locks itself in for the rest of the session, without blocking data entry.
-async function setUserNameIfEmpty(userName) {
-  const current = await getSession();
-  if (current && current.userName) return current; // already set — don't override
-  return startSession({
-    trainingTitle: current ? current.trainingTitle : '',
-    userName,
-  });
-}
-
 async function clearSession() {
   try {
     await DB.clearSession();
@@ -70,6 +58,6 @@ async function clearSession() {
   EventBus.emit('session:updated', null);
 }
 
-const SessionService = { getSession, startSession, setUserNameIfEmpty, clearSession };
+const SessionService = { getSession, startSession, clearSession };
 
 export default SessionService;

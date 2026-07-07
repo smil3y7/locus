@@ -6,11 +6,13 @@ import Validator from './validator.js';
 import ConfigService from './configService.js';
 import EventBus from './eventBus.js';
 import Utils from './utils.js';
+import SessionService from './sessionService.js';
 
 const FALLBACK_CREATED_BY = 'Neznan vnašalec';
 
 async function saveEntry(rawData) {
   const config = await ConfigService.getLiveConfig();
+  const session = await SessionService.getSession();
 
   const candidate = {
     values: rawData.values || {},
@@ -31,7 +33,7 @@ async function saveEntry(rawData) {
   const entry = {
     id: Utils.generateId('entry'),
     created: Date.now(),
-    createdBy: (rawData.enteredBy && rawData.enteredBy.trim()) || FALLBACK_CREATED_BY,
+    createdBy: (session && session.userName) || FALLBACK_CREATED_BY,
     configVersion: config.version,
     values: candidate.values,
     photo: candidate.photo,

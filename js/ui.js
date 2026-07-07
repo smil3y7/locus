@@ -3,6 +3,7 @@
 // No native browser alert/confirm. No business logic — rendering + interaction only.
 
 import EventBus from './eventBus.js';
+import Utils from './utils.js';
 
 let toastRoot = null;
 let modalRoot = null;
@@ -231,6 +232,40 @@ function printHtml(html) {
   window.print();
 }
 
+// Shared HTML template for tab UIs (formBuilder's entry form, viewer's
+// detail view, app's admin field list all need the same tab-bar/panel
+// markup, just with different panel content) — pair with tabify() below
+// to wire up the click behaviour once rendered.
+function renderTabsHtml(sections, renderPanelContent, { tabButtonExtra, afterTabList = '' } = {}) {
+  const tabButtons = sections
+    .map(
+      (s) => `
+      <button type="button" class="mf-tab-btn" data-tab="${s.id}" role="tab">
+        ${Utils.escapeHtml(s.label)}${tabButtonExtra ? tabButtonExtra(s) : ''}
+      </button>
+    `
+    )
+    .join('');
+
+  const panels = sections
+    .map(
+      (s) => `
+      <div class="mf-tab-panel" data-tab-panel="${s.id}">
+        ${renderPanelContent(s)}
+      </div>
+    `
+    )
+    .join('');
+
+  return `
+    <div class="mf-tabs">
+      <div class="mf-tab-list" role="tablist">${tabButtons}</div>
+      ${afterTabList}
+      <div class="mf-tab-panels">${panels}</div>
+    </div>
+  `;
+}
+
 function tabify(container, { onChange } = {}) {
   const tabList = container.querySelector('.mf-tab-list');
   const panels = container.querySelectorAll('.mf-tab-panel');
@@ -280,6 +315,7 @@ const UI = {
   banner,
   printHtml,
   tabify,
+  renderTabsHtml,
 };
 
 export default UI;

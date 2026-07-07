@@ -68,6 +68,59 @@ function formatMeasurements(rows, field) {
     .join(', ');
 }
 
-const Utils = { deepClone, generateId, formatDate, formatDateTime, slugify, isoDate, formatMeasurements };
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+const DEFAULT_FIELD_COLOR = '#A65A3A';
+
+// Groups config.fields by config.groups, in group order, with a trailing
+// "Splošno" section for fields that have no (or an invalid) group. Used
+// by formBuilder (entry form tabs), viewer (detail view tabs), and app
+// (admin field list tabs) — the one grouping algorithm all three need.
+function groupFieldsIntoSections(config, { excludeTypes = [], includeEmptyGroups = false, alwaysIncludeUngrouped = false } = {}) {
+  const groups = Array.isArray(config.groups) ? config.groups : [];
+  const fieldsByGroup = new Map(groups.map((g) => [g.id, []]));
+  const ungrouped = [];
+
+  const fields = excludeTypes.length
+    ? config.fields.filter((f) => !excludeTypes.includes(f.type))
+    : config.fields;
+
+  for (const field of fields) {
+    if (field.group && fieldsByGroup.has(field.group)) {
+      fieldsByGroup.get(field.group).push(field);
+    } else {
+      ungrouped.push(field);
+    }
+  }
+
+  const sections = groups
+    .filter((g) => includeEmptyGroups || fieldsByGroup.get(g.id).length > 0)
+    .map((g) => ({ id: g.id, label: g.label, fields: fieldsByGroup.get(g.id) }));
+
+  if (ungrouped.length || alwaysIncludeUngrouped) {
+    sections.push({ id: '__ungrouped', label: 'Splošno', fields: ungrouped });
+  }
+
+  return sections;
+}
+
+const Utils = {
+  deepClone,
+  generateId,
+  formatDate,
+  formatDateTime,
+  slugify,
+  isoDate,
+  formatMeasurements,
+  escapeHtml,
+  groupFieldsIntoSections,
+  DEFAULT_FIELD_COLOR,
+};
 
 export default Utils;
