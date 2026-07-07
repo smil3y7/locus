@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 4,
   "groups": [
     {
       "id": "group_identifikacija",
@@ -24,6 +24,10 @@
     {
       "id": "group_dokumentacija",
       "label": "Dokumentacija"
+    },
+    {
+      "id": "testna_skupina_c7ii",
+      "label": "Testna skupina"
     }
   ],
   "fields": [
@@ -33,9 +37,10 @@
       "type": "text",
       "required": true,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#226bb9",
       "group": "group_identifikacija",
-      "placeholder": "npr. 2023.145"
+      "placeholder": "npr. 2023.145",
+      "measurementTypes": []
     },
     {
       "id": "other_number",
