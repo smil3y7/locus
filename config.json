@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 12,
   "groups": [
     {
       "id": "group_identifikacija",
@@ -24,10 +24,6 @@
     {
       "id": "group_dokumentacija",
       "label": "Dokumentacija"
-    },
-    {
-      "id": "testna_skupina_c7ii",
-      "label": "Testna skupina"
     }
   ],
   "fields": [
@@ -334,6 +330,39 @@
       "options": [],
       "color": "#A65A3A",
       "group": "group_dokumentacija"
+    },
+    {
+      "id": "avtor_fotografije_sign",
+      "label": "Avtor fotografije",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#a65a3a",
+      "group": "group_dokumentacija",
+      "placeholder": "",
+      "measurementTypes": []
+    },
+    {
+      "id": "datacija_fotografije_sqkb",
+      "label": "Datacija fotografije",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#a65a3a",
+      "group": "group_dokumentacija",
+      "placeholder": "",
+      "measurementTypes": []
+    },
+    {
+      "id": "lastni_tvo_fotografije_tr45",
+      "label": "Lastništvo fotografije",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#a65a3a",
+      "group": "group_dokumentacija",
+      "placeholder": "",
+      "measurementTypes": []
     }
   ]
 }
