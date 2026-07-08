@@ -15,6 +15,7 @@ in upravljanje muzejskih predmetov.
 - Tip polja "Mere" po CDWA standardu (vrsta mere + vrednost + enota, npr. Višina: 15 cm) — admin določi dovoljene vrste in enote, uporabnik pri vnosu doda poljubno število mer
 - Namigi (placeholder) v vnosnih poljih obrazca
 - Tiskanje/PDF: posamezna "muzejska kartica" predmeta ali celoten katalog
+- Verzioniranje aplikacije (`js/utils.js` → `APP_VERSION`, prikazano v nogi strani) in `CHANGELOG.md`
 - Premikanje polj gor/dol znotraj skupine, barvna oznaka polja (za označevanje polj, ki spadajo skupaj, ne glede na skupino/zavihek)
 - Uvoz sheme (JSON) v osnutek — lastna varnostna kopija ali predloga; vgrajena predloga "SPECTRUM jedro" (`templates/spectrum-core.json`, ~25 polj po standardu SPECTRUM) se naloži z enim klikom
 

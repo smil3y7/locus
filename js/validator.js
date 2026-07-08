@@ -24,6 +24,7 @@ function isEmpty(value) {
 function isValidPartialDate(dateValue) {
   if (!dateValue || typeof dateValue !== 'object' || !dateValue.value) return false;
   const { value, precision } = dateValue;
+  if (precision === 'text') return String(value).trim().length > 0; // free-text approximate dating
   if (precision === 'year') return /^\d{4}$/.test(value);
   if (precision === 'month') return /^\d{4}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}-01`).getTime());
   return !Number.isNaN(new Date(value).getTime());

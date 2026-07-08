@@ -789,6 +789,9 @@ function wireGlobalFormSubmission() {
 async function bootstrap() {
   UI.init();
 
+  const versionEl = document.getElementById('mf-app-version');
+  if (versionEl) versionEl.textContent = `LOCUS v${Utils.APP_VERSION}`;
+
   try {
     await ConfigService.getLiveConfig(); // warms the fetched/cached form schema; emits ui:fatal/ui:notify itself on failure
   } catch (err) {

@@ -33,6 +33,7 @@ function renderDateField(field, value, idBase, withName) {
         <option value="day">Dan</option>
         <option value="month">Mesec</option>
         <option value="year">Leto</option>
+        <option value="text">Opisno</option>
       </select>
       <input type="date" class="mf-date-value-input" aria-label="Vrednost datuma" />
       <input type="hidden" class="mf-date-hidden" id="${idBase}"${nameAttr} value="" />
@@ -50,6 +51,9 @@ function applyDatePrecisionInputType(valueInput, precision) {
   } else if (precision === 'month') {
     valueInput.type = 'month';
     valueInput.removeAttribute('placeholder');
+  } else if (precision === 'text') {
+    valueInput.type = 'text';
+    valueInput.placeholder = 'npr. prva polovica 19. stoletja';
   } else {
     valueInput.type = 'date';
     valueInput.removeAttribute('placeholder');
@@ -180,21 +184,19 @@ function summarizeGroupItem(item, subFields) {
 // ---------------------------------------------------------------------
 
 function attachGroupWidget(field, form, existingValues) {
-  if (field.type !== 'group') return;
+  if (field.type !== 'group') return null;
 
-  const hiddenInput = form.querySelector(`#f_${field.id}`);
   const chipsEl = form.querySelector(`#groupitems_${field.id}`);
   const addBtn = form.querySelector(`#addgroupitem_${field.id}`);
   const addFormEl = form.querySelector(`#addgroupform_${field.id}`);
-  if (!hiddenInput || !chipsEl || !addBtn || !addFormEl) return;
+  if (!chipsEl || !addBtn || !addFormEl) return null;
 
   const subFields = field.subFields || [];
+  // NOTE: items can hold File/Blob objects (image/document sub-fields).
+  // Those are NOT JSON-serializable, so — unlike measurements — this array
+  // is never round-tripped through a hidden input's string value. It's read
+  // directly by build()'s submit handler via the reference returned below.
   let items = Array.isArray(existingValues && existingValues[field.id]) ? [...existingValues[field.id]] : [];
-
-  function sync() {
-    hiddenInput.value = JSON.stringify(items);
-    renderChips();
-  }
 
   function renderChips() {
     if (items.length === 0) {
@@ -204,18 +206,36 @@ function attachGroupWidget(field, form, existingValues) {
     chipsEl.innerHTML = items
       .map(
         (item, index) => `
-        <span class="mf-measurement-chip">
-          ${Utils.escapeHtml(summarizeGroupItem(item, subFields))}
+        <span class="mf-measurement-chip mf-group-chip" data-group-index="${index}">
+          <span class="mf-group-chip-thumb" data-thumb-slot></span>
+          <span class="mf-group-chip-text">${Utils.escapeHtml(summarizeGroupItem(item, subFields))}</span>
           <button type="button" class="mf-chip-remove" data-index="${index}" aria-label="Odstrani">&times;</button>
         </span>
       `
       )
       .join('');
 
+    // Fill in an actual thumbnail for image sub-fields (a text summary alone
+    // doesn't let the curator *see* which photo they just added).
+    const imageSubField = subFields.find((sf) => sf.type === 'image');
+    if (imageSubField) {
+      chipsEl.querySelectorAll('.mf-group-chip').forEach((chipEl) => {
+        const idx = Number(chipEl.dataset.groupIndex);
+        const file = items[idx] && items[idx][imageSubField.id];
+        const slot = chipEl.querySelector('[data-thumb-slot]');
+        if (file instanceof Blob && slot) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.onload = () => URL.revokeObjectURL(img.src);
+          slot.appendChild(img);
+        }
+      });
+    }
+
     chipsEl.querySelectorAll('.mf-chip-remove').forEach((btn) => {
       btn.addEventListener('click', () => {
         items.splice(Number(btn.dataset.index), 1);
-        sync();
+        renderChips();
       });
     });
   }
@@ -264,7 +284,7 @@ function attachGroupWidget(field, form, existingValues) {
       }
       if (hasError) return;
       items.push(item);
-      sync();
+      renderChips();
       addFormEl.hidden = true;
     });
   }
@@ -274,7 +294,9 @@ function attachGroupWidget(field, form, existingValues) {
     addFormEl.hidden = !addFormEl.hidden;
   });
 
-  sync();
+  renderChips();
+
+  return items;
 }
 
 // ---------------------------------------------------------------------
@@ -441,7 +463,6 @@ function fieldInputHtml(field, value) {
       `;
     case 'group':
       return `
-        <input type="hidden" id="f_${field.id}" name="${field.id}" value="[]" />
         <div class="mf-measurements-chips" id="groupitems_${field.id}"></div>
         <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="addgroupitem_${field.id}">+ Dodaj</button>
         <div class="mf-measurement-add-form" id="addgroupform_${field.id}" hidden></div>
@@ -586,12 +607,17 @@ function build(container, config, options) {
 
   currentForm = container.querySelector('#mf-entry-form');
 
+  // Group fields can hold File/Blob sub-values, which can't survive a
+  // JSON.stringify round-trip through a hidden input — so their live data
+  // is read directly from this store at submit time instead of via FormData.
+  const groupFieldItems = {};
+
   config.fields.forEach((field) => {
     if (field.type === 'image') attachFilePreview(currentForm, `f_${field.id}`, 'image');
     else if (field.type === 'document') attachFilePreview(currentForm, `f_${field.id}`, 'document');
     else if (field.type === 'date') attachDateField(currentForm, `f_${field.id}`, existingValues ? existingValues[field.id] : null);
     else if (field.type === 'measurements') attachMeasurementsWidget(field, currentForm, existingValues);
-    else if (field.type === 'group') attachGroupWidget(field, currentForm, existingValues);
+    else if (field.type === 'group') groupFieldItems[field.id] = attachGroupWidget(field, currentForm, existingValues);
   });
 
   let tabController = null;
@@ -623,7 +649,7 @@ function build(container, config, options) {
         } catch (err) {
           values[field.id] = null;
         }
-      } else if (field.type === 'measurements' || field.type === 'group') {
+      } else if (field.type === 'measurements') {
         const raw = formData.get(field.id);
         try {
           values[field.id] = raw ? JSON.parse(raw) : [];
@@ -631,6 +657,8 @@ function build(container, config, options) {
           console.error('[FormBuilder] Failed to parse JSON field', field.id, err);
           values[field.id] = [];
         }
+      } else if (field.type === 'group') {
+        values[field.id] = groupFieldItems[field.id] || [];
       } else {
         values[field.id] = formData.get(field.id);
       }

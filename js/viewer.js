@@ -103,18 +103,21 @@ function documentLinkHtml(file, label) {
   return `<a href="${url}" download="${Utils.escapeHtml(name)}" class="mf-doc-link">&#128196; ${Utils.escapeHtml(name)}</a>`;
 }
 
-function summarizeGroupItemForDisplay(item, subFields) {
+function renderGroupItemHtml(item, subFields) {
   const parts = (subFields || [])
     .map((sf) => {
       const v = item ? item[sf.id] : undefined;
-      if (v === undefined || v === null || v === '') return null;
-      if (sf.type === 'image') return `${sf.label}: priložena slika`;
-      if (sf.type === 'document') return `${sf.label}: ${(v && v.name) || 'dokument'}`;
-      if (sf.type === 'date') return `${sf.label}: ${Utils.formatPartialDate(v)}`;
-      return `${sf.label}: ${v}`;
+      if (v === undefined || v === null || v === '') return '';
+      if (sf.type === 'image') {
+        const url = blobUrl(v);
+        return url ? `<span class="mf-group-item-photo"><img src="${url}" alt="" /></span>` : '';
+      }
+      if (sf.type === 'document') return documentLinkHtml(v, sf.label);
+      if (sf.type === 'date') return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${Utils.escapeHtml(Utils.formatPartialDate(v))}`;
+      return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${Utils.escapeHtml(v)}`;
     })
     .filter(Boolean);
-  return parts.join(', ') || 'Brez podatkov';
+  return `<div class="mf-group-item">${parts.join(' &middot; ')}</div>`;
 }
 
 function detailRowHtml(field, entry) {
@@ -129,12 +132,7 @@ function detailRowHtml(field, entry) {
     valueHtml = documentLinkHtml(raw, field.label);
   } else if (field.type === 'group') {
     const items = Array.isArray(raw) ? raw : [];
-    valueHtml =
-      items.length === 0
-        ? '—'
-        : `<ul class="mf-group-item-list">${items
-            .map((item) => `<li>${Utils.escapeHtml(summarizeGroupItemForDisplay(item, field.subFields))}</li>`)
-            .join('')}</ul>`;
+    valueHtml = items.length === 0 ? '—' : items.map((item) => renderGroupItemHtml(item, field.subFields)).join('');
   } else {
     valueHtml = Utils.escapeHtml(raw) || '—';
   }

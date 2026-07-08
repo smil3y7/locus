@@ -118,6 +118,8 @@ function formatPartialDate(dateValue) {
   if (!dateValue || !dateValue.value) return '';
   const { value, precision } = dateValue;
 
+  if (precision === 'text') return value; // free-text approximate dating, e.g. "prva polovica 19. stoletja"
+
   if (precision === 'year') return value;
 
   if (precision === 'month') {
@@ -132,6 +134,12 @@ function formatPartialDate(dateValue) {
   return d.toLocaleDateString('sl-SI', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+// Single source of truth for the app version — shown in the footer, and
+// stamped onto exported archives so it's clear which version produced them.
+// Bump this by hand when you ship a meaningful set of changes; see
+// CHANGELOG.md at the repo root for what each version contains.
+const APP_VERSION = '0.1.0';
+
 const Utils = {
   deepClone,
   generateId,
@@ -144,6 +152,7 @@ const Utils = {
   groupFieldsIntoSections,
   DEFAULT_FIELD_COLOR,
   formatPartialDate,
+  APP_VERSION,
 };
 
 export default Utils;
