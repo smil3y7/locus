@@ -1,5 +1,5 @@
 {
-  "version": 14,
+  "version": 17,
   "groups": [
     {
       "id": "group_identifikacija",
@@ -337,12 +337,14 @@
     },
     {
       "id": "photos",
-      "label": "Fotografije",
+      "label": "Vizualna dokumentacija",
       "type": "group",
       "required": false,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#a65a3a",
       "group": "group_dokumentacija",
+      "placeholder": "",
+      "measurementTypes": [],
       "subFields": [
         {
           "id": "slika",
@@ -352,21 +354,21 @@
           "options": []
         },
         {
-          "id": "avtor_fotografije",
-          "label": "Avtor fotografije",
+          "id": "avtor_fotografije_skena_32fe",
+          "label": "Avtor fotografije / skena",
           "type": "text",
           "required": false,
           "options": []
         },
         {
-          "id": "datacija_fotografije",
+          "id": "datacija_32fe",
           "label": "Datacija",
           "type": "date",
           "required": false,
           "options": []
         },
         {
-          "id": "lastnistvo_fotografije",
+          "id": "lastni_tvo_32fe",
           "label": "Lastništvo",
           "type": "text",
           "required": false,
@@ -376,12 +378,14 @@
     },
     {
       "id": "documents",
-      "label": "Dokumentacija",
+      "label": "Tekstovna dokumentacija",
       "type": "group",
       "required": false,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#a65a3a",
       "group": "group_dokumentacija",
+      "placeholder": "",
+      "measurementTypes": [],
       "subFields": [
         {
           "id": "dokument",
@@ -393,6 +397,20 @@
         {
           "id": "opis_dokumenta",
           "label": "Opis dokumenta",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "ustvarjalec_dokumenta_147g",
+          "label": "Ustvarjalec dokumenta",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "tevilka_dokumenta_147g",
+          "label": "Številka dokumenta",
           "type": "text",
           "required": false,
           "options": []
