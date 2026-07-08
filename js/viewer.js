@@ -19,19 +19,40 @@ function primaryFieldValue(entry, config, preferredIds) {
   return firstText ? entry.values[firstText.id] : entry.id;
 }
 
-function photoObjectUrl(photo) {
-  if (!photo) return null;
+function blobUrl(blob) {
+  if (!blob || !(blob instanceof Blob)) return null;
   try {
-    return URL.createObjectURL(photo);
+    return URL.createObjectURL(blob);
   } catch {
     return null;
   }
 }
 
+// A "hero" image for the card thumbnail / detail header: prefer a top-level
+// image field; fall back to the first image found inside a "group" field's
+// items (e.g. the first photo in a repeatable "Fotografije" group).
+function findPrimaryImageBlob(entry, config) {
+  const topImageField = config.fields.find((f) => f.type === 'image');
+  if (topImageField && entry.values[topImageField.id] instanceof Blob) {
+    return entry.values[topImageField.id];
+  }
+
+  const groupField = config.fields.find((f) => f.type === 'group' && (f.subFields || []).some((sf) => sf.type === 'image'));
+  if (groupField) {
+    const imageSubField = groupField.subFields.find((sf) => sf.type === 'image');
+    const items = entry.values[groupField.id];
+    if (Array.isArray(items)) {
+      const withImage = items.find((item) => item && item[imageSubField.id] instanceof Blob);
+      if (withImage) return withImage[imageSubField.id];
+    }
+  }
+  return null;
+}
+
 function renderCard(entry, config) {
   const title = primaryFieldValue(entry, config, ['title', 'naziv']);
   const inventory = entry.values.inventory_number || '';
-  const imgUrl = photoObjectUrl(entry.photo);
+  const imgUrl = blobUrl(findPrimaryImageBlob(entry, config));
 
   const card = document.createElement('article');
   card.className = 'mf-tag-card';
@@ -75,12 +96,53 @@ async function renderList() {
   }
 }
 
+function documentLinkHtml(file, label) {
+  if (!(file instanceof Blob)) return '—';
+  const url = blobUrl(file);
+  const name = file.name || label;
+  return `<a href="${url}" download="${Utils.escapeHtml(name)}" class="mf-doc-link">&#128196; ${Utils.escapeHtml(name)}</a>`;
+}
+
+function summarizeGroupItemForDisplay(item, subFields) {
+  const parts = (subFields || [])
+    .map((sf) => {
+      const v = item ? item[sf.id] : undefined;
+      if (v === undefined || v === null || v === '') return null;
+      if (sf.type === 'image') return `${sf.label}: priložena slika`;
+      if (sf.type === 'document') return `${sf.label}: ${(v && v.name) || 'dokument'}`;
+      if (sf.type === 'date') return `${sf.label}: ${Utils.formatPartialDate(v)}`;
+      return `${sf.label}: ${v}`;
+    })
+    .filter(Boolean);
+  return parts.join(', ') || 'Brez podatkov';
+}
+
 function detailRowHtml(field, entry) {
-  const value = field.type === 'measurements' ? Utils.formatMeasurements(entry.values[field.id], field) : entry.values[field.id];
+  const raw = entry.values[field.id];
+  let valueHtml;
+
+  if (field.type === 'measurements') {
+    valueHtml = Utils.escapeHtml(Utils.formatMeasurements(raw, field)) || '—';
+  } else if (field.type === 'date') {
+    valueHtml = Utils.escapeHtml(Utils.formatPartialDate(raw)) || '—';
+  } else if (field.type === 'document') {
+    valueHtml = documentLinkHtml(raw, field.label);
+  } else if (field.type === 'group') {
+    const items = Array.isArray(raw) ? raw : [];
+    valueHtml =
+      items.length === 0
+        ? '—'
+        : `<ul class="mf-group-item-list">${items
+            .map((item) => `<li>${Utils.escapeHtml(summarizeGroupItemForDisplay(item, field.subFields))}</li>`)
+            .join('')}</ul>`;
+  } else {
+    valueHtml = Utils.escapeHtml(raw) || '—';
+  }
+
   return `
     <div class="mf-detail-row" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR}">
       <span class="mf-detail-label">${Utils.escapeHtml(field.label)}</span>
-      <span class="mf-detail-value">${Utils.escapeHtml(value) || '—'}</span>
+      <span class="mf-detail-value">${valueHtml}</span>
     </div>
   `;
 }
@@ -112,7 +174,7 @@ function groupedDetailHtml(entry, config) {
 }
 
 function printCardHtml(entry, config) {
-  const imgUrl = photoObjectUrl(entry.photo);
+  const imgUrl = blobUrl(findPrimaryImageBlob(entry, config));
   const rows = groupedDetailHtml(entry, config);
   const title = primaryFieldValue(entry, config, ['title', 'naziv']) || 'Predmet';
   const inventory = entry.values.inventory_number || '';
@@ -132,7 +194,7 @@ function printCardHtml(entry, config) {
 }
 
 function openDetail(entry, config) {
-  const imgUrl = photoObjectUrl(entry.photo);
+  const imgUrl = blobUrl(findPrimaryImageBlob(entry, config));
   const rows = tabbedDetailHtml(entry, config);
 
   const content = document.createElement('div');

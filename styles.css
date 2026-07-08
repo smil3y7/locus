@@ -507,6 +507,71 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   cursor: pointer;
 }
 
+/* Date field (day/month/year precision chosen at entry time) */
+
+.mf-date-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mf-date-field .mf-date-precision {
+  flex: 0 0 auto;
+  width: auto;
+  background: var(--mf-surface);
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  padding: 10px 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--mf-parchment);
+}
+.mf-date-field .mf-date-value-input {
+  flex: 1;
+  background: var(--mf-surface);
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  color: var(--mf-parchment);
+}
+
+/* Document fields */
+
+.mf-doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--mf-parchment);
+}
+.mf-doc-preview { margin-top: 6px; }
+
+.mf-doc-link {
+  color: var(--mf-brass-bright);
+  text-decoration: none;
+  font-size: 14px;
+}
+.mf-doc-link:hover { text-decoration: underline; }
+
+/* Group field (repeatable composite) — reuses the chip look from measurements */
+
+.mf-group-item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mf-group-item-list li {
+  font-size: 13px;
+  color: var(--mf-parchment);
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--mf-hairline);
+}
+.mf-group-item-list li:last-child { border-bottom: none; }
+
 /* ---------------- Tabs ---------------- */
 
 [hidden] { display: none !important; }

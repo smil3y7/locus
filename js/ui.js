@@ -229,7 +229,38 @@ function printHtml(html) {
     document.body.appendChild(printArea);
   }
   printArea.innerHTML = html;
-  window.print();
+
+  // window.print() is synchronous, but <img src="blob:..."> loads
+  // asynchronously — without waiting, the print snapshot can be taken
+  // before the image has actually painted, leaving it blank.
+  const images = Array.from(printArea.querySelectorAll('img'));
+  if (images.length === 0) {
+    window.print();
+    return;
+  }
+
+  let printed = false;
+  const doPrint = () => {
+    if (printed) return;
+    printed = true;
+    window.print();
+  };
+
+  let remaining = images.length;
+  const onSettled = () => {
+    remaining -= 1;
+    if (remaining <= 0) doPrint();
+  };
+  images.forEach((img) => {
+    if (img.complete) {
+      onSettled();
+    } else {
+      img.addEventListener('load', onSettled, { once: true });
+      img.addEventListener('error', onSettled, { once: true }); // don't hang forever on a broken image
+    }
+  });
+
+  setTimeout(doPrint, 1500); // safety net in case a load/error event never fires
 }
 
 // Shared HTML template for tab UIs (formBuilder's entry form, viewer's

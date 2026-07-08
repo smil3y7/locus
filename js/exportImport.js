@@ -2,6 +2,11 @@
 // Exports the current entries + config + session as a downloadable .json
 // archive, and imports such archives back in for cross-machine review.
 // Talks to DB directly, emits via EventBus.
+//
+// Blob/File values (images, documents) can live anywhere inside an entry's
+// `values` — directly on a field, or nested inside a "group" field's
+// repeated items — so serialization walks the whole values tree rather than
+// assuming one fixed location.
 
 import DB from './db.js';
 import EventBus from './eventBus.js';
@@ -12,19 +17,70 @@ function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error || new Error('Branje slike ni uspelo.'));
+    reader.onerror = () => reject(reader.error || new Error('Branje datoteke ni uspelo.'));
     reader.readAsDataURL(blob);
   });
 }
 
 function dataUrlToBlob(dataUrl) {
   const match = /^data:(.*?);base64,(.*)$/.exec(dataUrl);
-  if (!match) throw new Error('Neveljaven zapis slike v izvozni datoteki.');
+  if (!match) throw new Error('Neveljaven zapis datoteke v izvozni datoteki.');
   const [, mime, base64] = match;
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return new Blob([bytes], { type: mime });
+}
+
+async function serializeValue(val) {
+  if (val instanceof Blob) {
+    return { __blob: true, dataUrl: await blobToDataUrl(val), name: val.name || '', type: val.type || '' };
+  }
+  if (Array.isArray(val)) {
+    return Promise.all(val.map((v) => serializeValue(v)));
+  }
+  if (val && typeof val === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(val)) {
+      out[k] = await serializeValue(v);
+    }
+    return out;
+  }
+  return val;
+}
+
+function deserializeValue(val) {
+  if (val && typeof val === 'object' && val.__blob) {
+    const blob = dataUrlToBlob(val.dataUrl);
+    return val.name ? new File([blob], val.name, { type: val.type || blob.type }) : blob;
+  }
+  if (Array.isArray(val)) {
+    return val.map((v) => deserializeValue(v));
+  }
+  if (val && typeof val === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(val)) {
+      out[k] = deserializeValue(v);
+    }
+    return out;
+  }
+  return val;
+}
+
+async function serializeEntry(entry) {
+  const values = {};
+  for (const [key, val] of Object.entries(entry.values || {})) {
+    values[key] = await serializeValue(val);
+  }
+  return { ...entry, values };
+}
+
+function deserializeEntry(entry) {
+  const values = {};
+  for (const [key, val] of Object.entries(entry.values || {})) {
+    values[key] = deserializeValue(val);
+  }
+  return { ...entry, values };
 }
 
 function buildFileName(session) {
@@ -49,19 +105,14 @@ async function exportArchive() {
   try {
     const [config, entries, session] = await Promise.all([ConfigService.getLiveConfig(), DB.getAllEntries(), DB.getSession()]);
 
-    const entriesWithPhotoData = await Promise.all(
-      entries.map(async (entry) => ({
-        ...entry,
-        photo: entry.photo ? await blobToDataUrl(entry.photo) : null,
-      }))
-    );
+    const serializedEntries = await Promise.all(entries.map((entry) => serializeEntry(entry)));
 
     const payload = {
       exportedAt: Date.now(),
-      appVersion: 1,
+      appVersion: 2,
       session: session || null,
       config,
-      entries: entriesWithPhotoData,
+      entries: serializedEntries,
     };
 
     const filename = buildFileName(session);
@@ -88,8 +139,8 @@ async function importArchive(file) {
 
     let imported = 0;
     for (const entry of payload.entries) {
-      const photoBlob = entry.photo ? dataUrlToBlob(entry.photo) : null;
-      await DB.saveEntry({ ...entry, photo: photoBlob });
+      const deserialized = deserializeEntry(entry);
+      await DB.saveEntry(deserialized);
       imported++;
     }
 

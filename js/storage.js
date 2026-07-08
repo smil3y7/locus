@@ -14,11 +14,7 @@ async function saveEntry(rawData) {
   const config = await ConfigService.getLiveConfig();
   const session = await SessionService.getSession();
 
-  const candidate = {
-    values: rawData.values || {},
-    photo: rawData.photo || null,
-  };
-
+  const candidate = { values: rawData.values || {} };
   const { valid, errors } = Validator.validateEntry(candidate, config);
 
   if (!valid) {
@@ -36,7 +32,6 @@ async function saveEntry(rawData) {
     createdBy: (session && session.userName) || FALLBACK_CREATED_BY,
     configVersion: config.version,
     values: candidate.values,
-    photo: candidate.photo,
   };
 
   try {
@@ -68,12 +63,15 @@ async function updateEntry(entryId, rawData) {
     return { success: false };
   }
 
-  const candidate = {
-    values: rawData.values || {},
-    // `photo === undefined` means "no new file chosen" — keep the existing one.
-    // `photo === null` or a File means an explicit change.
-    photo: rawData.photo !== undefined ? rawData.photo : existing.photo,
-  };
+  // `undefined` for any field's submitted value means "not touched — keep
+  // whatever this entry already had" (used by image/document fields when no
+  // new file was chosen). Every other field always submits a real value.
+  const mergedValues = { ...existing.values };
+  for (const [key, val] of Object.entries(rawData.values || {})) {
+    if (val === undefined) continue;
+    mergedValues[key] = val;
+  }
+  const candidate = { values: mergedValues };
 
   const { valid, errors } = Validator.validateEntry(candidate, config);
 
@@ -86,7 +84,6 @@ async function updateEntry(entryId, rawData) {
   const updatedEntry = {
     ...existing,
     values: candidate.values,
-    photo: candidate.photo,
     configVersion: config.version,
     updatedAt: Date.now(),
   };

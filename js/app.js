@@ -42,11 +42,24 @@ function fieldTypeOptions() {
     <option value="date">Datum</option>
     <option value="select">Izbira (select)</option>
     <option value="image">Slika</option>
+    <option value="document">Dokument (PDF ipd.)</option>
     <option value="measurements">Mere (CDWA: vrsta + vrednost + enota)</option>
+    <option value="group">Skupina (ponavljajoč se sklop pod-polj)</option>
   `;
 }
 
-async function renderConfigEditorBody() {
+function subFieldTypeOptions() {
+  return `
+    <option value="text">Besedilo</option>
+    <option value="number">Število</option>
+    <option value="date">Datum</option>
+    <option value="select">Izbira (select)</option>
+    <option value="image">Slika</option>
+    <option value="document">Dokument</option>
+  `;
+}
+
+async function renderConfigEditorBody(restore = {}) {
   const config = await ConfigService.getDraftConfig();
   const groups = config.groups || [];
 
@@ -189,6 +202,20 @@ async function renderConfigEditorBody() {
         </div>
         <p class="mf-field-hint">Uporabnik bo pri vnosu izbral eno od teh vrst (npr. Višina, Teža, Premer) in vnesel vrednost v eni od dovoljenih enot.</p>
       </div>
+      <div class="mf-field" id="cf-subfields-wrap" style="display:none">
+        <label>Pod-polja skupine</label>
+        <ul class="mf-config-list" id="cf-subfields-list"></ul>
+        <div class="mf-measurement-inline-fields">
+          <input type="text" id="cf-subfield-label" placeholder="npr. Avtor fotografije" autocomplete="off" />
+          <select id="cf-subfield-type">${subFieldTypeOptions()}</select>
+          <input type="text" id="cf-subfield-options" placeholder="Možnosti za izbiro, ločene z vejico" autocomplete="off" style="display:none" />
+          <label class="mf-field-inline"><input type="checkbox" id="cf-subfield-required" /> Obvezno</label>
+        </div>
+        <div class="mf-form-actions">
+          <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="cf-subfield-add">+ Dodaj pod-polje</button>
+        </div>
+        <p class="mf-field-hint">Vsak primerek te skupine (npr. ena fotografija) bo imel vnos za vsako od teh pod-polj. Uporabnik doda poljubno število primerkov.</p>
+      </div>
       <div class="mf-field mf-field-inline">
         <label for="cf-required">Obvezno polje</label>
         <input type="checkbox" id="cf-required" />
@@ -206,8 +233,11 @@ async function renderConfigEditorBody() {
   const measurementTypesWrap = wrapper.querySelector('#cf-measurement-types-wrap');
   const measurementTypesList = wrapper.querySelector('#cf-measurement-types-list');
   const placeholderInput = wrapper.querySelector('#cf-placeholder');
+  const subFieldsWrap = wrapper.querySelector('#cf-subfields-wrap');
+  const subFieldsList = wrapper.querySelector('#cf-subfields-list');
 
   let currentMeasurementTypes = [];
+  let currentSubFields = [];
 
   function renderMeasurementTypesList() {
     measurementTypesList.innerHTML =
@@ -231,16 +261,67 @@ async function renderConfigEditorBody() {
     });
   }
 
+  function renderSubFieldsList() {
+    subFieldsList.innerHTML =
+      currentSubFields
+        .map(
+          (sf, i) => `
+        <li class="mf-config-row" data-index="${i}">
+          <span class="mf-config-row-label">${Utils.escapeHtml(sf.label)}</span>
+          <span class="mf-config-row-type">${Utils.escapeHtml(sf.type)}${sf.required ? ' · obvezno' : ''}</span>
+          <button type="button" class="mf-icon-btn mf-remove-subfield" data-index="${i}" aria-label="Odstrani pod-polje">&times;</button>
+        </li>
+      `
+        )
+        .join('') || '<li class="mf-empty">Ni še dodanih pod-polj.</li>';
+
+    subFieldsList.querySelectorAll('.mf-remove-subfield').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentSubFields.splice(Number(btn.dataset.index), 1);
+        renderSubFieldsList();
+      });
+    });
+  }
+
   function updateVisibilityForType() {
     const type = typeSelect.value;
     optionsWrap.style.display = type === 'select' ? '' : 'none';
     measurementTypesWrap.style.display = type === 'measurements' ? '' : 'none';
-    placeholderWrap.style.display = type === 'image' || type === 'measurements' ? 'none' : '';
+    subFieldsWrap.style.display = type === 'group' ? '' : 'none';
+    placeholderWrap.style.display = ['image', 'document', 'measurements', 'group'].includes(type) ? 'none' : '';
   }
 
   typeSelect.addEventListener('change', updateVisibilityForType);
   updateVisibilityForType();
   renderMeasurementTypesList();
+  renderSubFieldsList();
+
+  const subFieldTypeSelect = wrapper.querySelector('#cf-subfield-type');
+  const subFieldOptionsInput = wrapper.querySelector('#cf-subfield-options');
+  subFieldTypeSelect.addEventListener('change', () => {
+    subFieldOptionsInput.style.display = subFieldTypeSelect.value === 'select' ? '' : 'none';
+  });
+
+  wrapper.querySelector('#cf-subfield-add').addEventListener('click', () => {
+    const labelInputEl = wrapper.querySelector('#cf-subfield-label');
+    const requiredInputEl = wrapper.querySelector('#cf-subfield-required');
+    const label = labelInputEl.value.trim();
+    if (!label) return;
+    const options = subFieldOptionsInput.value
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+    currentSubFields.push({
+      label,
+      type: subFieldTypeSelect.value,
+      required: requiredInputEl.checked,
+      options,
+    });
+    renderSubFieldsList();
+    labelInputEl.value = '';
+    subFieldOptionsInput.value = '';
+    requiredInputEl.checked = false;
+  });
 
   wrapper.querySelector('#cf-mtype-add').addEventListener('click', () => {
     const labelInputEl = wrapper.querySelector('#cf-mtype-label');
@@ -257,7 +338,10 @@ async function renderConfigEditorBody() {
     unitsInputEl.value = '';
   });
 
-  UI.tabify(wrapper);
+  const fieldTabController = UI.tabify(wrapper);
+  if (restore.activeFieldTab && fieldTabController) {
+    fieldTabController.activate(restore.activeFieldTab);
+  }
 
   const formTitle = wrapper.querySelector('#cf-form-title');
   const editIdInput = wrapper.querySelector('#cf-edit-id');
@@ -265,6 +349,7 @@ async function renderConfigEditorBody() {
   const cancelEditBtn = wrapper.querySelector('#cf-cancel-edit');
   const labelInput = wrapper.querySelector('#cf-label');
   const groupSelect = wrapper.querySelector('#cf-group');
+  if (restore.lastGroup) groupSelect.value = restore.lastGroup;
   const requiredInput = wrapper.querySelector('#cf-required');
   const optionsInput = wrapper.querySelector('#cf-options');
   const colorInput = wrapper.querySelector('#cf-color');
@@ -280,6 +365,8 @@ async function renderConfigEditorBody() {
     colorInput.value = field.color || Utils.DEFAULT_FIELD_COLOR;
     currentMeasurementTypes = field.measurementTypes ? Utils.deepClone(field.measurementTypes) : [];
     renderMeasurementTypesList();
+    currentSubFields = field.subFields ? Utils.deepClone(field.subFields) : [];
+    renderSubFieldsList();
     requiredInput.checked = Boolean(field.required);
     formTitle.textContent = `Urejaš polje: ${field.label}`;
     submitBtn.textContent = 'Shrani spremembe';
@@ -292,6 +379,8 @@ async function renderConfigEditorBody() {
     wrapper.querySelector('#mf-add-field-form').reset();
     currentMeasurementTypes = [];
     renderMeasurementTypesList();
+    currentSubFields = [];
+    renderSubFieldsList();
     updateVisibilityForType();
     formTitle.textContent = 'Novo polje';
     submitBtn.textContent = 'Dodaj polje';
@@ -442,8 +531,23 @@ async function renderConfigEditorBody() {
       return;
     }
 
+    if (type === 'group' && currentSubFields.length === 0) {
+      UI.toast({ type: 'error', message: 'Dodaj vsaj eno pod-polje (npr. Avtor fotografije), preden shraniš skupino.' });
+      return;
+    }
+
     const editingId = editIdInput.value;
-    const fieldPayload = { label, type, required, options, group, placeholder, color, measurementTypes: currentMeasurementTypes };
+    const fieldPayload = {
+      label,
+      type,
+      required,
+      options,
+      group,
+      placeholder,
+      color,
+      measurementTypes: currentMeasurementTypes,
+      subFields: currentSubFields,
+    };
 
     try {
       if (editingId) {
@@ -465,8 +569,21 @@ async function renderConfigEditorBody() {
 }
 
 async function refreshConfigEditor(oldWrapper) {
-  const fresh = await renderConfigEditorBody();
+  const activeTabBtn = oldWrapper.querySelector('.mf-tab-btn-active');
+  const groupSelect = oldWrapper.querySelector('#cf-group');
+  const scrollParent = oldWrapper.closest('.mf-modal-body');
+
+  const restore = {
+    activeFieldTab: activeTabBtn ? activeTabBtn.dataset.tab : null,
+    lastGroup: groupSelect ? groupSelect.value : '',
+  };
+  const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
+
+  const fresh = await renderConfigEditorBody(restore);
   oldWrapper.replaceWith(fresh);
+
+  const newScrollParent = fresh.closest('.mf-modal-body');
+  if (newScrollParent) newScrollParent.scrollTop = scrollTop;
 }
 
 async function openConfigEditorModal() {
@@ -593,9 +710,12 @@ async function printCatalog() {
   }
 
   // Keep the printed catalogue to a reasonable width: inventory number,
-  // title/naziv, and up to two more short text fields.
+  // title/naziv, and up to two more short, single-value fields. Document and
+  // group fields don't summarize well in a compact table cell, so they're
+  // left out of the catalogue view (still visible on each entry's own
+  // printed card).
   const previewFields = config.fields
-    .filter((f) => f.type !== 'image' && f.id !== 'inventory_number' && f.id !== 'title')
+    .filter((f) => ['text', 'number', 'select', 'date', 'measurements'].includes(f.type) && f.id !== 'inventory_number' && f.id !== 'title')
     .slice(0, 3);
 
   const headerCells = ['Inv. št.', 'Naziv', ...previewFields.map((f) => f.label), 'Datum vnosa']
@@ -609,7 +729,10 @@ async function printCatalog() {
       const title = entry.values.title || '—';
       const cells = previewFields
         .map((f) => {
-          const val = f.type === 'measurements' ? Utils.formatMeasurements(entry.values[f.id], f) : entry.values[f.id];
+          let val;
+          if (f.type === 'measurements') val = Utils.formatMeasurements(entry.values[f.id], f);
+          else if (f.type === 'date') val = Utils.formatPartialDate(entry.values[f.id]);
+          else val = entry.values[f.id];
           return `<td>${Utils.escapeHtml(val) || '—'}</td>`;
         })
         .join('');

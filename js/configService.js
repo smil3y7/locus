@@ -70,6 +70,29 @@ function normalizeConfig(config) {
   return { ...config, groups, fields };
 }
 
+// Sub-field types allowed inside a "group" field. No nesting (no "group" or
+// "measurements" as a sub-field type) and no repeatable-file sprawl beyond
+// what a group item already provides.
+const GROUP_SUBFIELD_TYPES = ['text', 'number', 'date', 'select', 'image', 'document'];
+
+// For the "group" field type (repeatable composite, e.g. "Fotografije" made
+// of slika + avtor + datacija + lastništvo, or "Napisi" made of napis +
+// lokacija): the curator defines the sub-fields once; each entry can then
+// add as many items as it needs, each with its own values for those
+// sub-fields.
+function normalizeSubFields(subFields) {
+  if (!Array.isArray(subFields)) return [];
+  return subFields
+    .filter((sf) => sf && sf.label && GROUP_SUBFIELD_TYPES.includes(sf.type))
+    .map((sf) => ({
+      id: sf.id || Utils.slugify(sf.label) + '_' + Date.now().toString(36).slice(-4),
+      label: String(sf.label),
+      type: sf.type,
+      required: Boolean(sf.required),
+      options: Array.isArray(sf.options) ? sf.options.filter(Boolean).map(String) : [],
+    }));
+}
+
 // For the "measurements" field type (CDWA Type/Value/Unit pattern): the
 // curator defines which measurement types are allowed (e.g. height, weight)
 // and which units apply to each, so users pick from a controlled list
@@ -221,6 +244,7 @@ async function addField(field) {
     group: groupId,
     placeholder: field.placeholder ? String(field.placeholder) : '',
     measurementTypes: normalizeMeasurementTypes(field.measurementTypes),
+    subFields: normalizeSubFields(field.subFields),
   };
 
   return saveDraft({ ...current, fields: [...current.fields, normalized] });
@@ -277,6 +301,7 @@ async function updateField(fieldId, updates) {
     group: groupId,
     placeholder: updates.placeholder ? String(updates.placeholder) : '',
     measurementTypes: normalizeMeasurementTypes(updates.measurementTypes),
+    subFields: normalizeSubFields(updates.subFields),
   };
 
   return saveDraft({ ...current, fields: current.fields.map((f) => (f.id === fieldId ? merged : f)) });
@@ -403,6 +428,7 @@ const ConfigService = {
   importDraftFromObject,
   loadTemplate,
   DEFAULT_CONFIG,
+  GROUP_SUBFIELD_TYPES,
 };
 
 export default ConfigService;

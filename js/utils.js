@@ -110,6 +110,28 @@ function groupFieldsIntoSections(config, { excludeTypes = [], includeEmptyGroups
   return sections;
 }
 
+// Dates can be entered with different precision (full day, month+year, or
+// just a year) — chosen at data-entry time per field, since how precisely
+// an object's date is *known* varies object to object, not field to field.
+// Stored as { value: "2023-06-15" | "2023-06" | "2023", precision }.
+function formatPartialDate(dateValue) {
+  if (!dateValue || !dateValue.value) return '';
+  const { value, precision } = dateValue;
+
+  if (precision === 'year') return value;
+
+  if (precision === 'month') {
+    const [year, month] = value.split('-');
+    if (!year || !month) return value;
+    return `${month}/${year}`;
+  }
+
+  // Full day precision
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString('sl-SI', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 const Utils = {
   deepClone,
   generateId,
@@ -121,6 +143,7 @@ const Utils = {
   escapeHtml,
   groupFieldsIntoSections,
   DEFAULT_FIELD_COLOR,
+  formatPartialDate,
 };
 
 export default Utils;
