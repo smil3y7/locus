@@ -1,16 +1,126 @@
 {
-  "version": 1,
+  "version": 14,
   "groups": [
-    { "id": "group_basic", "label": "Osnovni podatki" },
-    { "id": "group_physical", "label": "Fizične lastnosti" },
-    { "id": "group_status", "label": "Stanje in lokacija" },
-    { "id": "group_media", "label": "Dokumentacija" }
+    {
+      "id": "group_identifikacija",
+      "label": "Identifikacija predmeta"
+    },
+    {
+      "id": "group_opis",
+      "label": "Opis predmeta"
+    },
+    {
+      "id": "group_nastanek",
+      "label": "Nastanek predmeta"
+    },
+    {
+      "id": "group_lokacija",
+      "label": "Lokacija in hramba"
+    },
+    {
+      "id": "group_zgodovina",
+      "label": "Zgodovina in povezave"
+    },
+    {
+      "id": "group_dokumentacija",
+      "label": "Dokumentacija"
+    }
   ],
   "fields": [
-    { "id": "inventory_number", "label": "Inventarna številka", "type": "text", "required": true, "options": [], "color": "#A65A3A", "group": "group_basic" },
-    { "id": "title", "label": "Naziv predmeta", "type": "text", "required": true, "options": [], "color": "#A65A3A", "group": "group_basic" },
-    { "id": "period", "label": "Obdobje", "type": "text", "required": false, "options": [], "color": "#A65A3A", "group": "group_basic" },
-    { "id": "material", "label": "Material", "type": "text", "required": false, "options": [], "color": "#6F7D5C", "group": "group_physical" },
+    {
+      "id": "inventory_number",
+      "label": "Inventarna številka",
+      "type": "text",
+      "required": true,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija",
+      "placeholder": "npr. 2023.145"
+    },
+    {
+      "id": "other_number",
+      "label": "Druga številka",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija",
+      "placeholder": "npr. stara inventarna št."
+    },
+    {
+      "id": "object_name",
+      "label": "Naziv predmeta",
+      "type": "text",
+      "required": true,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija"
+    },
+    {
+      "id": "title",
+      "label": "Naslov",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija",
+      "placeholder": "npr. naslov umetnine"
+    },
+    {
+      "id": "brief_description",
+      "label": "Kratek opis",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija"
+    },
+    {
+      "id": "object_count",
+      "label": "Število predmetov",
+      "type": "number",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija",
+      "placeholder": "1"
+    },
+    {
+      "id": "distinguishing_features",
+      "label": "Razpoznavne značilnosti",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija"
+    },
+    {
+      "id": "comments",
+      "label": "Opombe",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_identifikacija"
+    },
+    {
+      "id": "description",
+      "label": "Podroben opis",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_opis"
+    },
+    {
+      "id": "material",
+      "label": "Material",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_opis"
+    },
     {
       "id": "measurements",
       "label": "Mere",
@@ -18,19 +128,276 @@
       "required": false,
       "options": [],
       "color": "#6F7D5C",
-      "group": "group_physical",
+      "group": "group_opis",
       "measurementTypes": [
-        { "id": "visina", "label": "Višina", "units": ["cm", "mm", "m"] },
-        { "id": "sirina", "label": "Širina", "units": ["cm", "mm", "m"] },
-        { "id": "dolzina", "label": "Dolžina", "units": ["cm", "mm", "m"] },
-        { "id": "globina", "label": "Globina", "units": ["cm", "mm", "m"] },
-        { "id": "premer", "label": "Premer", "units": ["cm", "mm", "m"] },
-        { "id": "obseg", "label": "Obseg", "units": ["cm", "mm", "m"] },
-        { "id": "teza", "label": "Teža", "units": ["g", "kg"] }
+        {
+          "id": "visina",
+          "label": "Višina",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
+          "id": "sirina",
+          "label": "Širina",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
+          "id": "dolzina",
+          "label": "Dolžina",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
+          "id": "globina",
+          "label": "Globina",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
+          "id": "premer",
+          "label": "Premer",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
+          "id": "obseg",
+          "label": "Obseg",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
+          "id": "teza",
+          "label": "Teža",
+          "units": [
+            "g",
+            "kg"
+          ]
+        }
       ]
     },
-    { "id": "condition", "label": "Stanje ohranjenosti", "type": "select", "required": true, "options": ["Odlično", "Dobro", "Zmerno", "Slabo", "Za restavracijo"], "color": "#A63A2E", "group": "group_status" },
-    { "id": "location", "label": "Lokacija", "type": "text", "required": false, "options": [], "color": "#A63A2E", "group": "group_status" },
-    { "id": "photo", "label": "Fotografija", "type": "image", "required": false, "options": [], "color": "#A65A3A", "group": "group_media" }
+    {
+      "id": "technique",
+      "label": "Tehnika izdelave",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_opis"
+    },
+    {
+      "id": "colour",
+      "label": "Barva",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_opis"
+    },
+    {
+      "id": "inscription",
+      "label": "Napisi/oznake",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_opis",
+      "subFields": [
+        {
+          "id": "napis",
+          "label": "Napis",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "id": "lokacija_napisa",
+          "label": "Lokacija napisa",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ]
+    },
+    {
+      "id": "condition",
+      "label": "Stanje ohranjenosti",
+      "type": "select",
+      "required": true,
+      "options": [
+        "Odlično",
+        "Dobro",
+        "Zmerno",
+        "Slabo",
+        "Za restavracijo"
+      ],
+      "color": "#A63A2E",
+      "group": "group_opis"
+    },
+    {
+      "id": "production_person",
+      "label": "Izdelovalec/avtor",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B8863A",
+      "group": "group_nastanek"
+    },
+    {
+      "id": "production_organisation",
+      "label": "Organizacija izdelave",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B8863A",
+      "group": "group_nastanek"
+    },
+    {
+      "id": "production_date",
+      "label": "Datum/obdobje nastanka",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#B8863A",
+      "group": "group_nastanek"
+    },
+    {
+      "id": "production_place",
+      "label": "Kraj nastanka",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B8863A",
+      "group": "group_nastanek"
+    },
+    {
+      "id": "current_location",
+      "label": "Trenutna lokacija",
+      "type": "text",
+      "required": true,
+      "options": [],
+      "color": "#A63A2E",
+      "group": "group_lokacija",
+      "placeholder": "npr. depo, soba 3, polica B2"
+    },
+    {
+      "id": "normal_location",
+      "label": "Stalna lokacija",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#A63A2E",
+      "group": "group_lokacija"
+    },
+    {
+      "id": "historical_context",
+      "label": "Zgodovinski kontekst",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_zgodovina"
+    },
+    {
+      "id": "previous_owner",
+      "label": "Prejšnji lastnik",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_zgodovina"
+    },
+    {
+      "id": "acquisition_method",
+      "label": "Način pridobitve",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#6F7D5C",
+      "group": "group_zgodovina",
+      "placeholder": "npr. darilo, nakup, najdba"
+    },
+    {
+      "id": "photos",
+      "label": "Fotografije",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_dokumentacija",
+      "subFields": [
+        {
+          "id": "slika",
+          "label": "Slika",
+          "type": "image",
+          "required": true,
+          "options": []
+        },
+        {
+          "id": "avtor_fotografije",
+          "label": "Avtor fotografije",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "datacija_fotografije",
+          "label": "Datacija",
+          "type": "date",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "lastnistvo_fotografije",
+          "label": "Lastništvo",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ]
+    },
+    {
+      "id": "documents",
+      "label": "Dokumentacija",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#A65A3A",
+      "group": "group_dokumentacija",
+      "subFields": [
+        {
+          "id": "dokument",
+          "label": "Dokument",
+          "type": "document",
+          "required": true,
+          "options": []
+        },
+        {
+          "id": "opis_dokumenta",
+          "label": "Opis dokumenta",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ]
+    }
   ]
 }
