@@ -27,6 +27,17 @@ let currentForm = null;
 
 function renderDateField(field, value, idBase, withName) {
   const nameAttr = withName ? ` name="${field.id}"` : '';
+  if (field.fixedPrecision) {
+    // Locked to one precision (typically "day") — no selector shown, since
+    // administrative dates (e.g. "Datum pregleda") always need an exact date,
+    // not a curator's choice between day/month/year/opisno.
+    return `
+      <div class="mf-date-field" data-date-wrap="${idBase}" data-fixed-precision="${field.fixedPrecision}">
+        <input type="date" class="mf-date-value-input" aria-label="Vrednost datuma" />
+        <input type="hidden" class="mf-date-hidden" id="${idBase}"${nameAttr} value="" />
+      </div>
+    `;
+  }
   return `
     <div class="mf-date-field" data-date-wrap="${idBase}">
       <select class="mf-date-precision" aria-label="Natančnost datuma">
@@ -63,14 +74,23 @@ function applyDatePrecisionInputType(valueInput, precision) {
 function attachDateField(container, idBase, existingValue) {
   const wrap = container.querySelector(`[data-date-wrap="${CSS.escape(idBase)}"]`);
   if (!wrap) return;
-  const precisionSelect = wrap.querySelector('.mf-date-precision');
+  const fixedPrecision = wrap.dataset.fixedPrecision || null;
+  const precisionSelect = wrap.querySelector('.mf-date-precision'); // null when fixedPrecision
   const valueInput = wrap.querySelector('.mf-date-value-input');
   const hiddenInput = wrap.querySelector('.mf-date-hidden');
 
   function sync() {
-    const precision = precisionSelect.value;
+    const precision = fixedPrecision || (precisionSelect ? precisionSelect.value : 'day');
     const raw = valueInput.value;
     hiddenInput.value = raw ? JSON.stringify({ value: String(raw), precision }) : '';
+  }
+
+  if (fixedPrecision) {
+    applyDatePrecisionInputType(valueInput, fixedPrecision);
+    valueInput.addEventListener('input', sync);
+    if (existingValue && existingValue.value) valueInput.value = existingValue.value;
+    sync();
+    return;
   }
 
   precisionSelect.addEventListener('change', () => {
@@ -118,24 +138,33 @@ function attachFilePreview(container, idBase, type) {
 // Sub-field rendering, reused both at top level and inside "group" items
 // ---------------------------------------------------------------------
 
-function renderSubFieldInput(field, idBase) {
+function renderSubFieldInput(field, idBase, value) {
   switch (field.type) {
     case 'number':
-      return `<input type="number" id="${idBase}" step="any" />`;
+      return `<input type="number" id="${idBase}" step="any" value="${value !== undefined && value !== null ? Utils.escapeHtml(value) : ''}" />`;
     case 'date':
-      return renderDateField(field, null, idBase, false);
+      return renderDateField(field, value, idBase, false);
     case 'select': {
       const opts = (field.options || [])
-        .map((opt) => `<option value="${Utils.escapeHtml(opt)}">${Utils.escapeHtml(opt)}</option>`)
+        .map((opt) => `<option value="${Utils.escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${Utils.escapeHtml(opt)}</option>`)
         .join('');
-      return `<select id="${idBase}"><option value="" selected disabled>Izberi …</option>${opts}</select>`;
+      return `<select id="${idBase}"><option value="" ${value ? '' : 'selected'} disabled>Izberi …</option>${opts}</select>`;
     }
-    case 'image':
-      return `<input type="file" id="${idBase}" accept="image/*" /><div class="mf-image-preview" data-preview-for="${idBase}"></div>`;
-    case 'document':
-      return `<input type="file" id="${idBase}" accept="${DOCUMENT_ACCEPT}" /><div class="mf-doc-preview" data-preview-for="${idBase}"></div>`;
+    case 'image': {
+      const hint = value instanceof Blob ? '<p class="mf-field-hint">Trenutna slika ostane, če ne izbereš nove.</p>' : '';
+      return `<input type="file" id="${idBase}" accept="image/*" />${hint}<div class="mf-image-preview" data-preview-for="${idBase}"></div>`;
+    }
+    case 'document': {
+      const hint =
+        value instanceof Blob
+          ? `<p class="mf-field-hint">Trenutna priloga: ${Utils.escapeHtml(value.name || 'dokument')} (ostane, če ne izbereš nove).</p>`
+          : '';
+      return `<input type="file" id="${idBase}" accept="${DOCUMENT_ACCEPT}" />${hint}<div class="mf-doc-preview" data-preview-for="${idBase}"></div>`;
+    }
+    case 'link':
+      return `<input type="url" id="${idBase}" placeholder="https://…" value="${value ? Utils.escapeHtml(value) : ''}" />`;
     default:
-      return `<input type="text" id="${idBase}" autocomplete="off" />`;
+      return `<input type="text" id="${idBase}" autocomplete="off" value="${value !== undefined && value !== null ? Utils.escapeHtml(value) : ''}" />`;
   }
 }
 
@@ -299,6 +328,32 @@ function attachGroupWidget(field, form, existingValues) {
   return items;
 }
 
+// Non-repeatable "group" (e.g. "Čas izdelave", "Avers/Revers") — sub-fields
+// are always visible inline (rendered by fieldInputHtml itself); this just
+// wires up their behavior (date precision, file previews).
+function attachNonRepeatableGroup(field, form, existingItem) {
+  if (field.type !== 'group' || field.repeatable !== false) return;
+  for (const sf of field.subFields || []) {
+    const idBase = `f_${field.id}_${sf.id}`;
+    if (sf.type === 'date') attachDateField(form, idBase, existingItem ? existingItem[sf.id] : null);
+    else if (sf.type === 'image') attachFilePreview(form, idBase, 'image');
+    else if (sf.type === 'document') attachFilePreview(form, idBase, 'document');
+  }
+}
+
+function readNonRepeatableGroupValue(form, field, existingItem) {
+  const obj = {};
+  for (const sf of field.subFields || []) {
+    const val = readSubFieldValue(form, sf, `f_${field.id}_${sf.id}`);
+    if ((sf.type === 'image' || sf.type === 'document') && val === null && existingItem && existingItem[sf.id] instanceof Blob) {
+      obj[sf.id] = existingItem[sf.id]; // no new file chosen — keep what was already there
+    } else {
+      obj[sf.id] = val;
+    }
+  }
+  return obj;
+}
+
 // ---------------------------------------------------------------------
 // Measurements field (CDWA Type/Value/Unit) — unchanged from before
 // ---------------------------------------------------------------------
@@ -452,6 +507,8 @@ function fieldInputHtml(field, value) {
     case 'document':
       return `<input type="file" id="f_${field.id}" name="${field.id}" accept="${DOCUMENT_ACCEPT}" />
         <div class="mf-doc-preview" data-preview-for="f_${field.id}"></div>`;
+    case 'link':
+      return `<input type="url" id="f_${field.id}" name="${field.id}" ${req} placeholder="${field.placeholder ? Utils.escapeHtml(field.placeholder) : 'https://…'}" value="${Utils.escapeHtml(val)}" />`;
     case 'measurements':
       // Real widget is attached after render (attachMeasurementsWidget) — this
       // hidden input is what FormData actually reads on submit (JSON string).
@@ -461,12 +518,33 @@ function fieldInputHtml(field, value) {
         <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="addmeasure_${field.id}">+ Dodaj mero</button>
         <div class="mf-measurement-add-form" id="addform_${field.id}" hidden></div>
       `;
-    case 'group':
+    case 'group': {
+      if (field.repeatable === false) {
+        // Single compound value (e.g. "Čas izdelave", "Avers/Revers") — the
+        // sub-fields are always visible inline, no add/remove chips.
+        const subFields = field.subFields || [];
+        const existingItem = value || {};
+        return `
+          <div class="mf-group-inline" data-group-inline="${field.id}">
+            ${subFields
+              .map(
+                (sf) => `
+              <div class="mf-field mf-group-inline-field">
+                <label>${Utils.escapeHtml(sf.label)}${sf.required ? ' <span class="mf-required">*</span>' : ''}</label>
+                ${renderSubFieldInput(sf, `f_${field.id}_${sf.id}`, existingItem[sf.id])}
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `;
+      }
       return `
         <div class="mf-measurements-chips" id="groupitems_${field.id}"></div>
         <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="addgroupitem_${field.id}">+ Dodaj</button>
         <div class="mf-measurement-add-form" id="addgroupform_${field.id}" hidden></div>
       `;
+    }
     default:
       return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} value="${Utils.escapeHtml(val)}"${placeholder} />`;
   }
@@ -498,7 +576,7 @@ function updateTabDots(container, sections) {
     const dot = container.querySelector(`[data-tab-dot="${section.id}"]`);
     if (!dot) return;
     const incomplete = section.fields.some((field) => {
-      if (!field.required || field.type === 'image' || field.type === 'document') return false;
+      if (!field.required || ['image', 'document', 'group', 'measurements'].includes(field.type)) return false;
       const el = container.querySelector(`#f_${field.id}`);
       if (!el) return false;
       return !el.value || !el.value.trim();
@@ -575,6 +653,16 @@ function build(container, config, options) {
 
   const renderField = (field) => fieldHtml(field, existingValues, existingPhotoUrlsByField);
 
+  const renderSectionedFields = (s) => {
+    const blocks = Utils.groupFieldsBySection(s.fields, s.razdelki);
+    return blocks
+      .map((b) => {
+        const heading = b.label ? `<h4 class="mf-section-heading">${Utils.escapeHtml(b.label)}</h4>` : '';
+        return heading + b.fields.map(renderField).join('');
+      })
+      .join('');
+  };
+
   const sections = Utils.groupFieldsIntoSections(config);
   const useTabs = sections.length > 1;
 
@@ -587,12 +675,12 @@ function build(container, config, options) {
         <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-tab-next">Naslednja skupina →</button>
       </div>
     `;
-    fieldsMarkup = UI.renderTabsHtml(sections, (s) => s.fields.map(renderField).join(''), {
+    fieldsMarkup = UI.renderTabsHtml(sections, renderSectionedFields, {
       tabButtonExtra: (s) => `<span class="mf-tab-dot" data-tab-dot="${s.id}" hidden></span>`,
       afterTabList: navHtml,
     });
   } else {
-    fieldsMarkup = sections.map((s) => s.fields.map(renderField).join('')).join('');
+    fieldsMarkup = sections.map(renderSectionedFields).join('');
   }
 
   container.innerHTML = `
@@ -617,6 +705,8 @@ function build(container, config, options) {
     else if (field.type === 'document') attachFilePreview(currentForm, `f_${field.id}`, 'document');
     else if (field.type === 'date') attachDateField(currentForm, `f_${field.id}`, existingValues ? existingValues[field.id] : null);
     else if (field.type === 'measurements') attachMeasurementsWidget(field, currentForm, existingValues);
+    else if (field.type === 'group' && field.repeatable === false)
+      attachNonRepeatableGroup(field, currentForm, existingValues ? existingValues[field.id] : null);
     else if (field.type === 'group') groupFieldItems[field.id] = attachGroupWidget(field, currentForm, existingValues);
   });
 
@@ -658,7 +748,11 @@ function build(container, config, options) {
           values[field.id] = [];
         }
       } else if (field.type === 'group') {
-        values[field.id] = groupFieldItems[field.id] || [];
+        if (field.repeatable === false) {
+          values[field.id] = readNonRepeatableGroupValue(currentForm, field, existingValues ? existingValues[field.id] : null);
+        } else {
+          values[field.id] = groupFieldItems[field.id] || [];
+        }
       } else {
         values[field.id] = formData.get(field.id);
       }
@@ -669,7 +763,11 @@ function build(container, config, options) {
         .flatMap((s) => s.fields.map((f) => ({ ...f, sectionId: s.id })))
         .find((f) => {
           if (!f.required) return false;
-          if (f.type === 'measurements' || f.type === 'group') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
+          if (f.type === 'measurements') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
+          if (f.type === 'group') {
+            if (f.repeatable === false) return false; // sub-field-level required is enforced by Validator
+            return !Array.isArray(values[f.id]) || values[f.id].length === 0;
+          }
           if (f.type === 'date') return !values[f.id] || !values[f.id].value;
           if (f.type === 'image' || f.type === 'document') return !values[f.id];
           return !values[f.id] || !String(values[f.id]).trim();

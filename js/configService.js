@@ -61,19 +61,24 @@ let cachedLiveConfig = null;
 let cachedDraftConfig = null;
 
 function normalizeConfig(config) {
-  const groups = Array.isArray(config.groups) ? config.groups : [];
+  const groups = Array.isArray(config.groups)
+    ? config.groups.map((g) => ({ ...g, sections: Array.isArray(g.sections) ? g.sections : [] }))
+    : [];
   const groupIds = new Set(groups.map((g) => g.id));
-  const fields = (config.fields || []).map((f) => ({
-    ...f,
-    group: f.group && groupIds.has(f.group) ? f.group : null,
-  }));
+  const sectionsByGroup = new Map(groups.map((g) => [g.id, new Set(g.sections.map((s) => s.id))]));
+  const fields = (config.fields || []).map((f) => {
+    const group = f.group && groupIds.has(f.group) ? f.group : null;
+    const validSections = group ? sectionsByGroup.get(group) : null;
+    const section = group && f.section && validSections && validSections.has(f.section) ? f.section : null;
+    return { ...f, group, section };
+  });
   return { ...config, groups, fields };
 }
 
 // Sub-field types allowed inside a "group" field. No nesting (no "group" or
 // "measurements" as a sub-field type) and no repeatable-file sprawl beyond
 // what a group item already provides.
-const GROUP_SUBFIELD_TYPES = ['text', 'number', 'date', 'select', 'image', 'document'];
+const GROUP_SUBFIELD_TYPES = ['text', 'number', 'date', 'select', 'image', 'document', 'link'];
 
 // For the "group" field type (repeatable composite, e.g. "Fotografije" made
 // of slika + avtor + datacija + lastništvo, or "Napisi" made of napis +
@@ -233,6 +238,8 @@ async function addField(field) {
   }
 
   const groupId = field.group && current.groups.some((g) => g.id === field.group) ? field.group : null;
+  const groupDef = groupId ? current.groups.find((g) => g.id === groupId) : null;
+  const sectionId = field.section && groupDef && groupDef.sections.some((s) => s.id === field.section) ? field.section : null;
 
   const normalized = {
     id: field.id,
@@ -242,9 +249,12 @@ async function addField(field) {
     options: Array.isArray(field.options) ? field.options : [],
     color: field.color || Utils.DEFAULT_FIELD_COLOR,
     group: groupId,
+    section: sectionId,
     placeholder: field.placeholder ? String(field.placeholder) : '',
     measurementTypes: normalizeMeasurementTypes(field.measurementTypes),
     subFields: normalizeSubFields(field.subFields),
+    repeatable: field.type === 'group' ? field.repeatable !== false : undefined,
+    fixedPrecision: field.type === 'date' && field.fixedPrecision ? field.fixedPrecision : null,
   };
 
   return saveDraft({ ...current, fields: [...current.fields, normalized] });
@@ -290,6 +300,8 @@ async function updateField(fieldId, updates) {
   }
 
   const groupId = updates.group && current.groups.some((g) => g.id === updates.group) ? updates.group : null;
+  const groupDef = groupId ? current.groups.find((g) => g.id === groupId) : null;
+  const sectionId = updates.section && groupDef && groupDef.sections.some((s) => s.id === updates.section) ? updates.section : null;
 
   const merged = {
     id: fieldId,
@@ -299,9 +311,12 @@ async function updateField(fieldId, updates) {
     options: Array.isArray(updates.options) ? updates.options : [],
     color: updates.color || existing.color || Utils.DEFAULT_FIELD_COLOR,
     group: groupId,
+    section: sectionId,
     placeholder: updates.placeholder ? String(updates.placeholder) : '',
     measurementTypes: normalizeMeasurementTypes(updates.measurementTypes),
     subFields: normalizeSubFields(updates.subFields),
+    repeatable: updates.type === 'group' ? updates.repeatable !== false : undefined,
+    fixedPrecision: updates.type === 'date' && updates.fixedPrecision ? updates.fixedPrecision : null,
   };
 
   return saveDraft({ ...current, fields: current.fields.map((f) => (f.id === fieldId ? merged : f)) });
@@ -354,6 +369,83 @@ async function renameGroup(groupId, newLabel) {
     ...current,
     groups: current.groups.map((g) => (g.id === groupId ? { ...g, label: newLabel.trim() } : g)),
   });
+}
+
+async function moveGroup(groupId, direction) {
+  const current = await getDraftConfig();
+  const idx = current.groups.findIndex((g) => g.id === groupId);
+  if (idx === -1) return current;
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= current.groups.length) return current;
+  const groups = [...current.groups];
+  [groups[idx], groups[swapIdx]] = [groups[swapIdx], groups[idx]];
+  return saveDraft({ ...current, groups });
+}
+
+// ---------------------------------------------------------------------
+// Sections ("razdelki") — a second level of organization WITHIN one group/
+// tab, used to visually cluster related fields (e.g. inside "Identifikacija"
+// kartica: razdelek "Status in identifikacija"). Scoped per-group.
+// ---------------------------------------------------------------------
+
+async function addSection(groupId, label) {
+  if (!label || !label.trim()) {
+    const err = new Error('addSection: label je obvezen');
+    console.error('[ConfigService]', err);
+    EventBus.emit('ui:notify', { type: 'error', message: 'Razdelka ni bilo mogoče dodati.' });
+    throw err;
+  }
+  const current = await getDraftConfig();
+  const groupDef = current.groups.find((g) => g.id === groupId);
+  if (!groupDef) {
+    const err = new Error(`addSection: skupina "${groupId}" ne obstaja`);
+    console.error('[ConfigService]', err);
+    throw err;
+  }
+  const id = Utils.slugify(label) + '_' + Date.now().toString(36).slice(-4);
+  const groups = current.groups.map((g) => (g.id === groupId ? { ...g, sections: [...g.sections, { id, label: label.trim() }] } : g));
+  return saveDraft({ ...current, groups });
+}
+
+async function removeSection(groupId, sectionId) {
+  const current = await getDraftConfig();
+  const groups = current.groups.map((g) =>
+    g.id === groupId ? { ...g, sections: g.sections.filter((s) => s.id !== sectionId) } : g
+  );
+  // Fields pointing at the removed section fall back to "unsectioned" —
+  // normalizeConfig (called inside saveDraft) already clears any field.section
+  // that no longer resolves to a valid section on its group.
+  return saveDraft({ ...current, groups });
+}
+
+async function renameSection(groupId, sectionId, newLabel) {
+  if (!newLabel || !newLabel.trim()) {
+    const err = new Error('renameSection: newLabel je obvezen');
+    console.error('[ConfigService]', err);
+    EventBus.emit('ui:notify', { type: 'error', message: 'Ime razdelka ne more biti prazno.' });
+    throw err;
+  }
+  const current = await getDraftConfig();
+  const groups = current.groups.map((g) =>
+    g.id === groupId
+      ? { ...g, sections: g.sections.map((s) => (s.id === sectionId ? { ...s, label: newLabel.trim() } : s)) }
+      : g
+  );
+  return saveDraft({ ...current, groups });
+}
+
+async function moveSection(groupId, sectionId, direction) {
+  const current = await getDraftConfig();
+  const groupDef = current.groups.find((g) => g.id === groupId);
+  if (!groupDef) return current;
+  const idx = groupDef.sections.findIndex((s) => s.id === sectionId);
+  if (idx === -1) return current;
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= groupDef.sections.length) return current;
+  const sections = [...groupDef.sections];
+  [sections[idx], sections[swapIdx]] = [sections[swapIdx], sections[idx]];
+  const groups = current.groups.map((g) => (g.id === groupId ? { ...g, sections } : g));
+  return saveDraft({ ...current, groups });
 }
 
 // Loads an arbitrary schema JSON (uploaded file, or a bundled template) into
@@ -424,6 +516,11 @@ const ConfigService = {
   addGroup,
   removeGroup,
   renameGroup,
+  moveGroup,
+  addSection,
+  removeSection,
+  renameSection,
+  moveSection,
   exportDraftFile,
   importDraftFromObject,
   loadTemplate,

@@ -68,7 +68,7 @@ function handleEscape(event) {
   if (event.key === 'Escape') closeModal();
 }
 
-function openModal({ title = '', content = '', closeOnBackdrop = true } = {}) {
+function openModal({ title = '', content = '', closeOnBackdrop = true, wide = false } = {}) {
   ensureRoots();
   // A modal opened right after another one closed must not let that prior
   // close's delayed cleanup (see closeModal) wipe out THIS modal's content
@@ -83,7 +83,7 @@ function openModal({ title = '', content = '', closeOnBackdrop = true } = {}) {
   backdrop.className = 'mf-modal-backdrop';
 
   const card = document.createElement('div');
-  card.className = 'mf-modal-card';
+  card.className = wide ? 'mf-modal-card mf-modal-card-wide' : 'mf-modal-card';
   card.setAttribute('role', 'dialog');
   card.setAttribute('aria-modal', 'true');
 
@@ -299,11 +299,19 @@ function renderTabsHtml(sections, renderPanelContent, { tabButtonExtra, afterTab
 
 function tabify(container, { onChange } = {}) {
   const tabList = container.querySelector('.mf-tab-list');
-  const panels = container.querySelectorAll('.mf-tab-panel');
-  if (!tabList || panels.length === 0) return null;
+  if (!tabList) return null;
+  // Scope to THIS tabs instance's own panels only (direct children of its
+  // sibling .mf-tab-panels wrapper) — without this, nesting one tab system
+  // inside another's panel (e.g. admin editor's outer mode-tabs containing
+  // an inner per-group field-list tabs) would grab the inner tabs' panels
+  // too via an unscoped querySelectorAll.
+  const tabsRoot = tabList.parentElement;
+  const panelsWrap = tabsRoot ? tabsRoot.querySelector(':scope > .mf-tab-panels') : null;
+  const panels = panelsWrap ? panelsWrap.querySelectorAll(':scope > .mf-tab-panel') : [];
+  if (panels.length === 0) return null;
 
   function activate(tabId) {
-    tabList.querySelectorAll('.mf-tab-btn').forEach((btn) => {
+    tabList.querySelectorAll(':scope > .mf-tab-btn').forEach((btn) => {
       const isActive = btn.dataset.tab === tabId;
       btn.classList.toggle('mf-tab-btn-active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -314,11 +322,11 @@ function tabify(container, { onChange } = {}) {
     if (onChange) onChange(tabId);
   }
 
-  tabList.querySelectorAll('.mf-tab-btn').forEach((btn) => {
+  tabList.querySelectorAll(':scope > .mf-tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => activate(btn.dataset.tab));
   });
 
-  const firstBtn = tabList.querySelector('.mf-tab-btn');
+  const firstBtn = tabList.querySelector(':scope > .mf-tab-btn');
   if (firstBtn) activate(firstBtn.dataset.tab);
 
   return { activate };

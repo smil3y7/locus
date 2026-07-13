@@ -10,6 +10,35 @@ arhivski datoteki (polje `locusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [0.2.0] — razdelki, sestavljena polja, povezave, podrobna SPECTRUM shema
+
+### Dodano
+- Razdelki ("razdelki") — drugi nivo organizacije znotraj kartice/zavihka, za
+  vizualno združevanje sorodnih polj (podnaslovi znotraj zavihka)
+- Neponavljajoča "Skupina" (`repeatable: false`) — sestavljena vrednost brez
+  seznama primerkov (npr. "Čas izdelave", "Avers/Revers", "Lokacija hrambe",
+  "Nabavna vrednost") — isti mehanizem pod-polj kot ponavljajoča skupina, a
+  vedno natanko en primerek
+- Tip polja "Povezava" (URL) — validacija oblike, klikljiv prikaz v pregledu
+- Datumsko polje z možnostjo zaklepa na "vedno točen dan" (brez izbirnika
+  natančnosti) — za administrativne datume, ki morajo biti vedno natančni
+- Premikanje skupin (kartic) gor/dol; upravljanje razdelkov znotraj skupine
+  (dodaj/odstrani/premakni); premikanje pod-polj znotraj urejevalnika skupin
+  in vrst mer
+- Sledenje "Zadnji spremenil" (samodejno iz seje ob vsaki urejeni spremembi,
+  po zgledu obstoječega "Vnesel"); prikaz "Nazadnje uredil" v podrobnostih in
+  na tiskani kartici
+- Admin urejevalnik reorganiziran v tri zavihke: Skupine, Polja, Nastavitve
+  in podatki — širši modal za boljšo preglednost
+- Predloga "SPECTRUM podrobno" (`templates/spectrum-podrobno.json`) — polna
+  shema po specifikaciji uporabnika, 10 kartic, ~65 polj, z razdelki,
+  sestavljenimi polji in povezavami
+
+### Popravljeno
+- `UI.tabify()` je pri gnezdenih zavihkih (npr. zavihki znotraj zavihkov v
+  admin urejevalniku) napačno zajel plošče iz notranjega sistema zavihkov —
+  popravljeno z omejitvijo na neposredne otroke
+
 ## [0.1.0] — testna različica pred prvo objavo
 
 Prva zaokrožena, celovito testirana različica. Aplikacija še ni bila

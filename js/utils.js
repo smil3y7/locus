@@ -101,10 +101,10 @@ function groupFieldsIntoSections(config, { excludeTypes = [], includeEmptyGroups
 
   const sections = groups
     .filter((g) => includeEmptyGroups || fieldsByGroup.get(g.id).length > 0)
-    .map((g) => ({ id: g.id, label: g.label, fields: fieldsByGroup.get(g.id) }));
+    .map((g) => ({ id: g.id, label: g.label, fields: fieldsByGroup.get(g.id), razdelki: g.sections || [] }));
 
   if (ungrouped.length || alwaysIncludeUngrouped) {
-    sections.push({ id: '__ungrouped', label: 'Splošno', fields: ungrouped });
+    sections.push({ id: '__ungrouped', label: 'Splošno', fields: ungrouped, razdelki: [] });
   }
 
   return sections;
@@ -138,7 +138,41 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '0.2.0';
+
+// Second-level grouping WITHIN one tab/group's fields — "razdelki" (sections)
+// are visual sub-headers that further organize a tab's fields, defined per
+// group (group.sections = [{id,label}]), referenced by field.section. If a
+// group defines no sections, this is a no-op passthrough (single flat bucket,
+// no sub-header rendered) — fully backward compatible with simpler forms.
+function groupFieldsBySection(fields, sectionDefs) {
+  const sections = Array.isArray(sectionDefs) ? sectionDefs : [];
+  if (sections.length === 0) {
+    return [{ id: null, label: null, fields }];
+  }
+  const bySectionId = new Map(sections.map((s) => [s.id, []]));
+  const unsectioned = [];
+  for (const f of fields) {
+    if (f.section && bySectionId.has(f.section)) bySectionId.get(f.section).push(f);
+    else unsectioned.push(f);
+  }
+  const result = [];
+  if (unsectioned.length) result.push({ id: null, label: null, fields: unsectioned });
+  for (const s of sections) {
+    const list = bySectionId.get(s.id);
+    if (list.length) result.push({ id: s.id, label: s.label, fields: list });
+  }
+  return result;
+}
+
+function isValidUrl(value) {
+  try {
+    const u = new URL(value);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 const Utils = {
   deepClone,
@@ -150,9 +184,11 @@ const Utils = {
   formatMeasurements,
   escapeHtml,
   groupFieldsIntoSections,
+  groupFieldsBySection,
   DEFAULT_FIELD_COLOR,
   formatPartialDate,
   APP_VERSION,
+  isValidUrl,
 };
 
 export default Utils;

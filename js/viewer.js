@@ -40,9 +40,11 @@ function findPrimaryImageBlob(entry, config) {
   const groupField = config.fields.find((f) => f.type === 'group' && (f.subFields || []).some((sf) => sf.type === 'image'));
   if (groupField) {
     const imageSubField = groupField.subFields.find((sf) => sf.type === 'image');
-    const items = entry.values[groupField.id];
-    if (Array.isArray(items)) {
-      const withImage = items.find((item) => item && item[imageSubField.id] instanceof Blob);
+    const stored = entry.values[groupField.id];
+    if (groupField.repeatable === false) {
+      if (stored && stored[imageSubField.id] instanceof Blob) return stored[imageSubField.id];
+    } else if (Array.isArray(stored)) {
+      const withImage = stored.find((item) => item && item[imageSubField.id] instanceof Blob);
       if (withImage) return withImage[imageSubField.id];
     }
   }
@@ -114,10 +116,16 @@ function renderGroupItemHtml(item, subFields) {
       }
       if (sf.type === 'document') return documentLinkHtml(v, sf.label);
       if (sf.type === 'date') return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${Utils.escapeHtml(Utils.formatPartialDate(v))}`;
+      if (sf.type === 'link') return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${linkHtml(v)}`;
       return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${Utils.escapeHtml(v)}`;
     })
     .filter(Boolean);
   return `<div class="mf-group-item">${parts.join(' &middot; ')}</div>`;
+}
+
+function linkHtml(url) {
+  if (!url || !Utils.isValidUrl(url)) return url ? Utils.escapeHtml(url) : '—';
+  return `<a href="${Utils.escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="mf-doc-link">${Utils.escapeHtml(url)}</a>`;
 }
 
 function detailRowHtml(field, entry) {
@@ -130,9 +138,15 @@ function detailRowHtml(field, entry) {
     valueHtml = Utils.escapeHtml(Utils.formatPartialDate(raw)) || '—';
   } else if (field.type === 'document') {
     valueHtml = documentLinkHtml(raw, field.label);
+  } else if (field.type === 'link') {
+    valueHtml = linkHtml(raw);
   } else if (field.type === 'group') {
-    const items = Array.isArray(raw) ? raw : [];
-    valueHtml = items.length === 0 ? '—' : items.map((item) => renderGroupItemHtml(item, field.subFields)).join('');
+    if (field.repeatable === false) {
+      valueHtml = raw ? renderGroupItemHtml(raw, field.subFields) : '—';
+    } else {
+      const items = Array.isArray(raw) ? raw : [];
+      valueHtml = items.length === 0 ? '—' : items.map((item) => renderGroupItemHtml(item, field.subFields)).join('');
+    }
   } else {
     valueHtml = Utils.escapeHtml(raw) || '—';
   }
@@ -145,14 +159,24 @@ function detailRowHtml(field, entry) {
   `;
 }
 
+function renderSectionedRows(s, entry) {
+  const blocks = Utils.groupFieldsBySection(s.fields, s.razdelki);
+  return blocks
+    .map((b) => {
+      const heading = b.label ? `<h4 class="mf-section-heading">${Utils.escapeHtml(b.label)}</h4>` : '';
+      return heading + b.fields.map((f) => detailRowHtml(f, entry)).join('');
+    })
+    .join('');
+}
+
 // On-screen detail view — tabbed, so a museum profession with many groups
 // and long field lists doesn't turn the modal into an endless scroll.
 function tabbedDetailHtml(entry, config) {
   const sections = Utils.groupFieldsIntoSections(config, { excludeTypes: ['image'] });
   if (sections.length <= 1) {
-    return sections.map((s) => s.fields.map((f) => detailRowHtml(f, entry)).join('')).join('');
+    return sections.map((s) => renderSectionedRows(s, entry)).join('');
   }
-  return UI.renderTabsHtml(sections, (s) => s.fields.map((f) => detailRowHtml(f, entry)).join(''));
+  return UI.renderTabsHtml(sections, (s) => renderSectionedRows(s, entry));
 }
 
 // Flat, fully-expanded rendering for print — a printed page has no concept
@@ -164,7 +188,7 @@ function groupedDetailHtml(entry, config) {
       (s) => `
       <div class="mf-detail-group">
         <h4 class="mf-detail-group-title">${Utils.escapeHtml(s.label)}</h4>
-        ${s.fields.map((f) => detailRowHtml(f, entry)).join('')}
+        ${renderSectionedRows(s, entry)}
       </div>
     `
     )
@@ -187,6 +211,7 @@ function printCardHtml(entry, config) {
       ${imgUrl ? `<div class="mf-print-photo"><img src="${imgUrl}" alt="" /></div>` : ''}
       <div class="mf-detail-rows">${rows}</div>
       <div class="mf-print-meta">Vnesel: ${Utils.escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}</div>
+      ${entry.updatedAt ? `<div class="mf-print-meta">Nazadnje uredil: ${Utils.escapeHtml(entry.updatedBy || '—')} · ${Utils.formatDateTime(entry.updatedAt)}</div>` : ''}
     </div>
   `;
 }
@@ -194,6 +219,9 @@ function printCardHtml(entry, config) {
 function openDetail(entry, config) {
   const imgUrl = blobUrl(findPrimaryImageBlob(entry, config));
   const rows = tabbedDetailHtml(entry, config);
+  const lastEditedLine = entry.updatedAt
+    ? `<div class="mf-detail-meta">Nazadnje uredil: ${Utils.escapeHtml(entry.updatedBy || '—')} · ${Utils.formatDateTime(entry.updatedAt)}</div>`
+    : '';
 
   const content = document.createElement('div');
   content.className = 'mf-detail';
@@ -202,6 +230,7 @@ function openDetail(entry, config) {
     <div class="mf-detail-meta">
       Vnesel: ${Utils.escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}
     </div>
+    ${lastEditedLine}
     <div class="mf-detail-rows">${rows}</div>
     <div class="mf-form-actions">
       <button type="button" class="mf-btn mf-btn-ghost" id="mf-edit-entry">Uredi predmet</button>

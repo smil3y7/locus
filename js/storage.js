@@ -48,6 +48,7 @@ async function saveEntry(rawData) {
 
 async function updateEntry(entryId, rawData) {
   const config = await ConfigService.getLiveConfig();
+  const session = await SessionService.getSession();
 
   let existing;
   try {
@@ -86,6 +87,7 @@ async function updateEntry(entryId, rawData) {
     values: candidate.values,
     configVersion: config.version,
     updatedAt: Date.now(),
+    updatedBy: (session && session.userName) || FALLBACK_CREATED_BY,
   };
 
   try {

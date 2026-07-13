@@ -13,11 +13,12 @@ in upravljanje muzejskih predmetov.
 - Izvoz/uvoz celotne baze kot `.json` (vključno s slikami) — za arhiviranje in pregled na drugem računalniku
 - Ponastavitev baze (izbriše vnose in sejo, ohrani konfiguracijo in PIN) — priprava na naslednjo skupino
 - Tip polja "Mere" po CDWA standardu (vrsta mere + vrednost + enota, npr. Višina: 15 cm) — admin določi dovoljene vrste in enote, uporabnik pri vnosu doda poljubno število mer
+- Razdelki znotraj kartice/zavihka; neponavljajoča sestavljena polja (npr. "Čas izdelave", "Avers/Revers"); tip polja "Povezava" (URL); datumsko polje z možnostjo zaklepa na vedno točen dan
 - Namigi (placeholder) v vnosnih poljih obrazca
 - Tiskanje/PDF: posamezna "muzejska kartica" predmeta ali celoten katalog
 - Verzioniranje aplikacije (`js/utils.js` → `APP_VERSION`, prikazano v nogi strani) in `CHANGELOG.md`
 - Premikanje polj gor/dol znotraj skupine, barvna oznaka polja (za označevanje polj, ki spadajo skupaj, ne glede na skupino/zavihek)
-- Uvoz sheme (JSON) v osnutek — lastna varnostna kopija ali predloga; vgrajena predloga "SPECTRUM jedro" (`templates/spectrum-core.json`, ~25 polj po standardu SPECTRUM) se naloži z enim klikom
+- Uvoz sheme (JSON) v osnutek — lastna varnostna kopija ali predloga; vgrajeni predlogi "SPECTRUM jedro" (`templates/spectrum-core.json`, ~25 polj) in "SPECTRUM podrobno" (`templates/spectrum-podrobno.json`, 10 kartic, ~65 polj) se naložita z enim klikom
 
 - Vanilla JS (ES moduli), brez frameworkov, brez build koraka
 - Podatki se hranijo lokalno v brskalniku (IndexedDB) — vsaka naprava/brskalnik ima svojo ločeno zbirko
@@ -31,6 +32,7 @@ styles.css
 config.json          – objavljena shema obrazca (enaka za vse obiskovalce)
 templates/
   spectrum-core.json – kurirano jedro po standardu SPECTRUM (~25 polj), naloži se v osnutek prek admin urejevalnika
+  spectrum-podrobno.json – polna shema po uporabnikovi specifikaciji (10 kartic, ~65 polj)
 assets/
   logo-on-light.png  – (dodaj sam/a) logotip za svetlo glavo strani
   logo-on-dark.png   – (dodaj sam/a) rezerva za temna ozadja

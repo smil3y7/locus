@@ -1,6 +1,8 @@
 // /js/validator.js
 // Validation layer only. No DOM access. No DB access.
 
+import Utils from './utils.js';
+
 function isEmpty(value) {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string' && value.trim() === '') return true;
@@ -62,6 +64,12 @@ function validateField(field, rawValue) {
       }
       break;
     }
+    case 'link': {
+      if (!Utils.isValidUrl(rawValue)) {
+        errors.push(`Polje "${field.label}" mora biti veljavna spletna povezava (http:// ali https://).`);
+      }
+      break;
+    }
     case 'measurements': {
       if (!Array.isArray(rawValue)) {
         errors.push(`Polje "${field.label}" ima neveljavno obliko podatkov.`);
@@ -84,11 +92,24 @@ function validateField(field, rawValue) {
       break;
     }
     case 'group': {
+      const subFields = field.subFields || [];
+      if (field.repeatable === false) {
+        // Single compound value (e.g. "Čas izdelave", "Avers/Revers") — not a
+        // list, so validate its sub-fields directly against the one object.
+        if (rawValue && typeof rawValue !== 'object') {
+          errors.push(`Polje "${field.label}" ima neveljavno obliko podatkov.`);
+          break;
+        }
+        for (const sf of subFields) {
+          const subErrors = validateField(sf, rawValue ? rawValue[sf.id] : undefined);
+          errors.push(...subErrors.map((e) => `Polje "${field.label}": ${e}`));
+        }
+        break;
+      }
       if (!Array.isArray(rawValue)) {
         errors.push(`Polje "${field.label}" ima neveljavno obliko podatkov.`);
         break;
       }
-      const subFields = field.subFields || [];
       rawValue.forEach((item, idx) => {
         for (const sf of subFields) {
           const subErrors = validateField(sf, item ? item[sf.id] : undefined);

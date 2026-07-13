@@ -25,13 +25,13 @@ async function openAddEntryModal() {
 
   const config = await ConfigService.getLiveConfig();
   const container = document.createElement('div');
-  UI.openModal({ title: 'Dodaj predmet', content: container });
+  UI.openModal({ title: 'Dodaj predmet', content: container, wide: true });
   FormBuilder.build(container, config);
 }
 
 async function openEditEntryModal(entry, config) {
   const container = document.createElement('div');
-  UI.openModal({ title: 'Uredi predmet', content: container });
+  UI.openModal({ title: 'Uredi predmet', content: container, wide: true });
   FormBuilder.build(container, config, { entry });
 }
 
@@ -43,8 +43,9 @@ function fieldTypeOptions() {
     <option value="select">Izbira (select)</option>
     <option value="image">Slika</option>
     <option value="document">Dokument (PDF ipd.)</option>
+    <option value="link">Povezava (URL)</option>
     <option value="measurements">Mere (CDWA: vrsta + vrednost + enota)</option>
-    <option value="group">Skupina (ponavljajoč se sklop pod-polj)</option>
+    <option value="group">Skupina (sklop pod-polj)</option>
   `;
 }
 
@@ -56,108 +57,179 @@ function subFieldTypeOptions() {
     <option value="select">Izbira (select)</option>
     <option value="image">Slika</option>
     <option value="document">Dokument</option>
+    <option value="link">Povezava (URL)</option>
   `;
 }
 
-async function renderConfigEditorBody(restore = {}) {
-  const config = await ConfigService.getDraftConfig();
+// ---------------------------------------------------------------------
+// "Skupine" tab — groups (kartice), their order, and their razdelki
+// ---------------------------------------------------------------------
+
+function renderGroupsTabContent(config) {
   const groups = config.groups || [];
 
-  const groupRows = groups
-    .map(
-      (g) => `
-      <li class="mf-config-row" data-group-id="${g.id}">
-        <span class="mf-config-row-label">${Utils.escapeHtml(g.label)}</span>
-        <span class="mf-config-row-type">${config.fields.filter((f) => f.group === g.id).length} polj</span>
-        <button type="button" class="mf-icon-btn mf-remove-group" data-id="${g.id}" aria-label="Odstrani skupino">&times;</button>
-      </li>
-    `
-    )
+  const groupBlocks = groups
+    .map((g, i) => {
+      const fieldCount = config.fields.filter((f) => f.group === g.id).length;
+      const sections = g.sections || [];
+      const sectionRows =
+        sections
+          .map(
+            (s, si) => `
+          <li class="mf-config-row" data-section-id="${s.id}">
+            <button type="button" class="mf-icon-btn mf-move-section" data-group="${g.id}" data-id="${s.id}" data-dir="up" ${si === 0 ? 'disabled' : ''} aria-label="Premakni razdelek navzgor">&uarr;</button>
+            <button type="button" class="mf-icon-btn mf-move-section" data-group="${g.id}" data-id="${s.id}" data-dir="down" ${si === sections.length - 1 ? 'disabled' : ''} aria-label="Premakni razdelek navzdol">&darr;</button>
+            <span class="mf-config-row-label">${Utils.escapeHtml(s.label)}</span>
+            <button type="button" class="mf-icon-btn mf-remove-section" data-group="${g.id}" data-id="${s.id}" aria-label="Odstrani razdelek">&times;</button>
+          </li>
+        `
+          )
+          .join('') || '<li class="mf-empty">Ni razdelkov — polja se prikažejo brez podnaslovov.</li>';
+
+      return `
+        <li class="mf-config-row mf-group-block-row" data-group-id="${g.id}">
+          <div class="mf-group-row-header">
+            <button type="button" class="mf-icon-btn mf-move-group" data-id="${g.id}" data-dir="up" ${i === 0 ? 'disabled' : ''} aria-label="Premakni skupino navzgor">&uarr;</button>
+            <button type="button" class="mf-icon-btn mf-move-group" data-id="${g.id}" data-dir="down" ${i === groups.length - 1 ? 'disabled' : ''} aria-label="Premakni skupino navzdol">&darr;</button>
+            <span class="mf-config-row-label">${Utils.escapeHtml(g.label)}</span>
+            <span class="mf-config-row-type">${fieldCount} polj</span>
+            <button type="button" class="mf-icon-btn mf-remove-group" data-id="${g.id}" aria-label="Odstrani skupino">&times;</button>
+          </div>
+          <div class="mf-group-sections">
+            <span class="mf-config-group-heading">Razdelki v tej kartici</span>
+            <ul class="mf-config-list">${sectionRows}</ul>
+            <div class="mf-measurement-inline-fields">
+              <input type="text" class="mf-new-section-label" data-group="${g.id}" placeholder="npr. Status in identifikacija" autocomplete="off" />
+              <button type="button" class="mf-btn mf-btn-ghost mf-btn-small mf-add-section" data-group="${g.id}">+ Dodaj razdelek</button>
+            </div>
+          </div>
+        </li>
+      `;
+    })
     .join('');
 
-  function fieldRowHtml(f, isFirst, isLast) {
-    return `
-      <li class="mf-config-row" data-id="${f.id}" style="--field-accent:${f.color || Utils.DEFAULT_FIELD_COLOR}">
-        <button type="button" class="mf-icon-btn mf-move-field" data-id="${f.id}" data-dir="up" ${isFirst ? 'disabled' : ''} aria-label="Premakni navzgor">&uarr;</button>
-        <button type="button" class="mf-icon-btn mf-move-field" data-id="${f.id}" data-dir="down" ${isLast ? 'disabled' : ''} aria-label="Premakni navzdol">&darr;</button>
-        <span class="mf-config-row-label">${Utils.escapeHtml(f.label)}</span>
-        <span class="mf-config-row-type">${Utils.escapeHtml(f.type)}${f.required ? ' · obvezno' : ''}</span>
-        <button type="button" class="mf-icon-btn mf-edit-field" data-id="${f.id}" aria-label="Uredi polje" title="Uredi">&#9998;</button>
-        <button type="button" class="mf-icon-btn mf-remove-field" data-id="${f.id}" aria-label="Odstrani polje">&times;</button>
-      </li>
-    `;
-  }
-
-  function fieldRowsHtml(fields) {
-    return fields.map((f, i) => fieldRowHtml(f, i === 0, i === fields.length - 1)).join('') || '<li class="mf-empty">Ni polj.</li>';
-  }
-
-  const fieldSectionEntries = Utils.groupFieldsIntoSections(config, {
-    includeEmptyGroups: true,
-    alwaysIncludeUngrouped: true,
-  }).map((s) => (s.id === '__ungrouped' ? { ...s, label: 'Brez skupine' } : s));
-
-  const useFieldTabs = fieldSectionEntries.length > 1;
-  const fieldSectionsMarkup = useFieldTabs
-    ? UI.renderTabsHtml(fieldSectionEntries, (s) => `<ul class="mf-config-list">${fieldRowsHtml(s.fields)}</ul>`)
-    : fieldSectionEntries
-        .map((s) => `<div class="mf-config-group-block"><span class="mf-config-group-heading">${Utils.escapeHtml(s.label)}</span><ul class="mf-config-list">${fieldRowsHtml(s.fields)}</ul></div>`)
-        .join('');
-
-  const groupOptions = groups.map((g) => `<option value="${g.id}">${Utils.escapeHtml(g.label)}</option>`).join('');
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'mf-config-editor';
-  wrapper.innerHTML = `
-    <div class="mf-config-toolbar">
-      <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-change-pin-btn">Spremeni admin PIN</button>
-    </div>
-
-    <p class="mf-draft-notice">
-      Tu urejaš <strong>osnutek</strong> sheme — spremembe ne vplivajo na obrazec, ki ga trenutno vidijo uporabniki,
-      dokler osnutka ne izvoziš kot <code>config.json</code> in ga ne objaviš (zamenjaj datoteko v repozitoriju,
-      <code>git push</code>, Vercel samodejno objavi).
-    </p>
-    <div class="mf-form-actions">
-      <button type="button" class="mf-btn mf-btn-primary" id="mf-export-schema-btn">Izvozi shemo obrazca (config.json)</button>
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-reset-draft-btn">Ponastavi osnutek na objavljeno shemo</button>
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-import-schema-btn">Uvozi shemo (JSON)</button>
-      <input type="file" id="mf-import-schema-input" accept="application/json" style="display:none" />
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-load-spectrum-btn">Naloži predlogo: SPECTRUM jedro</button>
-    </div>
-
-    <hr class="mf-divider" />
-
-    <p class="mf-config-section-title">Upravljanje podatkov</p>
-    <div class="mf-form-actions">
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-export-btn">Izvozi bazo</button>
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-import-btn">Uvozi bazo</button>
-      <button type="button" class="mf-btn mf-btn-danger" id="mf-reset-btn">Ponastavi bazo</button>
-      <input type="file" id="mf-import-input" accept="application/json" style="display:none" />
-    </div>
-    <p class="mf-field-hint">Izvoz vključuje vse vnose, slike in trenutno objavljeno konfiguracijo obrazca. Ponastavitev izbriše vnose in podatke seje na tem računalniku — objavljena shema in PIN ostaneta.</p>
-
-    <hr class="mf-divider" />
-
-    <p class="mf-config-section-title">Skupine polj (osnutek)</p>
-    <ul class="mf-config-list">${groupRows || '<li class="mf-empty">Ni skupin — polja bodo prikazana brez razvrstitve.</li>'}</ul>
+  return `
+    <ul class="mf-config-list">${groupBlocks || '<li class="mf-empty">Ni skupin — polja bodo prikazana brez razvrstitve.</li>'}</ul>
     <form id="mf-add-group-form" class="mf-add-field-form">
       <div class="mf-field">
-        <label for="cg-label">Nova skupina</label>
+        <label for="cg-label">Nova skupina (kartica)</label>
         <input type="text" id="cg-label" required autocomplete="off" placeholder="npr. Fizične lastnosti" />
       </div>
       <div class="mf-form-actions">
         <button type="submit" class="mf-btn mf-btn-ghost">Dodaj skupino</button>
       </div>
     </form>
+  `;
+}
 
-    <hr class="mf-divider" />
+function wireGroupsTab(wrapper, refresh) {
+  wrapper.querySelectorAll('.mf-move-group').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await ConfigService.moveGroup(btn.dataset.id, btn.dataset.dir);
+      await refresh();
+    });
+  });
 
-    <p class="mf-config-section-title">Polja obrazca</p>
-    ${fieldSectionsMarkup}
+  wrapper.querySelectorAll('.mf-remove-group').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const confirmed = await UI.confirm(
+        'Odstraniti to skupino? Polja v njej ne bodo izbrisana, le prestavljena med "Brez skupine".',
+        'Odstrani skupino'
+      );
+      if (!confirmed) return;
+      await ConfigService.removeGroup(btn.dataset.id);
+      await refresh();
+    });
+  });
 
-    <hr class="mf-divider" />
+  wrapper.querySelectorAll('.mf-move-section').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await ConfigService.moveSection(btn.dataset.group, btn.dataset.id, btn.dataset.dir);
+      await refresh();
+    });
+  });
 
+  wrapper.querySelectorAll('.mf-remove-section').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const confirmed = await UI.confirm(
+        'Odstraniti ta razdelek? Polja vanj ne bodo izbrisana, le prestavljena med neuvrščena.',
+        'Odstrani razdelek'
+      );
+      if (!confirmed) return;
+      await ConfigService.removeSection(btn.dataset.group, btn.dataset.id);
+      await refresh();
+    });
+  });
+
+  wrapper.querySelectorAll('.mf-add-section').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const input = wrapper.querySelector(`.mf-new-section-label[data-group="${btn.dataset.group}"]`);
+      const label = input.value.trim();
+      if (!label) return;
+      try {
+        await ConfigService.addSection(btn.dataset.group, label);
+        await refresh();
+      } catch (err) {
+        console.error('[App] addSection failed', err);
+      }
+    });
+  });
+
+  const addGroupForm = wrapper.querySelector('#mf-add-group-form');
+  if (addGroupForm) {
+    addGroupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const label = wrapper.querySelector('#cg-label').value.trim();
+      if (!label) return;
+      try {
+        await ConfigService.addGroup({ label });
+        await refresh();
+      } catch (err) {
+        console.error('[App] addGroup failed', err);
+      }
+    });
+  }
+}
+
+// ---------------------------------------------------------------------
+// "Polja" tab — field list (by group, in its own inner tabs) + field form
+// ---------------------------------------------------------------------
+
+function fieldRowHtml(f, isFirst, isLast) {
+  return `
+    <li class="mf-config-row" data-id="${f.id}" style="--field-accent:${f.color || Utils.DEFAULT_FIELD_COLOR}">
+      <button type="button" class="mf-icon-btn mf-move-field" data-id="${f.id}" data-dir="up" ${isFirst ? 'disabled' : ''} aria-label="Premakni navzgor">&uarr;</button>
+      <button type="button" class="mf-icon-btn mf-move-field" data-id="${f.id}" data-dir="down" ${isLast ? 'disabled' : ''} aria-label="Premakni navzdol">&darr;</button>
+      <span class="mf-config-row-label">${Utils.escapeHtml(f.label)}</span>
+      <span class="mf-config-row-type">${Utils.escapeHtml(f.type)}${f.required ? ' · obvezno' : ''}</span>
+      <button type="button" class="mf-icon-btn mf-edit-field" data-id="${f.id}" aria-label="Uredi polje" title="Uredi">&#9998;</button>
+      <button type="button" class="mf-icon-btn mf-remove-field" data-id="${f.id}" aria-label="Odstrani polje">&times;</button>
+    </li>
+  `;
+}
+
+function fieldRowsHtml(fields) {
+  return fields.map((f, i) => fieldRowHtml(f, i === 0, i === fields.length - 1)).join('') || '<li class="mf-empty">Ni polj.</li>';
+}
+
+function renderFieldsListMarkup(config) {
+  const fieldSectionEntries = Utils.groupFieldsIntoSections(config, {
+    includeEmptyGroups: true,
+    alwaysIncludeUngrouped: true,
+  }).map((s) => (s.id === '__ungrouped' ? { ...s, label: 'Brez skupine' } : s));
+
+  const useFieldTabs = fieldSectionEntries.length > 1;
+  return useFieldTabs
+    ? UI.renderTabsHtml(fieldSectionEntries, (s) => `<ul class="mf-config-list">${fieldRowsHtml(s.fields)}</ul>`)
+    : fieldSectionEntries
+        .map((s) => `<div class="mf-config-group-block"><span class="mf-config-group-heading">${Utils.escapeHtml(s.label)}</span><ul class="mf-config-list">${fieldRowsHtml(s.fields)}</ul></div>`)
+        .join('');
+}
+
+function renderFieldFormMarkup(config) {
+  const groupOptions = (config.groups || []).map((g) => `<option value="${g.id}">${Utils.escapeHtml(g.label)}</option>`).join('');
+
+  return `
     <p class="mf-config-section-title" id="cf-form-title">Novo polje</p>
     <form id="mf-add-field-form" class="mf-add-field-form">
       <input type="hidden" id="cf-edit-id" value="" />
@@ -172,6 +244,10 @@ async function renderConfigEditorBody(restore = {}) {
           ${groupOptions}
         </select>
       </div>
+      <div class="mf-field" id="cf-section-wrap" style="display:none">
+        <label for="cf-section">Razdelek</label>
+        <select id="cf-section"><option value="">Brez razdelka</option></select>
+      </div>
       <div class="mf-field">
         <label for="cf-type">Tip polja</label>
         <select id="cf-type">${fieldTypeOptions()}</select>
@@ -184,6 +260,10 @@ async function renderConfigEditorBody(restore = {}) {
         <label for="cf-placeholder">Namig (placeholder)</label>
         <input type="text" id="cf-placeholder" autocomplete="off" placeholder="npr. npr. 2023.145" />
         <p class="mf-field-hint">Sivo besedilo v praznem polju, ki nakaže pričakovan format. Ni nadomestilo za ime polja.</p>
+      </div>
+      <div class="mf-field mf-field-inline" id="cf-fixed-precision-wrap" style="display:none">
+        <label for="cf-fixed-precision">Vedno točen dan (brez izbire natančnosti)</label>
+        <input type="checkbox" id="cf-fixed-precision" />
       </div>
       <div class="mf-field mf-field-inline">
         <label for="cf-color">Barva oznake</label>
@@ -214,7 +294,12 @@ async function renderConfigEditorBody(restore = {}) {
         <div class="mf-form-actions">
           <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="cf-subfield-add">+ Dodaj pod-polje</button>
         </div>
-        <p class="mf-field-hint">Vsak primerek te skupine (npr. ena fotografija) bo imel vnos za vsako od teh pod-polj. Uporabnik doda poljubno število primerkov.</p>
+        <p class="mf-field-hint">Vsak primerek te skupine (npr. ena fotografija) bo imel vnos za vsako od teh pod-polj.</p>
+        <div class="mf-field mf-field-inline" id="cf-repeatable-wrap">
+          <label for="cf-repeatable">Ponavljajoča (dovoli več primerkov)</label>
+          <input type="checkbox" id="cf-repeatable" checked />
+        </div>
+        <p class="mf-field-hint">Če ni ponavljajoča, se pod-polja prikažejo enkrat, brez gumba "+ Dodaj" (npr. "Čas izdelave", "Avers/Revers").</p>
       </div>
       <div class="mf-field mf-field-inline">
         <label for="cf-required">Obvezno polje</label>
@@ -226,15 +311,23 @@ async function renderConfigEditorBody(restore = {}) {
       </div>
     </form>
   `;
+}
 
+function wireFieldsTab(wrapper, config, refresh, restore) {
   const typeSelect = wrapper.querySelector('#cf-type');
   const optionsWrap = wrapper.querySelector('#cf-options-wrap');
   const placeholderWrap = wrapper.querySelector('#cf-placeholder-wrap');
+  const fixedPrecisionWrap = wrapper.querySelector('#cf-fixed-precision-wrap');
+  const fixedPrecisionInput = wrapper.querySelector('#cf-fixed-precision');
   const measurementTypesWrap = wrapper.querySelector('#cf-measurement-types-wrap');
   const measurementTypesList = wrapper.querySelector('#cf-measurement-types-list');
   const placeholderInput = wrapper.querySelector('#cf-placeholder');
   const subFieldsWrap = wrapper.querySelector('#cf-subfields-wrap');
   const subFieldsList = wrapper.querySelector('#cf-subfields-list');
+  const repeatableInput = wrapper.querySelector('#cf-repeatable');
+  const groupSelect = wrapper.querySelector('#cf-group');
+  const sectionWrap = wrapper.querySelector('#cf-section-wrap');
+  const sectionSelect = wrapper.querySelector('#cf-section');
 
   let currentMeasurementTypes = [];
   let currentSubFields = [];
@@ -269,6 +362,8 @@ async function renderConfigEditorBody(restore = {}) {
         <li class="mf-config-row" data-index="${i}">
           <span class="mf-config-row-label">${Utils.escapeHtml(sf.label)}</span>
           <span class="mf-config-row-type">${Utils.escapeHtml(sf.type)}${sf.required ? ' · obvezno' : ''}</span>
+          <button type="button" class="mf-icon-btn mf-move-subfield" data-index="${i}" data-dir="up" ${i === 0 ? 'disabled' : ''} aria-label="Premakni navzgor">&uarr;</button>
+          <button type="button" class="mf-icon-btn mf-move-subfield" data-index="${i}" data-dir="down" ${i === currentSubFields.length - 1 ? 'disabled' : ''} aria-label="Premakni navzdol">&darr;</button>
           <button type="button" class="mf-icon-btn mf-remove-subfield" data-index="${i}" aria-label="Odstrani pod-polje">&times;</button>
         </li>
       `
@@ -281,6 +376,25 @@ async function renderConfigEditorBody(restore = {}) {
         renderSubFieldsList();
       });
     });
+    subFieldsList.querySelectorAll('.mf-move-subfield').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.index);
+        const swap = btn.dataset.dir === 'up' ? idx - 1 : idx + 1;
+        if (swap < 0 || swap >= currentSubFields.length) return;
+        [currentSubFields[idx], currentSubFields[swap]] = [currentSubFields[swap], currentSubFields[idx]];
+        renderSubFieldsList();
+      });
+    });
+  }
+
+  function refreshSectionOptions() {
+    const groupId = groupSelect.value;
+    const groupDef = (config.groups || []).find((g) => g.id === groupId);
+    const sections = groupDef ? groupDef.sections || [] : [];
+    sectionSelect.innerHTML =
+      '<option value="">Brez razdelka</option>' +
+      sections.map((s) => `<option value="${s.id}">${Utils.escapeHtml(s.label)}</option>`).join('');
+    sectionWrap.style.display = sections.length > 0 ? '' : 'none';
   }
 
   function updateVisibilityForType() {
@@ -288,13 +402,21 @@ async function renderConfigEditorBody(restore = {}) {
     optionsWrap.style.display = type === 'select' ? '' : 'none';
     measurementTypesWrap.style.display = type === 'measurements' ? '' : 'none';
     subFieldsWrap.style.display = type === 'group' ? '' : 'none';
+    fixedPrecisionWrap.style.display = type === 'date' ? '' : 'none';
     placeholderWrap.style.display = ['image', 'document', 'measurements', 'group'].includes(type) ? 'none' : '';
   }
 
   typeSelect.addEventListener('change', updateVisibilityForType);
+  groupSelect.addEventListener('change', refreshSectionOptions);
   updateVisibilityForType();
+  refreshSectionOptions();
   renderMeasurementTypesList();
   renderSubFieldsList();
+
+  if (restore.lastGroup) {
+    groupSelect.value = restore.lastGroup;
+    refreshSectionOptions();
+  }
 
   const subFieldTypeSelect = wrapper.querySelector('#cf-subfield-type');
   const subFieldOptionsInput = wrapper.querySelector('#cf-subfield-options');
@@ -307,16 +429,8 @@ async function renderConfigEditorBody(restore = {}) {
     const requiredInputEl = wrapper.querySelector('#cf-subfield-required');
     const label = labelInputEl.value.trim();
     if (!label) return;
-    const options = subFieldOptionsInput.value
-      .split(',')
-      .map((o) => o.trim())
-      .filter(Boolean);
-    currentSubFields.push({
-      label,
-      type: subFieldTypeSelect.value,
-      required: requiredInputEl.checked,
-      options,
-    });
+    const options = subFieldOptionsInput.value.split(',').map((o) => o.trim()).filter(Boolean);
+    currentSubFields.push({ label, type: subFieldTypeSelect.value, required: requiredInputEl.checked, options });
     renderSubFieldsList();
     labelInputEl.value = '';
     subFieldOptionsInput.value = '';
@@ -328,19 +442,16 @@ async function renderConfigEditorBody(restore = {}) {
     const unitsInputEl = wrapper.querySelector('#cf-mtype-units');
     const label = labelInputEl.value.trim();
     if (!label) return;
-    const units = unitsInputEl.value
-      .split(',')
-      .map((u) => u.trim())
-      .filter(Boolean);
+    const units = unitsInputEl.value.split(',').map((u) => u.trim()).filter(Boolean);
     currentMeasurementTypes.push({ label, units });
     renderMeasurementTypesList();
     labelInputEl.value = '';
     unitsInputEl.value = '';
   });
 
-  const fieldTabController = UI.tabify(wrapper);
-  if (restore.activeFieldTab && fieldTabController) {
-    fieldTabController.activate(restore.activeFieldTab);
+  const fieldListTabController = UI.tabify(wrapper.querySelector('#mf-fields-list-wrap'));
+  if (restore.activeFieldTab && fieldListTabController) {
+    fieldListTabController.activate(restore.activeFieldTab);
   }
 
   const formTitle = wrapper.querySelector('#cf-form-title');
@@ -348,8 +459,6 @@ async function renderConfigEditorBody(restore = {}) {
   const submitBtn = wrapper.querySelector('#cf-submit-btn');
   const cancelEditBtn = wrapper.querySelector('#cf-cancel-edit');
   const labelInput = wrapper.querySelector('#cf-label');
-  const groupSelect = wrapper.querySelector('#cf-group');
-  if (restore.lastGroup) groupSelect.value = restore.lastGroup;
   const requiredInput = wrapper.querySelector('#cf-required');
   const optionsInput = wrapper.querySelector('#cf-options');
   const colorInput = wrapper.querySelector('#cf-color');
@@ -358,11 +467,15 @@ async function renderConfigEditorBody(restore = {}) {
     editIdInput.value = field.id;
     labelInput.value = field.label;
     groupSelect.value = field.group || '';
+    refreshSectionOptions();
+    sectionSelect.value = field.section || '';
     typeSelect.value = field.type;
     updateVisibilityForType();
     optionsInput.value = (field.options || []).join(', ');
     placeholderInput.value = field.placeholder || '';
     colorInput.value = field.color || Utils.DEFAULT_FIELD_COLOR;
+    fixedPrecisionInput.checked = Boolean(field.fixedPrecision);
+    repeatableInput.checked = field.repeatable !== false;
     currentMeasurementTypes = field.measurementTypes ? Utils.deepClone(field.measurementTypes) : [];
     renderMeasurementTypesList();
     currentSubFields = field.subFields ? Utils.deepClone(field.subFields) : [];
@@ -382,6 +495,7 @@ async function renderConfigEditorBody(restore = {}) {
     currentSubFields = [];
     renderSubFieldsList();
     updateVisibilityForType();
+    refreshSectionOptions();
     formTitle.textContent = 'Novo polje';
     submitBtn.textContent = 'Dodaj polje';
     cancelEditBtn.style.display = 'none';
@@ -389,6 +503,122 @@ async function renderConfigEditorBody(restore = {}) {
 
   cancelEditBtn.addEventListener('click', exitEditMode);
 
+  wrapper.querySelectorAll('.mf-edit-field').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const field = config.fields.find((f) => f.id === btn.dataset.id);
+      if (field) enterEditMode(field);
+    });
+  });
+
+  wrapper.querySelectorAll('.mf-move-field').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await ConfigService.moveField(btn.dataset.id, btn.dataset.dir);
+      await refresh();
+    });
+  });
+
+  wrapper.querySelectorAll('.mf-remove-field').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const confirmed = await UI.confirm('Odstraniti to polje iz obrazca?', 'Odstrani polje');
+      if (!confirmed) return;
+      await ConfigService.removeField(btn.dataset.id);
+      await refresh();
+    });
+  });
+
+  wrapper.querySelector('#mf-add-field-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const label = labelInput.value.trim();
+    const group = groupSelect.value || null;
+    const section = sectionSelect.value || null;
+    const type = typeSelect.value;
+    const required = requiredInput.checked;
+    const optionsRaw = optionsInput.value.trim();
+    const options = optionsRaw ? optionsRaw.split(',').map((o) => o.trim()).filter(Boolean) : [];
+    const placeholder = placeholderInput.value.trim();
+    const color = colorInput.value;
+    const fixedPrecision = type === 'date' && fixedPrecisionInput.checked ? 'day' : null;
+    const repeatable = repeatableInput.checked;
+
+    if (!label) return;
+
+    if (type === 'measurements' && currentMeasurementTypes.length === 0) {
+      UI.toast({ type: 'error', message: 'Dodaj vsaj eno vrsto mere (npr. Višina), preden shraniš polje.' });
+      return;
+    }
+
+    if (type === 'group' && currentSubFields.length === 0) {
+      UI.toast({ type: 'error', message: 'Dodaj vsaj eno pod-polje (npr. Avtor fotografije), preden shraniš skupino.' });
+      return;
+    }
+
+    const editingId = editIdInput.value;
+    const fieldPayload = {
+      label,
+      type,
+      required,
+      options,
+      group,
+      section,
+      placeholder,
+      color,
+      fixedPrecision,
+      repeatable,
+      measurementTypes: currentMeasurementTypes,
+      subFields: currentSubFields,
+    };
+
+    try {
+      if (editingId) {
+        await ConfigService.updateField(editingId, fieldPayload);
+      } else {
+        await ConfigService.addField({ id: Utils.slugify(label) + '_' + Date.now().toString(36).slice(-4), ...fieldPayload });
+      }
+      await refresh();
+    } catch (err) {
+      console.error('[App] field save failed', err);
+    }
+  });
+}
+
+// ---------------------------------------------------------------------
+// "Nastavitve in podatki" tab — PIN, schema publish/import/template, DB tools
+// ---------------------------------------------------------------------
+
+function renderSettingsTabContent() {
+  return `
+    <div class="mf-config-toolbar">
+      <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-change-pin-btn">Spremeni admin PIN</button>
+    </div>
+
+    <p class="mf-draft-notice">
+      Tu urejaš <strong>osnutek</strong> sheme — spremembe ne vplivajo na obrazec, ki ga trenutno vidijo uporabniki,
+      dokler osnutka ne izvoziš kot <code>config.json</code> in ga ne objaviš (zamenjaj datoteko v repozitoriju,
+      <code>git push</code>, Vercel samodejno objavi).
+    </p>
+    <div class="mf-form-actions">
+      <button type="button" class="mf-btn mf-btn-primary" id="mf-export-schema-btn">Izvozi shemo obrazca (config.json)</button>
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-reset-draft-btn">Ponastavi osnutek na objavljeno shemo</button>
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-import-schema-btn">Uvozi shemo (JSON)</button>
+      <input type="file" id="mf-import-schema-input" accept="application/json" style="display:none" />
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-load-spectrum-btn">Naloži predlogo: SPECTRUM jedro</button>
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-load-spectrum-detailed-btn">Naloži predlogo: SPECTRUM podrobno (10 kartic)</button>
+    </div>
+
+    <hr class="mf-divider" />
+
+    <p class="mf-config-section-title">Upravljanje podatkov</p>
+    <div class="mf-form-actions">
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-export-btn">Izvozi bazo</button>
+      <button type="button" class="mf-btn mf-btn-ghost" id="mf-import-btn">Uvozi bazo</button>
+      <button type="button" class="mf-btn mf-btn-danger" id="mf-reset-btn">Ponastavi bazo</button>
+      <input type="file" id="mf-import-input" accept="application/json" style="display:none" />
+    </div>
+    <p class="mf-field-hint">Izvoz vključuje vse vnose, slike/dokumente in trenutno objavljeno konfiguracijo obrazca. Ponastavitev izbriše vnose in podatke seje na tem računalniku — objavljena shema in PIN ostaneta.</p>
+  `;
+}
+
+function wireSettingsTab(wrapper, refresh) {
   wrapper.querySelector('#mf-export-schema-btn').addEventListener('click', () => {
     ConfigService.exportDraftFile();
   });
@@ -400,7 +630,7 @@ async function renderConfigEditorBody(restore = {}) {
     );
     if (!confirmed) return;
     await ConfigService.resetDraftToLive();
-    await refreshConfigEditor(wrapper);
+    await refresh();
   });
 
   const importSchemaInput = wrapper.querySelector('#mf-import-schema-input');
@@ -417,7 +647,7 @@ async function renderConfigEditorBody(restore = {}) {
     try {
       const text = await file.text();
       await ConfigService.importDraftFromObject(JSON.parse(text));
-      await refreshConfigEditor(wrapper);
+      await refresh();
     } catch (err) {
       console.error('[App] Schema import failed', err);
       UI.toast({ type: 'error', message: 'Datoteke ni bilo mogoče prebrati kot veljavno shemo (JSON).' });
@@ -426,13 +656,27 @@ async function renderConfigEditorBody(restore = {}) {
 
   wrapper.querySelector('#mf-load-spectrum-btn').addEventListener('click', async () => {
     const confirmed = await UI.confirm(
-      'To bo prepisalo trenutni osnutek s predlogo SPECTRUM jedro (~24 polj po standardu SPECTRUM). Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?',
+      'To bo prepisalo trenutni osnutek s predlogo SPECTRUM jedro. Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?',
       'Naloži predlogo'
     );
     if (!confirmed) return;
     try {
       await ConfigService.loadTemplate('./templates/spectrum-core.json');
-      await refreshConfigEditor(wrapper);
+      await refresh();
+    } catch (err) {
+      console.error('[App] Template load failed', err);
+    }
+  });
+
+  wrapper.querySelector('#mf-load-spectrum-detailed-btn').addEventListener('click', async () => {
+    const confirmed = await UI.confirm(
+      'To bo prepisalo trenutni osnutek s podrobno predlogo SPECTRUM (10 kartic, ~65 polj). Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?',
+      'Naloži predlogo'
+    );
+    if (!confirmed) return;
+    try {
+      await ConfigService.loadTemplate('./templates/spectrum-podrobno.json');
+      await refresh();
     } catch (err) {
       console.error('[App] Template load failed', err);
     }
@@ -463,118 +707,59 @@ async function renderConfigEditorBody(restore = {}) {
     await SessionService.clearSession();
     UI.toast({ type: 'success', message: 'Baza je ponastavljena in pripravljena za naslednjo skupino.' });
   });
+}
 
-  wrapper.querySelectorAll('.mf-edit-field').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const field = config.fields.find((f) => f.id === btn.dataset.id);
-      if (field) enterEditMode(field);
-    });
+// ---------------------------------------------------------------------
+// Top-level admin editor: outer tabs = Skupine | Polja | Nastavitve in podatki
+// ---------------------------------------------------------------------
+
+async function renderConfigEditorBody(restore = {}) {
+  const config = await ConfigService.getDraftConfig();
+
+  const outerSections = [
+    { id: 'groups', label: 'Skupine' },
+    { id: 'fields', label: 'Polja' },
+    { id: 'settings', label: 'Nastavitve in podatki' },
+  ];
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'mf-config-editor';
+  wrapper.innerHTML = UI.renderTabsHtml(outerSections, (s) => {
+    if (s.id === 'groups') return `<div class="mf-outer-tab-panel">${renderGroupsTabContent(config)}</div>`;
+    if (s.id === 'fields')
+      return `
+        <div class="mf-outer-tab-panel">
+          <p class="mf-config-section-title">Polja obrazca</p>
+          <div id="mf-fields-list-wrap">${renderFieldsListMarkup(config)}</div>
+          <hr class="mf-divider" />
+          ${renderFieldFormMarkup(config)}
+        </div>
+      `;
+    return `<div class="mf-outer-tab-panel">${renderSettingsTabContent()}</div>`;
   });
 
-  wrapper.querySelectorAll('.mf-move-field').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      await ConfigService.moveField(btn.dataset.id, btn.dataset.dir);
-      await refreshConfigEditor(wrapper);
-    });
-  });
+  const outerTabController = UI.tabify(wrapper);
+  if (restore.activeOuterTab && outerTabController) outerTabController.activate(restore.activeOuterTab);
 
-  wrapper.querySelectorAll('.mf-remove-field').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const confirmed = await UI.confirm('Odstraniti to polje iz obrazca?', 'Odstrani polje');
-      if (!confirmed) return;
-      await ConfigService.removeField(btn.dataset.id);
-      await refreshConfigEditor(wrapper);
-    });
-  });
+  const refresh = () => refreshConfigEditor(wrapper);
 
-  wrapper.querySelectorAll('.mf-remove-group').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const confirmed = await UI.confirm(
-        'Odstraniti to skupino? Polja v njej ne bodo izbrisana, le prestavljena med "Brez skupine".',
-        'Odstrani skupino'
-      );
-      if (!confirmed) return;
-      await ConfigService.removeGroup(btn.dataset.id);
-      await refreshConfigEditor(wrapper);
-    });
-  });
-
-  wrapper.querySelector('#mf-add-group-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const label = wrapper.querySelector('#cg-label').value.trim();
-    if (!label) return;
-    try {
-      await ConfigService.addGroup({ label });
-      await refreshConfigEditor(wrapper);
-    } catch (err) {
-      console.error('[App] addGroup failed', err);
-    }
-  });
-
-  wrapper.querySelector('#mf-add-field-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const label = labelInput.value.trim();
-    const group = groupSelect.value || null;
-    const type = typeSelect.value;
-    const required = requiredInput.checked;
-    const optionsRaw = optionsInput.value.trim();
-    const options = optionsRaw
-      ? optionsRaw.split(',').map((o) => o.trim()).filter(Boolean)
-      : [];
-    const placeholder = placeholderInput.value.trim();
-    const color = colorInput.value;
-
-    if (!label) return;
-
-    if (type === 'measurements' && currentMeasurementTypes.length === 0) {
-      UI.toast({ type: 'error', message: 'Dodaj vsaj eno vrsto mere (npr. Višina), preden shraniš polje.' });
-      return;
-    }
-
-    if (type === 'group' && currentSubFields.length === 0) {
-      UI.toast({ type: 'error', message: 'Dodaj vsaj eno pod-polje (npr. Avtor fotografije), preden shraniš skupino.' });
-      return;
-    }
-
-    const editingId = editIdInput.value;
-    const fieldPayload = {
-      label,
-      type,
-      required,
-      options,
-      group,
-      placeholder,
-      color,
-      measurementTypes: currentMeasurementTypes,
-      subFields: currentSubFields,
-    };
-
-    try {
-      if (editingId) {
-        await ConfigService.updateField(editingId, fieldPayload);
-      } else {
-        await ConfigService.addField({
-          id: Utils.slugify(label) + '_' + Date.now().toString(36).slice(-4),
-          ...fieldPayload,
-        });
-      }
-      await refreshConfigEditor(wrapper);
-    } catch (err) {
-      // ConfigService already emits ui:notify on failure
-      console.error('[App] field save failed', err);
-    }
-  });
+  wireGroupsTab(wrapper, refresh);
+  wireFieldsTab(wrapper, config, refresh, restore);
+  wireSettingsTab(wrapper, refresh);
 
   return wrapper;
 }
 
 async function refreshConfigEditor(oldWrapper) {
-  const activeTabBtn = oldWrapper.querySelector('.mf-tab-btn-active');
+  const activeOuterBtn = oldWrapper.querySelector('.mf-tab-btn-active');
+  const innerFieldsWrap = oldWrapper.querySelector('#mf-fields-list-wrap');
+  const activeInnerBtn = innerFieldsWrap ? innerFieldsWrap.querySelector('.mf-tab-btn-active') : null;
   const groupSelect = oldWrapper.querySelector('#cf-group');
   const scrollParent = oldWrapper.closest('.mf-modal-body');
 
   const restore = {
-    activeFieldTab: activeTabBtn ? activeTabBtn.dataset.tab : null,
+    activeOuterTab: activeOuterBtn ? activeOuterBtn.dataset.tab : null,
+    activeFieldTab: activeInnerBtn ? activeInnerBtn.dataset.tab : null,
     lastGroup: groupSelect ? groupSelect.value : '',
   };
   const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
@@ -588,7 +773,7 @@ async function refreshConfigEditor(oldWrapper) {
 
 async function openConfigEditorModal() {
   const body = await renderConfigEditorBody();
-  UI.openModal({ title: 'Uredi obrazec', content: body });
+  UI.openModal({ title: 'Uredi obrazec', content: body, wide: true });
 }
 
 async function changeAdminPin() {
@@ -715,7 +900,7 @@ async function printCatalog() {
   // left out of the catalogue view (still visible on each entry's own
   // printed card).
   const previewFields = config.fields
-    .filter((f) => ['text', 'number', 'select', 'date', 'measurements'].includes(f.type) && f.id !== 'inventory_number' && f.id !== 'title')
+    .filter((f) => ['text', 'number', 'select', 'date', 'measurements', 'link'].includes(f.type) && f.id !== 'inventory_number' && f.id !== 'title')
     .slice(0, 3);
 
   const headerCells = ['Inv. št.', 'Naziv', ...previewFields.map((f) => f.label), 'Datum vnosa']

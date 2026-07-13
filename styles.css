@@ -616,6 +616,48 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   border: 1px solid var(--mf-hairline-strong);
 }
 
+.mf-modal-card-wide { width: min(900px, 100%); }
+
+.mf-section-heading {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--mf-brass);
+  margin: 22px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--mf-hairline-strong);
+}
+.mf-section-heading:first-child { margin-top: 0; }
+
+.mf-group-inline {
+  border: 1px dashed var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.mf-group-inline-field { margin-bottom: 10px; }
+.mf-group-inline-field:last-child { margin-bottom: 0; }
+
+.mf-group-block-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  border-left: 2px solid var(--mf-brass);
+}
+.mf-group-row-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mf-group-sections {
+  padding: 10px 12px;
+  background: var(--mf-surface);
+  border-radius: var(--radius);
+  border: 1px dashed var(--mf-hairline-strong);
+}
+.mf-group-sections .mf-config-list { margin: 8px 0; }
+
+.mf-outer-tab-panel { padding-top: 4px; }
+
 /* ---------------- Tabs ---------------- */
 
 [hidden] { display: none !important; }
