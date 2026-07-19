@@ -10,6 +10,14 @@ arhivski datoteki (polje `locusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [0.2.1] — poudarjanje polj z barvo ozadja
+
+### Dodano
+- Poljem lahko admin poleg barvne obrobe (za označevanje sorodnih polj) dodeli
+  tudi rahlo obarvano **ozadje** ("Poudari z barvo ozadja") — za polja, ki
+  naj resnično vizualno izstopajo, ne le tanka obroba. Velja v obrazcu za
+  vnos in v podrobnostih predmeta.
+
 ## [0.2.0] — razdelki, sestavljena polja, povezave, podrobna SPECTRUM shema
 
 ### Dodano

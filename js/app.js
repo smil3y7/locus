@@ -270,6 +270,11 @@ function renderFieldFormMarkup(config) {
         <input type="color" id="cf-color" value="${Utils.DEFAULT_FIELD_COLOR}" />
       </div>
       <p class="mf-field-hint">Poljem, ki spadajo skupaj (ne glede na skupino/zavihek), lahko dodeliš isto barvo, da jih uporabnik prepozna na prvi pogled.</p>
+      <div class="mf-field mf-field-inline">
+        <label for="cf-bg-highlight">Poudari z barvo ozadja</label>
+        <input type="checkbox" id="cf-bg-highlight" />
+      </div>
+      <p class="mf-field-hint">Polje dobi rahlo obarvano ozadje (v izbrani barvi) namesto samo obrobe — za polja, ki naj resnično izstopajo.</p>
       <div class="mf-field" id="cf-measurement-types-wrap" style="display:none">
         <label>Dovoljene vrste mer</label>
         <ul class="mf-config-list" id="cf-measurement-types-list"></ul>
@@ -462,6 +467,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
   const requiredInput = wrapper.querySelector('#cf-required');
   const optionsInput = wrapper.querySelector('#cf-options');
   const colorInput = wrapper.querySelector('#cf-color');
+  const bgHighlightInput = wrapper.querySelector('#cf-bg-highlight');
 
   function enterEditMode(field) {
     editIdInput.value = field.id;
@@ -474,6 +480,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     optionsInput.value = (field.options || []).join(', ');
     placeholderInput.value = field.placeholder || '';
     colorInput.value = field.color || Utils.DEFAULT_FIELD_COLOR;
+    bgHighlightInput.checked = Boolean(field.backgroundHighlight);
     fixedPrecisionInput.checked = Boolean(field.fixedPrecision);
     repeatableInput.checked = field.repeatable !== false;
     currentMeasurementTypes = field.measurementTypes ? Utils.deepClone(field.measurementTypes) : [];
@@ -537,6 +544,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     const options = optionsRaw ? optionsRaw.split(',').map((o) => o.trim()).filter(Boolean) : [];
     const placeholder = placeholderInput.value.trim();
     const color = colorInput.value;
+    const backgroundHighlight = bgHighlightInput.checked;
     const fixedPrecision = type === 'date' && fixedPrecisionInput.checked ? 'day' : null;
     const repeatable = repeatableInput.checked;
 
@@ -562,6 +570,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
       section,
       placeholder,
       color,
+      backgroundHighlight,
       fixedPrecision,
       repeatable,
       measurementTypes: currentMeasurementTypes,

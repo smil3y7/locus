@@ -255,6 +255,7 @@ async function addField(field) {
     subFields: normalizeSubFields(field.subFields),
     repeatable: field.type === 'group' ? field.repeatable !== false : undefined,
     fixedPrecision: field.type === 'date' && field.fixedPrecision ? field.fixedPrecision : null,
+    backgroundHighlight: Boolean(field.backgroundHighlight),
   };
 
   return saveDraft({ ...current, fields: [...current.fields, normalized] });
@@ -317,6 +318,7 @@ async function updateField(fieldId, updates) {
     subFields: normalizeSubFields(updates.subFields),
     repeatable: updates.type === 'group' ? updates.repeatable !== false : undefined,
     fixedPrecision: updates.type === 'date' && updates.fixedPrecision ? updates.fixedPrecision : null,
+    backgroundHighlight: Boolean(updates.backgroundHighlight),
   };
 
   return saveDraft({ ...current, fields: current.fields.map((f) => (f.id === fieldId ? merged : f)) });

@@ -138,7 +138,7 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.2.1';
 
 // Second-level grouping WITHIN one tab/group's fields — "razdelki" (sections)
 // are visual sub-headers that further organize a tab's fields, defined per
@@ -174,6 +174,16 @@ function isValidUrl(value) {
   }
 }
 
+function hexToRgba(hex, alpha) {
+  const clean = String(hex).replace('#', '');
+  const bigint = parseInt(clean, 16);
+  if (Number.isNaN(bigint)) return `rgba(184, 147, 74, ${alpha})`;
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 const Utils = {
   deepClone,
   generateId,
@@ -189,6 +199,7 @@ const Utils = {
   formatPartialDate,
   APP_VERSION,
   isValidUrl,
+  hexToRgba,
 };
 
 export default Utils;

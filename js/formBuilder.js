@@ -562,8 +562,11 @@ function fieldHtml(field, existingValues, existingPhotoUrlsByField) {
         : '';
     currentFileHint = `<p class="mf-field-hint">${label}</p>${preview}`;
   }
+  const bgStyle = field.backgroundHighlight
+    ? `background-color:${Utils.hexToRgba(field.color || Utils.DEFAULT_FIELD_COLOR, 0.14)};padding:10px 12px;border-radius:6px;`
+    : '';
   return `
-    <div class="mf-field" data-type="${field.type}" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR}">
+    <div class="mf-field" data-type="${field.type}" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR};${bgStyle}">
       <label for="f_${field.id}">${Utils.escapeHtml(field.label)}${field.required ? ' <span class="mf-required">*</span>' : ''}</label>
       ${fieldInputHtml(field, value)}
       ${currentFileHint}

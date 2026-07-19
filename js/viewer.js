@@ -151,8 +151,9 @@ function detailRowHtml(field, entry) {
     valueHtml = Utils.escapeHtml(raw) || '—';
   }
 
+  const bgStyle = field.backgroundHighlight ? `background-color:${Utils.hexToRgba(field.color || Utils.DEFAULT_FIELD_COLOR, 0.14)};` : '';
   return `
-    <div class="mf-detail-row" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR}">
+    <div class="mf-detail-row" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR};${bgStyle}">
       <span class="mf-detail-label">${Utils.escapeHtml(field.label)}</span>
       <span class="mf-detail-value">${valueHtml}</span>
     </div>
