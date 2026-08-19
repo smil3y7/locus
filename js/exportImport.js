@@ -110,7 +110,7 @@ async function exportArchive() {
     const payload = {
       exportedAt: Date.now(),
       appVersion: 2, // archive FORMAT version (bump only if the export/import shape changes)
-      locusVersion: Utils.APP_VERSION, // which LOCUS app build produced this export
+      lokusVersion: Utils.APP_VERSION, // which Lokus app build produced this export
       session: session || null,
       config,
       entries: serializedEntries,

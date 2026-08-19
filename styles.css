@@ -1,28 +1,32 @@
 /* ============================================================
-   LOCUS — Muzejska dokumentacijska platforma
+   LOKUS — Muzejska dokumentacijska platforma
    Design tokens
-   Palette: warm parchment background, terracotta primary,
-   sand secondary, archival green + rust for status signalling.
+   Palette (SPDM identity):
+     primary teal #45998B, light primary #A9D5CD,
+     dark neutral #2F3B39, light neutral #F4F8F7,
+     accent (warnings / important statuses) #B68B52.
+   Danger red is kept separate from the brand palette on purpose,
+   reserved strictly for destructive actions and validation errors.
    Type: Fraunces (display serif) / Source Serif 4 (body) /
    IBM Plex Mono (data, inventory numbers).
    ============================================================ */
 
 :root {
-  --mf-bg: #F8F5F0;
-  --mf-bg-elevated: #F1E9DA;
+  --mf-bg: #F4F8F7;             /* light neutral — base app background */
+  --mf-bg-elevated: #E9F3F1;    /* light neutral, slightly deeper — header wash, panels */
   --mf-surface: #FFFFFF;
   --mf-surface-2: #FFFFFF;
-  --mf-parchment: #3A2E27;   /* primary ink / text colour */
-  --mf-muted: #8C7B6B;
-  --mf-brass: #A65A3A;       /* brand primary — terracotta */
-  --mf-brass-bright: #8B4A2E; /* primary, darker (hover/active on light bg) */
-  --mf-secondary: #D9C6A5;   /* brand secondary — sand */
-  --mf-green: #6F7D5C;
-  --mf-rust: #A63A2E;        /* danger */
-  --mf-hairline: rgba(58, 46, 39, 0.12);
-  --mf-hairline-strong: rgba(58, 46, 39, 0.24);
-  --mf-shadow: 0 14px 34px rgba(58, 46, 39, 0.14);
-  --mf-on-brass: #FBF6EF;    /* text placed on top of primary-coloured surfaces */
+  --mf-parchment: #2F3B39;      /* dark neutral — primary ink / text colour */
+  --mf-muted: #5F726E;          /* muted text, derived from dark neutral */
+  --mf-brass: #45998B;          /* brand primary — teal */
+  --mf-brass-bright: #397D72;   /* primary, darker (hover/active on light bg) */
+  --mf-secondary: #A9D5CD;      /* light primary — card backgrounds, hover states */
+  --mf-accent: #B68B52;         /* accent — warning marks, important statuses */
+  --mf-rust: #A63A2E;           /* danger — reserved for destructive actions/errors, not part of brand palette */
+  --mf-hairline: rgba(47, 59, 57, 0.12);
+  --mf-hairline-strong: rgba(47, 59, 57, 0.24);
+  --mf-shadow: 0 14px 34px rgba(47, 59, 57, 0.14);
+  --mf-on-brass: #F4F8F7;       /* text placed on top of primary-coloured surfaces */
 
   --font-display: 'Fraunces', 'Iowan Old Style', serif;
   --font-body: 'Source Serif 4', Georgia, serif;
@@ -39,8 +43,8 @@ html, body {
   padding: 0;
   background: var(--mf-bg);
   background-image:
-    radial-gradient(circle at 15% 0%, rgba(166, 90, 58, 0.05), transparent 45%),
-    radial-gradient(circle at 85% 100%, rgba(111, 125, 92, 0.05), transparent 45%);
+    radial-gradient(circle at 15% 0%, rgba(69, 153, 139, 0.06), transparent 45%),
+    radial-gradient(circle at 85% 100%, rgba(182, 139, 82, 0.05), transparent 45%);
   color: var(--mf-parchment);
   font-family: var(--font-body);
   min-height: 100vh;
@@ -80,20 +84,13 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 
 .mf-logo-img {
   height: 44px;
+  max-width: 200px;
   width: auto;
+  object-fit: contain;
   display: block;
 }
 
 .mf-header-titles { flex: 1; min-width: 220px; }
-
-.mf-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--mf-brass);
-  margin: 0 0 4px;
-}
 
 .mf-header-titles h1 {
   font-size: clamp(22px, 3vw, 30px);
@@ -287,6 +284,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-field input[type="number"],
 .mf-field input[type="date"],
 .mf-field input[type="password"],
+.mf-field textarea,
 .mf-field select {
   background: var(--mf-surface);
   border: 1px solid var(--mf-hairline-strong);
@@ -296,7 +294,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   padding: 10px 12px;
   border-radius: var(--radius);
 }
-.mf-field input:focus, .mf-field select:focus { border-color: var(--mf-brass); }
+.mf-field input:focus, .mf-field select:focus, .mf-field textarea:focus { border-color: var(--mf-brass); }
 
 .mf-field input[type="file"] {
   color: var(--mf-muted);
@@ -332,7 +330,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(40, 30, 24, 0.45);
+  background: rgba(20, 26, 25, 0.55);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: flex-start;
@@ -807,7 +805,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   margin: 0 0 14px;
 }
 .mf-draft-notice code {
-  background: rgba(58, 46, 39, 0.08);
+  background: rgba(47, 59, 57, 0.08);
   padding: 1px 5px;
   border-radius: 3px;
   font-family: var(--font-mono);
@@ -850,9 +848,37 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-toast-in { opacity: 1; transform: translateX(0); }
 .mf-toast-out { opacity: 0; transform: translateX(12px); }
 
-.mf-toast-success { border-left-color: var(--mf-green); }
+.mf-toast-success { border-left-color: var(--mf-brass); }
 .mf-toast-error { border-left-color: var(--mf-rust); }
 .mf-toast-info { border-left-color: var(--mf-brass); }
+
+/* ---------------- Detail view: compact top actions ---------------- */
+
+.mf-detail-actions-top {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.mf-btn-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.mf-btn-compact svg { flex-shrink: 0; }
+
+/* ---------------- Auto-expanding textarea ---------------- */
+
+.mf-field textarea.mf-autoexpand {
+  resize: none;
+  overflow: hidden;
+  min-height: 44px;
+  line-height: 1.45;
+  font-family: var(--font-body);
+}
 
 /* ---------------- Responsive ---------------- */
 
@@ -876,7 +902,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 
   .mf-print-card, .mf-print-catalog {
     font-family: var(--font-body);
-    color: #2A211B;
+    color: #2F3B39;
     max-width: 720px;
     margin: 0 auto;
   }
@@ -910,13 +936,13 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
     border-bottom: 1px solid #ddd;
     padding-left: 8px;
   }
-  .mf-print-card .mf-detail-group-title { color: #6B5B4B; }
+  .mf-print-card .mf-detail-group-title { color: #5F726E; }
 
   .mf-print-meta {
     margin-top: 16px;
     font-family: var(--font-mono);
     font-size: 10.5px;
-    color: #6B5B4B;
+    color: #5F726E;
   }
 
   .mf-print-catalog table {
@@ -930,7 +956,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
     text-align: left;
   }
   .mf-print-catalog th {
-    background: #F1E9DA;
+    background: #E9F3F1;
     font-family: var(--font-mono);
     font-size: 10px;
     text-transform: uppercase;

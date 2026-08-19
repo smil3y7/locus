@@ -1,4 +1,4 @@
-# LOCUS
+# Lokus
 
 Muzejska dokumentacijska platforma — offline-first spletna aplikacija za vnos
 in upravljanje muzejskih predmetov.
@@ -34,8 +34,7 @@ templates/
   spectrum-core.json – kurirano jedro po standardu SPECTRUM (~25 polj), naloži se v osnutek prek admin urejevalnika
   spectrum-podrobno.json – polna shema po uporabnikovi specifikaciji (10 kartic, ~65 polj)
 assets/
-  logo-on-light.png  – (dodaj sam/a) logotip za svetlo glavo strani
-  logo-on-dark.png   – (dodaj sam/a) rezerva za temna ozadja
+  logo.png           – (dodaj sam/a) logotip SPDM za glavo strani
 js/
   eventBus.js       – globalni pub/sub
   utils.js          – čiste pomožne funkcije
@@ -104,10 +103,10 @@ Ker gre za povsem statično stran (brez build koraka), je nastavitev minimalna:
 ## Git ukazi za prvi push
 
 ```bash
-cd locus
+cd lokus
 git init
 git add .
-git commit -m "LOCUS MVP"
+git commit -m "Lokus MVP"
 git branch -M main
 git remote add origin https://github.com/<uporabnisko-ime>/<ime-repozitorija>.git
 git push -u origin main

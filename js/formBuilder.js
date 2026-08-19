@@ -18,6 +18,16 @@ import Utils from './utils.js';
 
 const DOCUMENT_ACCEPT = '.pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.csv';
 
+// Grows a "Samodejno rastoče besedilno polje" (autoExpand text field) to fit
+// its content — only works while the element is actually visible (non-zero
+// layout), so callers must re-run this after showing a previously-hidden
+// tab panel, not just on input.
+function autoExpandTextarea(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 let currentContainer = null;
 let currentForm = null;
 
@@ -486,6 +496,9 @@ function fieldInputHtml(field, value) {
   const placeholder = field.placeholder ? ` placeholder="${Utils.escapeHtml(field.placeholder)}"` : '';
   switch (field.type) {
     case 'text':
+      if (field.autoExpand) {
+        return `<textarea id="f_${field.id}" name="${field.id}" ${req} class="mf-autoexpand" rows="1"${placeholder}>${Utils.escapeHtml(val)}</textarea>`;
+      }
       return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} autocomplete="off" value="${Utils.escapeHtml(val)}"${placeholder} />`;
     case 'number':
       return `<input type="number" id="f_${field.id}" name="${field.id}" ${req} step="any" value="${Utils.escapeHtml(val)}"${placeholder} />`;
@@ -716,7 +729,9 @@ function build(container, config, options) {
   let tabController = null;
   let updateTabPositionUi = null;
   if (useTabs) {
-    tabController = UI.tabify(container);
+    tabController = UI.tabify(container, {
+      onChange: () => container.querySelectorAll('.mf-autoexpand').forEach(autoExpandTextarea),
+    });
     updateTabPositionUi = wireTabNav(container, sections, tabController);
     updateTabDots(container, sections);
     currentForm.addEventListener('input', () => {
@@ -724,6 +739,16 @@ function build(container, config, options) {
       if (updateTabPositionUi) updateTabPositionUi();
     });
   }
+
+  // Initial sizing (covers pre-filled values in edit mode) + live growth
+  // while typing. Only the currently-visible tab panel sizes correctly here;
+  // the rest are picked up by the tabify onChange hook above.
+  container.querySelectorAll('.mf-autoexpand').forEach(autoExpandTextarea);
+  currentForm.addEventListener('input', (event) => {
+    if (event.target && event.target.classList && event.target.classList.contains('mf-autoexpand')) {
+      autoExpandTextarea(event.target);
+    }
+  });
 
   currentForm.addEventListener('submit', (event) => {
     event.preventDefault();

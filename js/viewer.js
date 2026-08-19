@@ -205,7 +205,7 @@ function printCardHtml(entry, config) {
   return `
     <div class="mf-print-card">
       <div class="mf-print-header">
-        <span class="mf-print-eyebrow">LOCUS · Muzejska dokumentacijska platforma</span>
+        <span class="mf-print-eyebrow">Lokus · Inventarna knjiga</span>
         <h2>${Utils.escapeHtml(title)}</h2>
         ${inventory ? `<span class="mf-print-inventory">${Utils.escapeHtml(inventory)}</span>` : ''}
       </div>
@@ -227,21 +227,30 @@ function openDetail(entry, config) {
   const content = document.createElement('div');
   content.className = 'mf-detail';
   content.innerHTML = `
+    <div class="mf-detail-actions-top">
+      <button type="button" class="mf-btn mf-btn-ghost mf-btn-compact" id="mf-edit-entry">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Uredi
+      </button>
+      <button type="button" class="mf-btn mf-btn-ghost mf-btn-compact" id="mf-print-entry">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Natisni
+      </button>
+      <button type="button" class="mf-btn mf-btn-danger mf-btn-compact" id="mf-delete-entry">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Izbriši
+      </button>
+    </div>
     ${imgUrl ? `<div class="mf-detail-photo"><img src="${imgUrl}" alt="" /></div>` : ''}
     <div class="mf-detail-meta">
       Vnesel: ${Utils.escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}
     </div>
     ${lastEditedLine}
     <div class="mf-detail-rows">${rows}</div>
-    <div class="mf-form-actions">
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-edit-entry">Uredi predmet</button>
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-print-entry">Natisni kartico</button>
-      <button type="button" class="mf-btn mf-btn-danger" id="mf-delete-entry">Izbriši predmet</button>
-    </div>
   `;
 
   const title = primaryFieldValue(entry, config, ['title', 'naziv']) || 'Podrobnosti predmeta';
-  UI.openModal({ title: Utils.escapeHtml(title), content });
+  UI.openModal({ title: Utils.escapeHtml(title), content, wide: true });
   UI.tabify(content);
 
   content.querySelector('#mf-delete-entry').addEventListener('click', async () => {

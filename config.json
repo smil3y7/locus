@@ -95,15 +95,15 @@
   "fields": [
     {
       "id": "status_enote",
-      "label": "Status enote",
+      "label": "Status predmeta",
       "type": "select",
       "required": true,
       "options": [
-        "Muzealija",
-        "Muzejski predmet",
-        "Evidentirano gradivo"
+        "muzealija",
+        "muzejski predmet",
+        "evidentirano gradivo"
       ],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_status"
     },
@@ -113,7 +113,7 @@
       "type": "text",
       "required": true,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_status",
       "placeholder": "npr. 2023.145"
@@ -124,7 +124,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_status"
     },
@@ -134,7 +134,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_status"
     },
@@ -145,7 +145,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_status",
       "subFields": [
@@ -174,7 +174,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_status"
     },
@@ -184,7 +184,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_poimenovanje"
     },
@@ -194,12 +194,12 @@
       "type": "select",
       "required": false,
       "options": [
-        "Književno",
-        "Strokovno",
-        "Narečno",
-        "Pogovorno"
+        "književno",
+        "strokovno",
+        "narečno",
+        "pogovorno"
       ],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_poimenovanje"
     },
@@ -209,7 +209,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_poimenovanje"
     },
@@ -220,7 +220,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_poimenovanje",
       "subFields": [
@@ -246,15 +246,15 @@
       "type": "select",
       "required": false,
       "options": [
-        "Slovenski",
-        "Angleški",
-        "Nemški",
-        "Italijanski",
-        "Latinski",
-        "Hrvaški",
-        "Drugo"
+        "slovenski",
+        "angleški",
+        "nemški",
+        "italijanski",
+        "latinski",
+        "hrvaški",
+        "drugo"
       ],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_poimenovanje"
     },
@@ -268,7 +268,7 @@
         "Zbirka glasbila",
         "Zbirka prazgodovina"
       ],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_klasifikacija"
     },
@@ -302,7 +302,7 @@
         "Drugi predmeti zgodovinskega pomena",
         "Brez zvrsti"
       ],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_klasifikacija"
     },
@@ -314,10 +314,10 @@
       "options": [
         "Iconclass",
         "AAT",
-        "Lastna klasifikacija",
-        "Drug sistem"
+        "lastna klasifikacija",
+        "drug sistem"
       ],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_klasifikacija"
     },
@@ -327,7 +327,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_klasifikacija",
       "placeholder": "npr. koda po izbranem klasifikacijskem sistemu"
@@ -339,7 +339,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_kljucne_besede",
       "subFields": [
@@ -356,12 +356,12 @@
           "type": "select",
           "required": false,
           "options": [
-            "Predmet",
-            "Oseba",
-            "Kraj",
-            "Dejavnost",
-            "Obdobje",
-            "Tema"
+            "predmet",
+            "oseba",
+            "kraj",
+            "dejavnost",
+            "obdobje",
+            "tema"
           ]
         }
       ]
@@ -373,7 +373,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_izdelava",
       "section": "sec_avtorstvo",
       "subFields": [
@@ -383,10 +383,10 @@
           "type": "select",
           "required": false,
           "options": [
-            "Pisatelj",
-            "Slikar",
-            "Kovač",
-            "Restavrator"
+            "pisatelj",
+            "slikar",
+            "kovač",
+            "restavrator"
           ]
         },
         {
@@ -409,9 +409,9 @@
           "type": "select",
           "required": false,
           "options": [
-            "Ustvarjalec",
-            "Izdelovalec",
-            "Soavtor"
+            "ustvarjalec",
+            "izdelovalec",
+            "soavtor"
           ]
         }
       ]
@@ -422,7 +422,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_izdelava",
       "section": "sec_nastanek"
     },
@@ -433,7 +433,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_izdelava",
       "section": "sec_nastanek",
       "subFields": [
@@ -443,11 +443,11 @@
           "type": "select",
           "required": false,
           "options": [
-            "Začetek",
-            "Sredina",
-            "Prva polovica",
-            "Tretja četrtina",
-            "Konec"
+            "začetek",
+            "sredina",
+            "prva polovica",
+            "tretja četrtina",
+            "konec"
           ]
         },
         {
@@ -477,19 +477,20 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_izdelava",
       "section": "sec_najdba"
     },
     {
       "id": "datum_najdbe",
       "label": "Datum najdbe",
-      "type": "text",
+      "type": "date",
       "required": false,
-      "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_izdelava",
-      "section": "sec_najdba"
+      "section": "sec_najdba",
+      "fixedPrecision": "day",
+      "options": []
     },
     {
       "id": "okoliscine_najdbe",
@@ -497,7 +498,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_izdelava",
       "section": "sec_najdba"
     },
@@ -507,7 +508,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_opis"
     },
@@ -518,7 +519,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_opis",
       "subFields": [
@@ -544,7 +545,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_opis"
     },
@@ -554,7 +555,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_opis"
     },
@@ -564,7 +565,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_opis"
     },
@@ -574,7 +575,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_interpretacija"
     },
@@ -585,7 +586,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_interpretacija",
       "subFields": [
@@ -595,6 +596,28 @@
           "type": "image",
           "required": true,
           "options": []
+        },
+        {
+          "id": "avtor",
+          "label": "Avtor",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "opis_slike",
+          "label": "Opis slike",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "datum",
+          "label": "Datum",
+          "type": "date",
+          "required": false,
+          "options": [],
+          "fixedPrecision": "day"
         }
       ]
     },
@@ -605,7 +628,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_interpretacija",
       "subFields": [
@@ -624,7 +647,7 @@
       "type": "link",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_interpretacija"
     },
@@ -634,7 +657,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_uporaba",
       "section": null
     },
@@ -645,7 +668,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_uporaba",
       "subFields": [
         {
@@ -654,11 +677,11 @@
           "type": "select",
           "required": false,
           "options": [
-            "Začetek",
-            "Sredina",
-            "Prva polovica",
-            "Tretja četrtina",
-            "Konec"
+            "začetek",
+            "sredina",
+            "prva polovica",
+            "tretja četrtina",
+            "konec"
           ]
         },
         {
@@ -689,7 +712,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_uporaba",
       "section": null
     },
@@ -699,7 +722,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_uporaba",
       "section": null
     },
@@ -709,7 +732,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_uporaba",
       "section": null
     },
@@ -720,7 +743,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_materialnost",
       "subFields": [
         {
@@ -729,12 +752,12 @@
           "type": "select",
           "required": true,
           "options": [
-            "Les",
-            "Marmor",
-            "Kamen",
-            "Steklo",
-            "Glina",
-            "Mavec"
+            "les",
+            "marmor",
+            "kamen",
+            "steklo",
+            "glina",
+            "mavec"
           ]
         },
         {
@@ -753,9 +776,10 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_materialnost",
-      "section": null
+      "section": null,
+      "autoExpand": true
     },
     {
       "id": "stevilo_delov",
@@ -763,7 +787,7 @@
       "type": "number",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_materialnost",
       "section": null
     },
@@ -774,7 +798,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_materialnost",
       "subFields": [
         {
@@ -783,9 +807,9 @@
           "type": "select",
           "required": true,
           "options": [
-            "Modeliranje",
-            "Klesanje",
-            "Kovanje"
+            "modeliranje",
+            "klesanje",
+            "kovanje"
           ]
         },
         {
@@ -804,9 +828,10 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_materialnost",
-      "section": null
+      "section": null,
+      "autoExpand": true
     },
     {
       "id": "mere",
@@ -814,12 +839,12 @@
       "type": "measurements",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_materialnost",
       "measurementTypes": [
         {
           "id": "visina",
-          "label": "Višina",
+          "label": "višina",
           "units": [
             "cm",
             "mm",
@@ -828,7 +853,7 @@
         },
         {
           "id": "sirina",
-          "label": "Širina",
+          "label": "širina",
           "units": [
             "cm",
             "mm",
@@ -837,7 +862,7 @@
         },
         {
           "id": "dolzina",
-          "label": "Dolžina",
+          "label": "dolžina",
           "units": [
             "cm",
             "mm",
@@ -846,7 +871,7 @@
         },
         {
           "id": "globina",
-          "label": "Globina",
+          "label": "globina",
           "units": [
             "cm",
             "mm",
@@ -855,7 +880,7 @@
         },
         {
           "id": "premer",
-          "label": "Premer",
+          "label": "premer",
           "units": [
             "cm",
             "mm",
@@ -864,7 +889,7 @@
         },
         {
           "id": "polmer",
-          "label": "Polmer",
+          "label": "polmer",
           "units": [
             "cm",
             "mm",
@@ -873,7 +898,7 @@
         },
         {
           "id": "teza",
-          "label": "Teža",
+          "label": "teža",
           "units": [
             "g",
             "kg"
@@ -888,7 +913,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#6F7D5C",
+      "color": "#2F6E63",
       "group": "group_materialnost",
       "placeholder": "npr. približno velikosti žogice za golf",
       "section": null
@@ -899,13 +924,13 @@
       "type": "select",
       "required": false,
       "options": [
-        "Popolno",
-        "Dobro",
-        "Poškodovano",
-        "Močno poškodovano",
-        "Fragmentarno"
+        "popolno",
+        "dobro",
+        "poškodovano",
+        "močno poškodovano",
+        "fragmentarno"
       ],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_stanje",
       "section": null
     },
@@ -915,7 +940,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_stanje",
       "section": null
     },
@@ -925,7 +950,7 @@
       "type": "date",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_stanje",
       "fixedPrecision": "day",
       "section": null
@@ -936,7 +961,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_stanje",
       "placeholder": "ime odgovorne osebe za pregled in opis stanja",
       "section": null
@@ -952,7 +977,7 @@
         "Premična dediščina, ki je status premičnega spomenika dobila z razglasitvijo",
         "Premična dediščina, ki je status premičnega spomenika pridobila z vpisom v inventarno knjigo muzeja"
       ],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_stanje",
       "section": null
     },
@@ -963,7 +988,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_stanje",
       "subFields": [
         {
@@ -986,7 +1011,7 @@
         "Pokrajinski muzej Koper",
         "Pilonova galerija Ajdovščina"
       ],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "section": null
     },
@@ -996,11 +1021,11 @@
       "type": "select",
       "required": false,
       "options": [
-        "Depo",
-        "Razstava",
-        "Posoja"
+        "depo",
+        "razstava",
+        "posoja"
       ],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "section": null
     },
@@ -1011,7 +1036,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "subFields": [
         {
@@ -1066,7 +1091,7 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "placeholder": "ime odgovorne osebe za nadzor depojev",
       "section": null
@@ -1081,7 +1106,7 @@
         "Župnijski urad Radovljica",
         "Novak, Janez"
       ],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "section": null
     },
@@ -1091,11 +1116,11 @@
       "type": "select",
       "required": false,
       "options": [
-        "Donacija",
-        "Nakup",
-        "Volilo"
+        "donacija",
+        "nakup",
+        "volilo"
       ],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "section": null
     },
@@ -1105,7 +1130,7 @@
       "type": "date",
       "required": false,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "fixedPrecision": "day",
       "section": null
@@ -1117,7 +1142,7 @@
       "required": false,
       "repeatable": true,
       "options": [],
-      "color": "#A63A2E",
+      "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "subFields": [
         {
@@ -1137,7 +1162,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_vrednost",
       "subFields": [
         {
@@ -1166,7 +1191,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_vrednost",
       "subFields": [
         {
@@ -1195,7 +1220,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_vrednost",
       "subFields": [
         {
@@ -1223,9 +1248,10 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_vrednost",
-      "section": null
+      "section": null,
+      "autoExpand": true
     },
     {
       "id": "vrednotil",
@@ -1234,7 +1260,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_vrednost",
       "subFields": [
         {
@@ -1260,7 +1286,7 @@
       "type": "date",
       "required": false,
       "options": [],
-      "color": "#B8863A",
+      "color": "#B68B52",
       "group": "group_vrednost",
       "fixedPrecision": "day",
       "section": null
@@ -1272,7 +1298,7 @@
       "required": false,
       "repeatable": false,
       "options": [],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_administrativno",
       "subFields": [
         {
@@ -1298,12 +1324,12 @@
       "type": "select",
       "required": false,
       "options": [
-        "Kustos zbirke",
-        "Kustos dokumentalist",
-        "Muzejski sodelavec",
-        "Študent"
+        "kustos zbirke",
+        "kustos dokumentalist",
+        "muzejski sodelavec",
+        "študent"
       ],
-      "color": "#A65A3A",
+      "color": "#45998B",
       "group": "group_administrativno",
       "section": null
     }

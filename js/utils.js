@@ -76,7 +76,7 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-const DEFAULT_FIELD_COLOR = '#A65A3A';
+const DEFAULT_FIELD_COLOR = '#45998B';
 
 // Groups config.fields by config.groups, in group order, with a trailing
 // "Splošno" section for fields that have no (or an invalid) group. Used
@@ -138,7 +138,7 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '0.2.1';
+const APP_VERSION = '0.3.0';
 
 // Second-level grouping WITHIN one tab/group's fields — "razdelki" (sections)
 // are visual sub-headers that further organize a tab's fields, defined per

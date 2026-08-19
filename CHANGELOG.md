@@ -6,9 +6,46 @@ Vse pomembnejše spremembe aplikacije so zabeležene tukaj. Format sledi
 
 Trenutna verzija je zapisana na enem mestu v kodi: `APP_VERSION` v
 `js/utils.js`. Prikazana je v nogi strani aplikacije in v vsaki izvoženi
-arhivski datoteki (polje `locusVersion`). Ob vsaki pomembnejši spremembi:
+arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
+
+## [0.3.0] — preimenovanje v Lokus, nova SPDM barvna shema, popravki obrazca
+
+### Spremenjeno
+- Aplikacija preimenovana iz LOCUS v **Lokus** (naslov strani, glava, tisk,
+  noga strani, ime lokalne baze `LokusDB`, polje `lokusVersion` v izvozu).
+  Ker je aplikacija še v testni fazi, preimenovanje ni ohranjalo združljivosti
+  za nazaj — obstoječi testni vnosi po posodobitvi niso več vidni (nova prazna
+  baza).
+- Nova barvna shema po CGP-ju SPDM: primarna #45998B, svetla primarna
+  #A9D5CD, temna nevtralna #2F3B39, svetla nevtralna #F4F8F7, akcentna
+  #B68B52. Rdeča barva za nevarna dejanja (brisanje, napake) je ohranjena
+  ločeno od barvne sheme. Obstoječe barvne oznake polj (za vizualno
+  združevanje sorodnih polj) so preslikane na dva odtenka primarne in dva
+  odtenka akcentne barve; admin jih lahko še vedno poljubno spremeni.
+- Logotip: glava strani zdaj uporablja samo eno datoteko, `assets/logo.png`
+  (prej dve, za svetlo/temno ozadje) — glej `assets/README.md`.
+- Naslov razdelka s predmeti "Zbirka" (+ podnapis) nadomeščen z enotnim
+  naslovom "Inventarna knjiga".
+- Polje "Status enote" preimenovano v "Status predmeta".
+- Šifrirana gesla (spustni seznami) so zdaj zapisana z malimi tiskanimi
+  črkami pri: status predmeta, vrsta imena, jezik naslova, tip klasifikacije
+  (razen kratic Iconclass/AAT), tip ključne besede, vrsta avtorstva, vloga
+  avtorstva, položaj (čas izdelave/uporabe), material, vrste mer, stanje,
+  trenutna lokacija, način pridobitve, vloga (administrativni podatki).
+- Polje "Datum najdbe" spremenjeno iz besedilnega v datumsko polje (izbira iz
+  koledarčka).
+- Gumbi "Uredi" / "Natisni" / "Izbriši" v podrobnostih predmeta premaknjeni
+  nad fotografijo, pomanjšani in opremljeni z ikono; kartica podrobnosti je
+  širša.
+
+### Dodano
+- Skupina "Viri – slike" ima nova pod-polja: Avtor, Opis slike, Datum.
+- Nova nastavitev polja "Samodejno rastoče besedilno polje" — admin jo lahko
+  vklopi na poljubnem besedilnem polju (privzeto vklopljena pri Opis
+  materiala, Opis tehnike, Opis vrednotenja); polje se med vnosom širi
+  navzdol namesto da besedilo obreže.
 
 ## [0.2.1] — poudarjanje polj z barvo ozadja
 

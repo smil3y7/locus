@@ -4,7 +4,7 @@
 
 import Utils from './utils.js';
 
-const DB_NAME = 'LocusDB';
+const DB_NAME = 'LokusDB';
 const DB_VERSION = 1;
 const STORE_ENTRIES = 'entries';
 const STORE_META = 'meta';

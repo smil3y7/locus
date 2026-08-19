@@ -275,6 +275,11 @@ function renderFieldFormMarkup(config) {
         <input type="checkbox" id="cf-bg-highlight" />
       </div>
       <p class="mf-field-hint">Polje dobi rahlo obarvano ozadje (v izbrani barvi) namesto samo obrobe — za polja, ki naj resnično izstopajo.</p>
+      <div class="mf-field mf-field-inline" id="cf-autoexpand-wrap" style="display:none">
+        <label for="cf-autoexpand">Samodejno rastoče besedilno polje</label>
+        <input type="checkbox" id="cf-autoexpand" />
+      </div>
+      <p class="mf-field-hint" id="cf-autoexpand-hint" style="display:none">Polje se med vnosom širi navzdol, da je vidno vse besedilo naenkrat — priporočljivo za daljša opisna polja (npr. opis materiala, opis tehnike, opis vrednotenja).</p>
       <div class="mf-field" id="cf-measurement-types-wrap" style="display:none">
         <label>Dovoljene vrste mer</label>
         <ul class="mf-config-list" id="cf-measurement-types-list"></ul>
@@ -326,6 +331,9 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
   const fixedPrecisionInput = wrapper.querySelector('#cf-fixed-precision');
   const measurementTypesWrap = wrapper.querySelector('#cf-measurement-types-wrap');
   const measurementTypesList = wrapper.querySelector('#cf-measurement-types-list');
+  const autoExpandWrap = wrapper.querySelector('#cf-autoexpand-wrap');
+  const autoExpandHint = wrapper.querySelector('#cf-autoexpand-hint');
+  const autoExpandInput = wrapper.querySelector('#cf-autoexpand');
   const placeholderInput = wrapper.querySelector('#cf-placeholder');
   const subFieldsWrap = wrapper.querySelector('#cf-subfields-wrap');
   const subFieldsList = wrapper.querySelector('#cf-subfields-list');
@@ -409,6 +417,9 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     subFieldsWrap.style.display = type === 'group' ? '' : 'none';
     fixedPrecisionWrap.style.display = type === 'date' ? '' : 'none';
     placeholderWrap.style.display = ['image', 'document', 'measurements', 'group'].includes(type) ? 'none' : '';
+    autoExpandWrap.style.display = type === 'text' ? '' : 'none';
+    autoExpandHint.style.display = type === 'text' ? '' : 'none';
+    if (type !== 'text') autoExpandInput.checked = false;
   }
 
   typeSelect.addEventListener('change', updateVisibilityForType);
@@ -481,6 +492,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     placeholderInput.value = field.placeholder || '';
     colorInput.value = field.color || Utils.DEFAULT_FIELD_COLOR;
     bgHighlightInput.checked = Boolean(field.backgroundHighlight);
+    autoExpandInput.checked = Boolean(field.autoExpand);
     fixedPrecisionInput.checked = Boolean(field.fixedPrecision);
     repeatableInput.checked = field.repeatable !== false;
     currentMeasurementTypes = field.measurementTypes ? Utils.deepClone(field.measurementTypes) : [];
@@ -545,6 +557,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     const placeholder = placeholderInput.value.trim();
     const color = colorInput.value;
     const backgroundHighlight = bgHighlightInput.checked;
+    const autoExpand = type === 'text' && autoExpandInput.checked;
     const fixedPrecision = type === 'date' && fixedPrecisionInput.checked ? 'day' : null;
     const repeatable = repeatableInput.checked;
 
@@ -571,6 +584,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
       placeholder,
       color,
       backgroundHighlight,
+      autoExpand,
       fixedPrecision,
       repeatable,
       measurementTypes: currentMeasurementTypes,
@@ -937,7 +951,7 @@ async function printCatalog() {
   const html = `
     <div class="mf-print-catalog">
       <div class="mf-print-header">
-        <span class="mf-print-eyebrow">LOCUS · Muzejska dokumentacijska platforma</span>
+        <span class="mf-print-eyebrow">Lokus · Inventarna knjiga</span>
         <h2>${Utils.escapeHtml(session?.trainingTitle || 'Katalog predmetov')}</h2>
         <span class="mf-print-inventory">${entries.length} predmetov ${session?.userName ? '· ' + Utils.escapeHtml(session.userName) : ''}</span>
       </div>
@@ -984,7 +998,7 @@ async function bootstrap() {
   UI.init();
 
   const versionEl = document.getElementById('mf-app-version');
-  if (versionEl) versionEl.textContent = `LOCUS v${Utils.APP_VERSION}`;
+  if (versionEl) versionEl.textContent = `Lokus v${Utils.APP_VERSION}`;
 
   try {
     await ConfigService.getLiveConfig(); // warms the fetched/cached form schema; emits ui:fatal/ui:notify itself on failure
