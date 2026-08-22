@@ -10,6 +10,20 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [0.4.1] — popravek: dolgo besedilo je uhajalo iz kartice/tiska
+
+### Popravljeno
+- Vrstice v pogledu podrobnosti predmeta (in enako v tiskanem izpisu, ki
+  uporablja isto strukturo) niso prelamljale daljšega besedila, zato je
+  vrednost pri poljih z veliko besedila (npr. Fizični opis celote, Opis
+  materiala/tehnike/vrednotenja) segala izven roba kartice, namesto da bi
+  se prelomila v več vrstic. To je bila splošna napaka pri izrisu vseh
+  vrednosti (ne le pri poljih s samodejno rastočo textarea), zato zdaj
+  velja popravljeno za vsa polja.
+- Dodatno utrjeno samodejno raščanje textarea v obrazcu za vnos/urejanje:
+  poleg preklopa med zavihki se velikost polja zdaj preračuna tudi ob
+  vsakem fokusu nanj (varovalka za robne primere).
+
 ## [0.4.0] — predmetna kartica, tooltipi, popravki šifrantov in Času uporabe/izdelave
 
 ### Spremenjeno

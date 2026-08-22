@@ -756,13 +756,23 @@ function build(container, config, options) {
 
   // Initial sizing (covers pre-filled values in edit mode) + live growth
   // while typing. Only the currently-visible tab panel sizes correctly here;
-  // the rest are picked up by the tabify onChange hook above.
+  // the rest are picked up by the tabify onChange hook above, and as a
+  // safety net, also on focus (covers e.g. keyboard tab-through).
   container.querySelectorAll('.mf-autoexpand').forEach(autoExpandTextarea);
   currentForm.addEventListener('input', (event) => {
     if (event.target && event.target.classList && event.target.classList.contains('mf-autoexpand')) {
       autoExpandTextarea(event.target);
     }
   });
+  currentForm.addEventListener(
+    'focus',
+    (event) => {
+      if (event.target && event.target.classList && event.target.classList.contains('mf-autoexpand')) {
+        autoExpandTextarea(event.target);
+      }
+    },
+    true // capture: 'focus' does not bubble
+  );
 
   currentForm.addEventListener('submit', (event) => {
     event.preventDefault();

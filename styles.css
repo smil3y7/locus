@@ -392,14 +392,24 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-detail-row {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: 12px;
   padding: 10px 0;
   border-bottom: 1px dashed var(--mf-hairline);
   border-left: 2px solid var(--field-accent, var(--mf-brass));
   padding-left: 10px;
 }
-.mf-detail-label { color: var(--mf-muted); font-size: 13px; }
-.mf-detail-value { color: var(--mf-parchment); font-size: 14px; text-align: right; }
+.mf-detail-label { color: var(--mf-muted); font-size: 13px; flex-shrink: 0; max-width: 40%; }
+.mf-detail-value {
+  color: var(--mf-parchment);
+  font-size: 14px;
+  text-align: right;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
 
 .mf-dialog-message { color: var(--mf-parchment); line-height: 1.5; margin: 0 0 18px; }
 
