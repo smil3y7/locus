@@ -18,6 +18,20 @@ import Utils from './utils.js';
 
 const DOCUMENT_ACCEPT = '.pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.csv';
 
+// Renders a <label> for a field/sub-field. When `tooltip` is set, both the
+// label text itself and a small info icon next to it get a native `title`
+// attribute — hovering (or focusing, for keyboard users) either one shows
+// the explanatory text via the browser's usual tooltip mechanism.
+function labelHtml(labelText, { required, tooltip, forId } = {}) {
+  const reqSpan = required ? ' <span class="mf-required">*</span>' : '';
+  const forAttr = forId ? ` for="${forId}"` : '';
+  if (!tooltip) {
+    return `<label${forAttr}>${Utils.escapeHtml(labelText)}${reqSpan}</label>`;
+  }
+  const tip = Utils.escapeHtml(tooltip);
+  return `<label${forAttr} title="${tip}">${Utils.escapeHtml(labelText)}${reqSpan} <span class="mf-tooltip-icon" tabindex="0" title="${tip}" aria-label="Pojasnilo: ${tip}">i</span></label>`;
+}
+
 // Grows a "Samodejno rastoče besedilno polje" (autoExpand text field) to fit
 // its content — only works while the element is actually visible (non-zero
 // layout), so callers must re-run this after showing a previously-hidden
@@ -158,7 +172,7 @@ function renderSubFieldInput(field, idBase, value) {
       const opts = (field.options || [])
         .map((opt) => `<option value="${Utils.escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${Utils.escapeHtml(opt)}</option>`)
         .join('');
-      return `<select id="${idBase}"><option value="" ${value ? '' : 'selected'} disabled>Izberi …</option>${opts}</select>`;
+      return `<select id="${idBase}"><option value="" ${value ? '' : 'selected'}>Izberi …</option>${opts}</select>`;
     }
     case 'image': {
       const hint = value instanceof Blob ? '<p class="mf-field-hint">Trenutna slika ostane, če ne izbereš nove.</p>' : '';
@@ -291,7 +305,7 @@ function attachGroupWidget(field, form, existingValues) {
           .map(
             (sf) => `
           <div class="mf-field">
-            <label>${Utils.escapeHtml(sf.label)}${sf.required ? ' <span class="mf-required">*</span>' : ''}</label>
+            ${labelHtml(sf.label, { required: sf.required, tooltip: sf.tooltip })}
             ${renderSubFieldInput(sf, `${idBase}_${sf.id}`)}
           </div>
         `
@@ -510,7 +524,7 @@ function fieldInputHtml(field, value) {
         .join('');
       const placeholderLabel = field.placeholder ? Utils.escapeHtml(field.placeholder) : 'Izberi …';
       return `<select id="f_${field.id}" name="${field.id}" ${req}>
-        <option value="" disabled${value ? '' : ' selected'}>${placeholderLabel}</option>
+        <option value=""${value ? '' : ' selected'}>${placeholderLabel}</option>
         ${opts}
       </select>`;
     }
@@ -538,12 +552,12 @@ function fieldInputHtml(field, value) {
         const subFields = field.subFields || [];
         const existingItem = value || {};
         return `
-          <div class="mf-group-inline" data-group-inline="${field.id}">
+          <div class="mf-group-inline${field.inlineRow ? ' mf-group-inline-row' : ''}" data-group-inline="${field.id}">
             ${subFields
               .map(
                 (sf) => `
               <div class="mf-field mf-group-inline-field">
-                <label>${Utils.escapeHtml(sf.label)}${sf.required ? ' <span class="mf-required">*</span>' : ''}</label>
+                ${labelHtml(sf.label, { required: sf.required, tooltip: sf.tooltip })}
                 ${renderSubFieldInput(sf, `f_${field.id}_${sf.id}`, existingItem[sf.id])}
               </div>
             `
@@ -580,7 +594,7 @@ function fieldHtml(field, existingValues, existingPhotoUrlsByField) {
     : '';
   return `
     <div class="mf-field" data-type="${field.type}" style="--field-accent:${field.color || Utils.DEFAULT_FIELD_COLOR};${bgStyle}">
-      <label for="f_${field.id}">${Utils.escapeHtml(field.label)}${field.required ? ' <span class="mf-required">*</span>' : ''}</label>
+      ${labelHtml(field.label, { required: field.required, tooltip: field.tooltip, forId: `f_${field.id}` })}
       ${fieldInputHtml(field, value)}
       ${currentFileHint}
     </div>

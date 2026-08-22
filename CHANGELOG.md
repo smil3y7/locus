@@ -10,6 +10,24 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [0.4.0] — predmetna kartica, tooltipi, popravki šifrantov in Času uporabe/izdelave
+
+### Spremenjeno
+- Predmetna kartica (pogled s podrobnostmi) se ne zapre več s klikom zunaj nje — zapre se samo z gumbom "×" ali s tipko Esc. (Ostali obrazci/pojavna okna v aplikaciji to obnašanje ohranijo nespremenjeno.)
+- Polje "Fizični opis celote" je zdaj samodejno rastoča textarea (enako kot Opis materiala/tehnike/vrednotenja) — besedilo med tipkanjem ne izgine več iz vidnega dela polja.
+- Popravljena splošna napaka: v vseh spustnih seznamih po celi aplikaciji (ne le v enem polju) je bilo prazno "Izberi …" po izbiri prave vrednosti pomotoma onemogočeno, zato je ni bilo več mogoče izbrati nazaj. Zdaj je vsak spustni seznam mogoče znova počistiti na prazno vrednost.
+- Polje "Številka" pri Času uporabe IN Času izdelave (isti napaki podvržena oba sklopa) je spremenjeno iz števila v besedilo, da lahko shrani zapis stoletja s piko (npr. "19.", "20.") brez izgube pike.
+- Položaj/Številka/Enota se pri Času uporabe in Času izdelave zdaj prikažejo v eni vodoravni vrstici.
+- "Vrsta imena": vrednost "književno" preimenovana v "knjižno".
+- V šifrante dodane nove vrednosti (obstoječe ohranjene): Zbirka, Tip klasifikacije, Tip ključne besede, Vrsta avtorstva, Material.
+- Predlogo `templates/spectrum-podrobno.json` znova uskladil z živo shemo `config.json`.
+
+### Dodano
+- Nov sklop polj "Naslov v tujem jeziku" + "Jezik naslova" (angleški/nemški/italijanski/francoski/španski), takoj za obstoječim poljem Jezik naslova.
+- Tooltipi (pojasnjevalna besedila) na 17 poljih — prikažejo se ob premiku miške/fokusu na ime polja ali na majhno ikono "i" poleg njega.
+- Admin urejevalnik polj ima nov vnos "Pojasnilo (tooltip)" — tooltip za poljubno polje je zdaj mogoče urejati brez poseganja v kodo, enako kot že obstoječi "Namig (placeholder)".
+- V urejevalniku obrazcev (zavihek Polja) so dodatne nastavitve polja preurejene v pregleden seznam s stikali (namesto razmetanih kljukic) — vsak opis je zdaj nedvoumno povezan s svojim stikalom.
+
 ## [0.3.0] — preimenovanje v Lokus, nova SPDM barvna shema, popravki obrazca
 
 ### Spremenjeno

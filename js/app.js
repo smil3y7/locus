@@ -212,6 +212,28 @@ function fieldRowsHtml(fields) {
   return fields.map((f, i) => fieldRowHtml(f, i === 0, i === fields.length - 1)).join('') || '<li class="mf-empty">Ni polj.</li>';
 }
 
+// Renders one row of a "settings list": label + hint tightly paired on the
+// left, a toggle switch (or arbitrary control) on the right. Used in the
+// field editor so each hint is unambiguously attached to its own control,
+// instead of the old stacked checkbox+paragraph layout.
+function settingsRow({ id, label, hint, wrapId, hidden, checked, control }) {
+  const rightControl = control || `
+    <label class="mf-switch">
+      <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} />
+      <span class="mf-switch-track" aria-hidden="true"></span>
+    </label>
+  `;
+  return `
+    <div class="mf-settings-row" ${wrapId ? `id="${wrapId}"` : ''} style="${hidden ? 'display:none' : ''}">
+      <div class="mf-settings-row-text">
+        <label for="${id}">${label}</label>
+        <p class="mf-field-hint">${hint}</p>
+      </div>
+      ${rightControl}
+    </div>
+  `;
+}
+
 function renderFieldsListMarkup(config) {
   const fieldSectionEntries = Utils.groupFieldsIntoSections(config, {
     includeEmptyGroups: true,
@@ -261,25 +283,43 @@ function renderFieldFormMarkup(config) {
         <input type="text" id="cf-placeholder" autocomplete="off" placeholder="npr. npr. 2023.145" />
         <p class="mf-field-hint">Sivo besedilo v praznem polju, ki nakaže pričakovan format. Ni nadomestilo za ime polja.</p>
       </div>
-      <div class="mf-field mf-field-inline" id="cf-fixed-precision-wrap" style="display:none">
-        <label for="cf-fixed-precision">Vedno točen dan (brez izbire natančnosti)</label>
-        <input type="checkbox" id="cf-fixed-precision" />
+      <div class="mf-field">
+        <label for="cf-tooltip">Pojasnilo (tooltip)</label>
+        <input type="text" id="cf-tooltip" autocomplete="off" placeholder="npr. Zapis v skladu s slovenskim pravopisom." />
+        <p class="mf-field-hint">Prikaže se ob premiku miške (ali tipkovničnem fokusu) na ime polja ali na majhno ikono "i" poleg njega. Pusti prazno, če polje ne potrebuje pojasnila.</p>
       </div>
-      <div class="mf-field mf-field-inline">
-        <label for="cf-color">Barva oznake</label>
-        <input type="color" id="cf-color" value="${Utils.DEFAULT_FIELD_COLOR}" />
+      <div class="mf-settings-list">
+        ${settingsRow({
+          id: 'cf-fixed-precision',
+          wrapId: 'cf-fixed-precision-wrap',
+          hidden: true,
+          label: 'Vedno točen dan (brez izbire natančnosti)',
+          hint: 'Če je izklopljeno, lahko uporabnik izbere tudi manj natančen datum (samo leto, samo mesec in leto ...).',
+        })}
+        ${settingsRow({
+          id: 'cf-color',
+          label: 'Barva oznake',
+          hint: 'Poljem, ki spadajo skupaj (ne glede na skupino/zavihek), lahko dodeliš isto barvo, da jih uporabnik prepozna na prvi pogled.',
+          control: `<input type="color" id="cf-color" value="${Utils.DEFAULT_FIELD_COLOR}" />`,
+        })}
+        ${settingsRow({
+          id: 'cf-bg-highlight',
+          label: 'Poudari z barvo ozadja',
+          hint: 'Polje dobi rahlo obarvano ozadje (v izbrani barvi) namesto samo obrobe — za polja, ki naj resnično izstopajo.',
+        })}
+        ${settingsRow({
+          id: 'cf-autoexpand',
+          wrapId: 'cf-autoexpand-wrap',
+          hidden: true,
+          label: 'Samodejno rastoče besedilno polje',
+          hint: 'Polje se med vnosom širi navzdol, da je vidno vse besedilo naenkrat — priporočljivo za daljša opisna polja (npr. opis materiala, opis tehnike, opis vrednotenja).',
+        })}
+        ${settingsRow({
+          id: 'cf-required',
+          label: 'Obvezno polje',
+          hint: 'Obrazca ni mogoče shraniti, dokler to polje ni izpolnjeno.',
+        })}
       </div>
-      <p class="mf-field-hint">Poljem, ki spadajo skupaj (ne glede na skupino/zavihek), lahko dodeliš isto barvo, da jih uporabnik prepozna na prvi pogled.</p>
-      <div class="mf-field mf-field-inline">
-        <label for="cf-bg-highlight">Poudari z barvo ozadja</label>
-        <input type="checkbox" id="cf-bg-highlight" />
-      </div>
-      <p class="mf-field-hint">Polje dobi rahlo obarvano ozadje (v izbrani barvi) namesto samo obrobe — za polja, ki naj resnično izstopajo.</p>
-      <div class="mf-field mf-field-inline" id="cf-autoexpand-wrap" style="display:none">
-        <label for="cf-autoexpand">Samodejno rastoče besedilno polje</label>
-        <input type="checkbox" id="cf-autoexpand" />
-      </div>
-      <p class="mf-field-hint" id="cf-autoexpand-hint" style="display:none">Polje se med vnosom širi navzdol, da je vidno vse besedilo naenkrat — priporočljivo za daljša opisna polja (npr. opis materiala, opis tehnike, opis vrednotenja).</p>
       <div class="mf-field" id="cf-measurement-types-wrap" style="display:none">
         <label>Dovoljene vrste mer</label>
         <ul class="mf-config-list" id="cf-measurement-types-list"></ul>
@@ -305,15 +345,15 @@ function renderFieldFormMarkup(config) {
           <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="cf-subfield-add">+ Dodaj pod-polje</button>
         </div>
         <p class="mf-field-hint">Vsak primerek te skupine (npr. ena fotografija) bo imel vnos za vsako od teh pod-polj.</p>
-        <div class="mf-field mf-field-inline" id="cf-repeatable-wrap">
-          <label for="cf-repeatable">Ponavljajoča (dovoli več primerkov)</label>
-          <input type="checkbox" id="cf-repeatable" checked />
+        <div class="mf-settings-list">
+          ${settingsRow({
+            id: 'cf-repeatable',
+            wrapId: 'cf-repeatable-wrap',
+            checked: true,
+            label: 'Ponavljajoča (dovoli več primerkov)',
+            hint: 'Če ni ponavljajoča, se pod-polja prikažejo enkrat, brez gumba "+ Dodaj" (npr. "Čas izdelave", "Avers/Revers").',
+          })}
         </div>
-        <p class="mf-field-hint">Če ni ponavljajoča, se pod-polja prikažejo enkrat, brez gumba "+ Dodaj" (npr. "Čas izdelave", "Avers/Revers").</p>
-      </div>
-      <div class="mf-field mf-field-inline">
-        <label for="cf-required">Obvezno polje</label>
-        <input type="checkbox" id="cf-required" />
       </div>
       <div class="mf-form-actions">
         <button type="submit" class="mf-btn mf-btn-primary" id="cf-submit-btn">Dodaj polje</button>
@@ -332,9 +372,9 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
   const measurementTypesWrap = wrapper.querySelector('#cf-measurement-types-wrap');
   const measurementTypesList = wrapper.querySelector('#cf-measurement-types-list');
   const autoExpandWrap = wrapper.querySelector('#cf-autoexpand-wrap');
-  const autoExpandHint = wrapper.querySelector('#cf-autoexpand-hint');
   const autoExpandInput = wrapper.querySelector('#cf-autoexpand');
   const placeholderInput = wrapper.querySelector('#cf-placeholder');
+  const tooltipInput = wrapper.querySelector('#cf-tooltip');
   const subFieldsWrap = wrapper.querySelector('#cf-subfields-wrap');
   const subFieldsList = wrapper.querySelector('#cf-subfields-list');
   const repeatableInput = wrapper.querySelector('#cf-repeatable');
@@ -418,7 +458,6 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     fixedPrecisionWrap.style.display = type === 'date' ? '' : 'none';
     placeholderWrap.style.display = ['image', 'document', 'measurements', 'group'].includes(type) ? 'none' : '';
     autoExpandWrap.style.display = type === 'text' ? '' : 'none';
-    autoExpandHint.style.display = type === 'text' ? '' : 'none';
     if (type !== 'text') autoExpandInput.checked = false;
   }
 
@@ -490,6 +529,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     updateVisibilityForType();
     optionsInput.value = (field.options || []).join(', ');
     placeholderInput.value = field.placeholder || '';
+    tooltipInput.value = field.tooltip || '';
     colorInput.value = field.color || Utils.DEFAULT_FIELD_COLOR;
     bgHighlightInput.checked = Boolean(field.backgroundHighlight);
     autoExpandInput.checked = Boolean(field.autoExpand);
@@ -555,6 +595,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     const optionsRaw = optionsInput.value.trim();
     const options = optionsRaw ? optionsRaw.split(',').map((o) => o.trim()).filter(Boolean) : [];
     const placeholder = placeholderInput.value.trim();
+    const tooltip = tooltipInput.value.trim();
     const color = colorInput.value;
     const backgroundHighlight = bgHighlightInput.checked;
     const autoExpand = type === 'text' && autoExpandInput.checked;
@@ -582,6 +623,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
       group,
       section,
       placeholder,
+      tooltip,
       color,
       backgroundHighlight,
       autoExpand,

@@ -250,7 +250,7 @@ function openDetail(entry, config) {
   `;
 
   const title = primaryFieldValue(entry, config, ['title', 'naziv']) || 'Podrobnosti predmeta';
-  UI.openModal({ title: Utils.escapeHtml(title), content, wide: true });
+  UI.openModal({ title: Utils.escapeHtml(title), content, wide: true, closeOnBackdrop: false });
   UI.tabify(content);
 
   content.querySelector('#mf-delete-entry').addEventListener('click', async () => {

@@ -11,7 +11,7 @@ assets/logo.png
 
 - Format: PNG, po možnosti s prosojnim ozadjem
 - Poljubno razmerje stranic — slika se v glavi strani samodejno prilagodi
-  (višina do 44 px, širina se sorazmerno prilagodi, največ 200 px)
+  (višina do 50 px, širina se sorazmerno prilagodi, največ 210 px)
 - Ime datoteke mora biti točno `logo.png` (male črke, brez presledkov)
 
 ## Kaj se zgodi, če datoteke še ni

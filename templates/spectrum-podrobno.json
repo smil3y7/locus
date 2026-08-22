@@ -186,7 +186,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_poimenovanje",
-      "section": "sec_poimenovanje"
+      "section": "sec_poimenovanje",
+      "tooltip": "Male tiskane črke, zapis z malo začetnico."
     },
     {
       "id": "vrsta_imena",
@@ -194,7 +195,7 @@
       "type": "select",
       "required": false,
       "options": [
-        "književno",
+        "knjižno",
         "strokovno",
         "narečno",
         "pogovorno"
@@ -211,7 +212,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_poimenovanje",
-      "section": "sec_poimenovanje"
+      "section": "sec_poimenovanje",
+      "tooltip": "Male tiskane črke, zapis z veliko začetnico."
     },
     {
       "id": "odgovornost_za_naslov",
@@ -259,6 +261,39 @@
       "section": "sec_poimenovanje"
     },
     {
+      "id": "naslov_v_tujem_jeziku",
+      "label": "Naslov v tujem jeziku",
+      "type": "group",
+      "required": false,
+      "repeatable": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje",
+      "subFields": [
+        {
+          "id": "naslov_tuji",
+          "label": "Naslov v tujem jeziku",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "jezik",
+          "label": "Jezik naslova",
+          "type": "select",
+          "required": false,
+          "options": [
+            "angleški",
+            "nemški",
+            "italijanski",
+            "francoski",
+            "španski"
+          ]
+        }
+      ],
+      "section": "sec_poimenovanje"
+    },
+    {
       "id": "zbirka",
       "label": "Zbirka",
       "type": "select",
@@ -266,7 +301,12 @@
       "options": [
         "Zbirka uporabna umetnost",
         "Zbirka glasbila",
-        "Zbirka prazgodovina"
+        "Zbirka prazgodovina",
+        "Umetnostnozgodovinska zbirka",
+        "Arheološka zbirka",
+        "Etnološka zbirka",
+        "Zbirka razglednic",
+        "Zbirka fotografske opreme"
       ],
       "color": "#2F6E63",
       "group": "group_poimenovanje",
@@ -315,7 +355,8 @@
         "Iconclass",
         "AAT",
         "lastna klasifikacija",
-        "drug sistem"
+        "drug sistem",
+        "Pravilnik o seznamih zvrsti dediščine in varstvenih usmeritvah Ur. l. RS, št. 102/10"
       ],
       "color": "#2F6E63",
       "group": "group_poimenovanje",
@@ -348,7 +389,8 @@
           "label": "Ključna beseda",
           "type": "text",
           "required": true,
-          "options": []
+          "options": [],
+          "tooltip": "Male tiskane črke, zapis z malo začetnico."
         },
         {
           "id": "tip",
@@ -361,7 +403,10 @@
             "kraj",
             "dejavnost",
             "obdobje",
-            "tema"
+            "tema",
+            "upodobljen motiv",
+            "material",
+            "tehnika"
           ]
         }
       ]
@@ -386,7 +431,11 @@
             "pisatelj",
             "slikar",
             "kovač",
-            "restavrator"
+            "restavrator",
+            "kipar",
+            "oblikovalec",
+            "fotograf",
+            "arhitekt"
           ]
         },
         {
@@ -453,7 +502,7 @@
         {
           "id": "stevilka",
           "label": "Številka",
-          "type": "number",
+          "type": "text",
           "required": false,
           "options": []
         },
@@ -469,7 +518,8 @@
             "stoletje"
           ]
         }
-      ]
+      ],
+      "inlineRow": true
     },
     {
       "id": "kraj_najdbe",
@@ -500,7 +550,8 @@
       "options": [],
       "color": "#B68B52",
       "group": "group_izdelava",
-      "section": "sec_najdba"
+      "section": "sec_najdba",
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "fizicni_opis_celote",
@@ -510,7 +561,9 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_opis",
-      "section": "sec_opis"
+      "section": "sec_opis",
+      "autoExpand": true,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "deljen_fizicni_opis",
@@ -547,7 +600,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_opis",
-      "section": "sec_opis"
+      "section": "sec_opis",
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "signatura",
@@ -557,7 +611,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_opis",
-      "section": "sec_opis"
+      "section": "sec_opis",
+      "tooltip": "Podatek se zapiše popolnoma enako, kot je zapisan na predmetu."
     },
     {
       "id": "polozaj_signature",
@@ -567,7 +622,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_opis",
-      "section": "sec_opis"
+      "section": "sec_opis",
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "zgodovinski_kontekst",
@@ -659,7 +715,8 @@
       "options": [],
       "color": "#8C6A3D",
       "group": "group_uporaba",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "cas_uporabe",
@@ -687,7 +744,7 @@
         {
           "id": "stevilka",
           "label": "Številka",
-          "type": "number",
+          "type": "text",
           "required": false,
           "options": []
         },
@@ -704,7 +761,8 @@
           ]
         }
       ],
-      "section": null
+      "section": null,
+      "inlineRow": true
     },
     {
       "id": "nacin_uporabe",
@@ -714,7 +772,8 @@
       "options": [],
       "color": "#8C6A3D",
       "group": "group_uporaba",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "kraj_odkritja",
@@ -724,7 +783,8 @@
       "options": [],
       "color": "#8C6A3D",
       "group": "group_uporaba",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "predhodno_lastnistvo",
@@ -734,7 +794,8 @@
       "options": [],
       "color": "#8C6A3D",
       "group": "group_uporaba",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "materiali",
@@ -757,7 +818,12 @@
             "kamen",
             "steklo",
             "glina",
-            "mavec"
+            "mavec",
+            "bron",
+            "papir",
+            "plastika",
+            "litoželezo",
+            "usnje"
           ]
         },
         {
@@ -831,7 +897,8 @@
       "color": "#2F6E63",
       "group": "group_materialnost",
       "section": null,
-      "autoExpand": true
+      "autoExpand": true,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "mere",
@@ -916,7 +983,8 @@
       "color": "#2F6E63",
       "group": "group_materialnost",
       "placeholder": "npr. približno velikosti žogice za golf",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "stanje",
@@ -942,7 +1010,8 @@
       "options": [],
       "color": "#8C6A3D",
       "group": "group_stanje",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "datum_pregleda",
@@ -964,7 +1033,8 @@
       "color": "#8C6A3D",
       "group": "group_stanje",
       "placeholder": "ime odgovorne osebe za pregled in opis stanja",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "varstvene_usmeritve",
@@ -1094,7 +1164,8 @@
       "color": "#8C6A3D",
       "group": "group_lastnistvo",
       "placeholder": "ime odgovorne osebe za nadzor depojev",
-      "section": null
+      "section": null,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "lastnik",
@@ -1251,7 +1322,8 @@
       "color": "#B68B52",
       "group": "group_vrednost",
       "section": null,
-      "autoExpand": true
+      "autoExpand": true,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
       "id": "vrednotil",
