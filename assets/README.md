@@ -23,3 +23,21 @@ glava strani se torej nikoli ne pokvari, tudi preden dodaš pravi logotip.
 ## Če boš kdaj logotip zamenjal
 
 Samo prepiši datoteko z istim imenom — v kodi ni treba spreminjati ničesar.
+
+---
+
+## Favicon (ikona v zavihku brskalnika)
+
+V tej mapi so tudi datoteke favicona: `favicon.svg` (glavna, uporablja jo
+večina sodobnih brskalnikov), `favicon.ico` in `favicon-192.png`
+(nadomestni različici za starejše brskalnike) ter `apple-touch-icon.png`
+(za iOS, če nekdo stran doda na domači zaslon telefona).
+
+Trenutno prikazujejo preprost motiv muzejske stavbe v primarni barvi
+(usklajen z nadomestno oznako v glavi strani). Če jih boš kdaj želel/a
+zamenjati s svojo različico:
+
+1. Pripravi kvadratno sliko (idealno vsaj 512×512 px).
+2. Po možnosti pripravi tudi `.svg` različico za ostrino na vseh zaslonih.
+3. Zamenjaj datoteke v tej mapi z istimi imeni — `index.html` jih že
+   pravilno povezuje, dodatnih sprememb v kodi ni treba.

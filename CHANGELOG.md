@@ -10,6 +10,20 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [0.4.2] — favicon
+
+### Dodano
+- Favicon (ikona zavihka brskalnika): `assets/favicon.svg` (glavna, SVG —
+  ostro na vseh velikostih/gostotah zaslona) z `favicon.ico` in
+  `favicon-192.png` kot nadomestnima različicama za starejše brskalnike,
+  ter `apple-touch-icon.png` za iOS. Motiv (muzejska stavba, primarna
+  barva) je usklajen z nadomestno oznako v glavi strani.
+
+### Odstranjeno
+- Neuporabljeni ostanki stare, dvodatotečne postavitve logotipa
+  (`assets/logo-on-light.png`, `assets/logo-on-dark.png`) — koda že od
+  verzije 0.3.0 uporablja samo `assets/logo.png`.
+
 ## [0.4.1] — popravek: dolgo besedilo je uhajalo iz kartice/tiska
 
 ### Popravljeno
