@@ -10,6 +10,14 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [0.4.3] — manjša popravka
+
+### Spremenjeno
+- Materialnost predmeta → Tehnike → Tehnika: dodana nova vrednost "tisk".
+- Stanje in varovanje → Opis stanja: polje je zdaj samodejno rastoča
+  textarea (enako kot preostala opisna polja) — uporablja isti,
+  generični mehanizem kot ostala, zato prelivanja iz verzije 0.4.1 ni.
+
 ## [0.4.2] — favicon
 
 ### Dodano

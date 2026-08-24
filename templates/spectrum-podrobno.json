@@ -875,7 +875,8 @@
           "options": [
             "modeliranje",
             "klesanje",
-            "kovanje"
+            "kovanje",
+            "tisk"
           ]
         },
         {
@@ -1011,7 +1012,8 @@
       "color": "#8C6A3D",
       "group": "group_stanje",
       "section": null,
-      "tooltip": "Zapis v skladu s slovenskim pravopisom."
+      "tooltip": "Zapis v skladu s slovenskim pravopisom.",
+      "autoExpand": true
     },
     {
       "id": "datum_pregleda",
