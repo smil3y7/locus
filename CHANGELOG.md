@@ -10,6 +10,27 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [0.4.5] — dosledno zapiranje vseh pojavnih oken
+
+### Spremenjeno
+- Vsa preostala pojavna okna ("Uredi obrazec" — admin urejevalnik sheme,
+  in "Nastavitve seje") se zdaj obnašajo enako kot predmetna kartica in
+  obrazca za vnos/urejanje predmeta — klik zunaj okna ga ne zapre več,
+  samo gumb "×" ali tipka Esc. Posebej pomembno pri "Uredi obrazec", kjer
+  bi nehoten klik lahko pomenil izgubo obsežnejših sprememb sheme
+  obrazca.
+
+## [0.4.4] — obrazec za vnos/urejanje predmeta se ne zapre več s klikom zunaj
+
+### Spremenjeno
+- Obrazec "Dodaj predmet" in "Uredi predmet" se zdaj obnašata enako kot
+  predmetna kartica (pogled s podrobnostmi) — klik zunaj njiju ju ne
+  zapre več, samo gumb "×" ali tipka Esc. Prej je bilo to omejeno samo na
+  pogled s podrobnostmi, obrazca za vnos/urejanje pa sta se še vedno
+  zaprla s klikom zunaj, kar je lahko povzročilo izgubo vnesenih
+  podatkov. ("Uredi obrazec" v admin urejevalniku in "Nastavitve seje"
+  ostajata nespremenjena.)
+
 ## [0.4.3] — manjša popravka
 
 ### Spremenjeno

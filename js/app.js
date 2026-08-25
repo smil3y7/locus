@@ -25,13 +25,13 @@ async function openAddEntryModal() {
 
   const config = await ConfigService.getLiveConfig();
   const container = document.createElement('div');
-  UI.openModal({ title: 'Dodaj predmet', content: container, wide: true });
+  UI.openModal({ title: 'Dodaj predmet', content: container, wide: true, closeOnBackdrop: false });
   FormBuilder.build(container, config);
 }
 
 async function openEditEntryModal(entry, config) {
   const container = document.createElement('div');
-  UI.openModal({ title: 'Uredi predmet', content: container, wide: true });
+  UI.openModal({ title: 'Uredi predmet', content: container, wide: true, closeOnBackdrop: false });
   FormBuilder.build(container, config, { entry });
 }
 
@@ -838,7 +838,7 @@ async function refreshConfigEditor(oldWrapper) {
 
 async function openConfigEditorModal() {
   const body = await renderConfigEditorBody();
-  UI.openModal({ title: 'Uredi obrazec', content: body, wide: true });
+  UI.openModal({ title: 'Uredi obrazec', content: body, wide: true, closeOnBackdrop: false });
 }
 
 async function changeAdminPin() {
@@ -930,7 +930,7 @@ async function openSessionSettingsModal() {
     </form>
   `;
 
-  UI.openModal({ title: 'Nastavitve seje', content });
+  UI.openModal({ title: 'Nastavitve seje', content, closeOnBackdrop: false });
 
   content.querySelector('#mf-session-cancel').addEventListener('click', () => EventBus.emit('ui:closeModal'));
 
