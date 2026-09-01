@@ -1,113 +1,44 @@
 # Lokus
 
-Muzejska dokumentacijska platforma — offline-first spletna aplikacija za vnos
-in upravljanje muzejskih predmetov.
+Muzejska dokumentacijska platforma za vnos in upravljanje muzejskih
+predmetov — deluje v celoti v brskalniku (offline-first), brez lastnega
+strežnika/baze v ozadju.
 
-## Funkcionalnosti
+- **Aplikacija teče na:** _[sem vpišite produkcijski Vercel naslov, ko bo
+  ustvarjen — glej `PREDAJA.md`]_
+- **Navodila za vsakodnevno uporabo** (nastavitve seje, vnos/urejanje
+  predmetov, admin urejevalnik obrazca, izvoz/uvoz baze): glejte
+  `navodila_lokus.md`.
+- **Prva postavitev / prevzem gostovanja** (GitHub, Vercel, domena):
+  glejte `PREDAJA.md`.
+- **Tehnična dokumentacija** (za razvijalca, ki bo nadaljeval delo na
+  kodi): glejte `DEVELOPMENT.md`.
 
-- Dinamičen obrazec za vnos predmetov, polja in skupine polj upravlja admin
-- Dodajanje, urejanje in brisanje vnosov
-- Skupine polj (npr. "Osnovni podatki", "Fizične lastnosti") — uporabnik jih sam ustvarja
-- Seja: ime vnašalca se vnese enkrat in ostane prednapolnjeno za vse predmete v seji
-- PIN zaščita za urejanje obrazca (deterrent za nenamerne klike, ni prava avtentikacija)
-- Izvoz/uvoz celotne baze kot `.json` (vključno s slikami) — za arhiviranje in pregled na drugem računalniku
-- Ponastavitev baze (izbriše vnose in sejo, ohrani konfiguracijo in PIN) — priprava na naslednjo skupino
-- Tip polja "Mere" po CDWA standardu (vrsta mere + vrednost + enota, npr. Višina: 15 cm) — admin določi dovoljene vrste in enote, uporabnik pri vnosu doda poljubno število mer
-- Razdelki znotraj kartice/zavihka; neponavljajoča sestavljena polja (npr. "Čas izdelave", "Avers/Revers"); tip polja "Povezava" (URL); datumsko polje z možnostjo zaklepa na vedno točen dan
-- Namigi (placeholder) v vnosnih poljih obrazca
-- Tiskanje/PDF: posamezna "muzejska kartica" predmeta ali celoten katalog
-- Verzioniranje aplikacije (`js/utils.js` → `APP_VERSION`, prikazano v nogi strani) in `CHANGELOG.md`
-- Premikanje polj gor/dol znotraj skupine, barvna oznaka polja (za označevanje polj, ki spadajo skupaj, ne glede na skupino/zavihek)
-- Uvoz sheme (JSON) v osnutek — lastna varnostna kopija ali predloga; vgrajeni predlogi "SPECTRUM jedro" (`templates/spectrum-core.json`, ~25 polj) in "SPECTRUM podrobno" (`templates/spectrum-podrobno.json`, 10 kartic, ~65 polj) se naložita z enim klikom
+## Kako deluje objava sprememb obrazca
 
-- Vanilla JS (ES moduli), brez frameworkov, brez build koraka
-- Podatki se hranijo lokalno v brskalniku (IndexedDB) — vsaka naprava/brskalnik ima svojo ločeno zbirko
-- Arhitektura: EventBus-driven, moduli med sabo ne komunicirajo neposredno
+Vsi obiskovalci strani vidijo **isto** shemo obrazca — bere se iz
+`config.json` v korenu repozitorija (ne iz baze posameznega brskalnika).
+Ločimo:
 
-## Struktura
-
-```
-index.html
-styles.css
-config.json          – objavljena shema obrazca (enaka za vse obiskovalce)
-templates/
-  spectrum-core.json – kurirano jedro po standardu SPECTRUM (~25 polj), naloži se v osnutek prek admin urejevalnika
-  spectrum-podrobno.json – polna shema po uporabnikovi specifikaciji (10 kartic, ~65 polj)
-assets/
-  logo.png           – (dodaj sam/a) logotip SPDM za glavo strani
-js/
-  eventBus.js       – globalni pub/sub
-  utils.js          – čiste pomožne funkcije
-  db.js             – edini modul, ki dostopa do IndexedDB
-  adminAuth.js       – PIN zaščita za urejevalnik obrazca (deterrent, ne prava avtentikacija)
-  sessionService.js – ime vnašalca in naslov izobraževanja za trenutno sejo
-  exportImport.js   – izvoz/uvoz baze kot .json (vključno s slikami)
-  configService.js  – shema obrazca (polja, skupine)
-  validator.js      – validacija vnosa
-  formBuilder.js    – dinamično renderiranje obrazca (dodajanje in urejanje)
-  storage.js        – poslovna logika: validiraj → shrani → sproži dogodek
-  ui.js             – toast/modal/potrditve/PIN vnos/tiskanje
-  viewer.js         – prikaz seznama in podrobnosti predmetov
-  app.js            – bootstrap, veže module skupaj
-```
-
-## Shema obrazca: objavljena vs. osnutek
-
-Ker je aplikacija servirana prek Vercel/GitHub, vsi obiskovalci strani dobijo
-**isto** shemo obrazca — bere se iz `config.json` v korenu repozitorija
-(ne iz IndexedDB posameznega brskalnika kot prej).
-
-- **Objavljena (live) shema** — `config.json`, del deploya, enaka za vse. To
-  uporablja obrazec za vnos predmetov. Če ob nalaganju strani ni povezave do
-  strežnika, se uporabi zadnja lokalno predpomnjena kopija, nato pa vgrajena
-  privzeta shema — obrazec torej nikoli ne odpove.
+- **Objavljena (live) shema** — `config.json`, del gostovane strani, enaka
+  za vse. To uporablja obrazec za vnos predmetov.
 - **Osnutek (draft)** — lokalna delovna kopija znotraj PIN-zaščitenega
   urejevalnika ("Uredi obrazec"). Urejanje osnutka **ne vpliva** na to, kar
-  vidijo drugi uporabniki.
+  vidijo drugi uporabniki, dokler ga admin ne objavi.
 
-### Kako kustos objavi nov obrazec
+Ko admin obrazec sestavi/popravi in je z osnutkom zadovoljen:
 
-1. V urejevalniku ("Uredi obrazec") si obrazec sestavi kot doslej (dodaja
-   polja, skupine).
-2. Klikne "Izvozi shemo obrazca (config.json)" — prenese se datoteka.
-3. To datoteko zamenja z obstoječo `config.json` v repozitoriju (npr. prek
-   GitHub spletnega vmesnika z "Upload file", ali lokalno + `git push`).
-4. Vercel samodejno objavi novo verzijo — vsi računalniki ob naslednjem
-   nalaganju strani dobijo novo shemo.
+1. V urejevalniku ("Uredi obrazec") klikne "Izvozi shemo obrazca" — prenese
+   se datoteka `config.json`.
+2. To datoteko naloži v GitHub repozitorij in z njo nadomesti obstoječi
+   `config.json`.
+3. Vercel spremembo samodejno objavi novo verzijo — vsi obiskovalci ob 
+   naslednjem nalaganju strani dobijo novo shemo. Za ta korak niso potrebni
+   `git` ukazi.
 
-## Lokalni zagon
-
-Module skripte (`type="module"`) zaradi CORS pravil zahtevajo HTTP strežnik — `file://` ne deluje.
-
-```bash
-npx serve .
-# ali
-python3 -m http.server 8000
-```
-
-Nato odpri `http://localhost:PORT`.
-
-## Deploy na Vercel
-
-Ker gre za povsem statično stran (brez build koraka), je nastavitev minimalna:
-
-1. Repo potisni na GitHub (glej spodaj).
-2. Na [vercel.com](https://vercel.com) → **Add New → Project** → izberi ta repo.
-3. Framework Preset: **Other** (ali "No Framework").
-4. Build Command: pusti prazno.
-5. Output Directory: `.` (koren repozitorija).
-6. Deploy.
-
-**Pomembno:** IndexedDB (in admin PIN) je vezan na brskalnik/napravo vsakega obiskovalca posebej — hosting ne ustvari skupne baze med uporabniki. Za deljeno zbirko med več osebami bi bil potreben pravi backend.
-
-## Git ukazi za prvi push
-
-```bash
-cd lokus
-git init
-git add .
-git commit -m "Lokus MVP"
-git branch -M main
-git remote add origin https://github.com/<uporabnisko-ime>/<ime-repozitorija>.git
-git push -u origin main
-```
+**Pomembno za vsakdanjo rabo:** IndexedDB (kamor se shranjujejo vneseni
+predmeti) in admin PIN sta vezana na brskalnik/napravo vsakega uporabnika
+posebej — gostovanje ne ustvari ene skupne baze med uporabniki. Če želite 
+podatke prenesti na drugo napravo, uporabite funkciji "Izvozi bazo" in
+"Uvozi bazo" (glej `navodila_lokus.md`). Aplikacija ne podpira samodejne 
+sinhronizacije ali sočasnega dela z eno skupno bazo.

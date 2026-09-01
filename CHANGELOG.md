@@ -10,6 +10,39 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.0.0] — predana verzija
+
+Prva stabilna izdaja, predana naročniku kot dokončan pogodbeni izdelek. 
+Različica vsebuje modul "Inventarna knjiga". Vsebinsko je enaka verziji 0.4.6 
+(glejte spodaj) — sprememba je izključno mejnik predaje, brez novih 
+funkcionalnosti.
+
+### Dodano (dokumentacija za predajo)
+- `PREDAJA.md` — podrobna navodila za prevzem gostovanja (GitHub in Vercel
+  računa, prevzem repozitorija, nov produkcijski Vercel projekt, neobvezna
+  lastna domena).
+- `DEVELOPMENT.md` — tehnična dokumentacija za razvijalca (struktura kode,
+  lokalni zagon, deploy), izločena iz README-ja.
+- `README.md` prenovljen — kratek, za naročnika/skrbnika, s povezavami na
+  ostale dokumente.
+- `navodila_lokus.md` — navodila za vsakodnevno uporabo aplikacije,
+  vključena v predajo.
+
+## [0.4.6] — stabilna izdaja za predajo
+
+Ta verzija je pripravljena kot **izhodišče za predajo dejanskemu
+uporabniku** — izhaja neposredno iz 0.4.5. Vsebuje en sam, izoliran popravek.
+
+### Popravljeno
+- Latentna napaka v admin urejevalniku: pojasnilo (tooltip) in nastavitev
+  "samodejno rastoče besedilno polje" sta se pri urejanju **obstoječega**
+  polja prek admin vmesnika izgubila (bila sta izpuščena s sicer
+  eksplicitnega seznama lastnosti, ki jih urejevalnik ob shranjevanju
+  ohrani). Obstoječa polja v `config.json`, ki so že imela ti nastavitvi
+  (opisna polja z avtomatsko rastočo textarea, tooltipi), s tem niso bila
+  prizadeta — napaka bi se sprožila šele, če bi admin tako polje pozneje
+  odprl za urejanje in ga znova shranil.
+
 ## [0.4.5] — dosledno zapiranje vseh pojavnih oken
 
 ### Spremenjeno
@@ -85,7 +118,7 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 - Admin urejevalnik polj ima nov vnos "Pojasnilo (tooltip)" — tooltip za poljubno polje je zdaj mogoče urejati brez poseganja v kodo, enako kot že obstoječi "Namig (placeholder)".
 - V urejevalniku obrazcev (zavihek Polja) so dodatne nastavitve polja preurejene v pregleden seznam s stikali (namesto razmetanih kljukic) — vsak opis je zdaj nedvoumno povezan s svojim stikalom.
 
-## [0.3.0] — preimenovanje v Lokus, nova SPDM barvna shema, popravki obrazca
+## [0.3.0] — preimenovanje v Lokus, nova barvna shema, popravki obrazca
 
 ### Spremenjeno
 - Aplikacija preimenovana iz LOCUS v **Lokus** (naslov strani, glava, tisk,
@@ -93,7 +126,7 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
   Ker je aplikacija še v testni fazi, preimenovanje ni ohranjalo združljivosti
   za nazaj — obstoječi testni vnosi po posodobitvi niso več vidni (nova prazna
   baza).
-- Nova barvna shema po CGP-ju SPDM: primarna #45998B, svetla primarna
+- Nova barvna shema: primarna #45998B, svetla primarna
   #A9D5CD, temna nevtralna #2F3B39, svetla nevtralna #F4F8F7, akcentna
   #B68B52. Rdeča barva za nevarna dejanja (brisanje, napake) je ohranjena
   ločeno od barvne sheme. Obstoječe barvne oznake polj (za vizualno

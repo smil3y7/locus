@@ -251,11 +251,13 @@ async function addField(field) {
     group: groupId,
     section: sectionId,
     placeholder: field.placeholder ? String(field.placeholder) : '',
+    tooltip: field.tooltip ? String(field.tooltip) : '',
     measurementTypes: normalizeMeasurementTypes(field.measurementTypes),
     subFields: normalizeSubFields(field.subFields),
     repeatable: field.type === 'group' ? field.repeatable !== false : undefined,
     fixedPrecision: field.type === 'date' && field.fixedPrecision ? field.fixedPrecision : null,
     backgroundHighlight: Boolean(field.backgroundHighlight),
+    autoExpand: field.type === 'text' ? Boolean(field.autoExpand) : false,
   };
 
   return saveDraft({ ...current, fields: [...current.fields, normalized] });
@@ -314,11 +316,13 @@ async function updateField(fieldId, updates) {
     group: groupId,
     section: sectionId,
     placeholder: updates.placeholder ? String(updates.placeholder) : '',
+    tooltip: updates.tooltip ? String(updates.tooltip) : '',
     measurementTypes: normalizeMeasurementTypes(updates.measurementTypes),
     subFields: normalizeSubFields(updates.subFields),
     repeatable: updates.type === 'group' ? updates.repeatable !== false : undefined,
     fixedPrecision: updates.type === 'date' && updates.fixedPrecision ? updates.fixedPrecision : null,
     backgroundHighlight: Boolean(updates.backgroundHighlight),
+    autoExpand: updates.type === 'text' ? Boolean(updates.autoExpand) : false,
   };
 
   return saveDraft({ ...current, fields: current.fields.map((f) => (f.id === fieldId ? merged : f)) });
