@@ -1,0 +1,1301 @@
+{
+  "version": 2,
+  "groups": [
+    {
+      "id": "group_identifikacija",
+      "label": "Identifikacija",
+      "sections": [
+        {
+          "id": "sec_identifikacija",
+          "label": "Identifikacija dokumentacijske enote"
+        }
+      ]
+    },
+    {
+      "id": "group_poimenovanje_vrsta",
+      "label": "Poimenovanje in vrsta",
+      "sections": [
+        {
+          "id": "sec_naslov",
+          "label": "Naslov"
+        },
+        {
+          "id": "sec_vrsta_dokumentacije",
+          "label": "Vrsta dokumentacije"
+        }
+      ]
+    },
+    {
+      "id": "group_vsebina",
+      "label": "Vsebina in povezava z enoto dediščine",
+      "sections": [
+        {
+          "id": "sec_dokumentirana_enota",
+          "label": "Dokumentirana enota"
+        },
+        {
+          "id": "sec_vsebina",
+          "label": "Vsebina"
+        }
+      ]
+    },
+    {
+      "id": "group_izdelava_nastanek",
+      "label": "Izdelava in nastanek",
+      "sections": [
+        {
+          "id": "sec_avtorstvo_dok",
+          "label": "Avtorstvo / ustvarjalec"
+        },
+        {
+          "id": "sec_nastanek_dok",
+          "label": "Nastanek"
+        }
+      ]
+    },
+    {
+      "id": "group_izvor",
+      "label": "Izvor in povezane dokumentacijske enote",
+      "sections": [
+        {
+          "id": "sec_izvor",
+          "label": "Izvor"
+        }
+      ]
+    },
+    {
+      "id": "group_tehnicni_podatki",
+      "label": "Tehnični podatki o dokumentaciji",
+      "sections": [
+        {
+          "id": "sec_skupni_tehnicni",
+          "label": "Skupni tehnični podatki"
+        },
+        {
+          "id": "sec_foto_sken",
+          "label": "Fotografija / sken"
+        },
+        {
+          "id": "sec_zvok",
+          "label": "Zvočni posnetek"
+        },
+        {
+          "id": "sec_video",
+          "label": "Video"
+        },
+        {
+          "id": "sec_tekstovna_dok",
+          "label": "Tekstovna dokumentacija"
+        }
+      ]
+    },
+    {
+      "id": "group_pravice",
+      "label": "Pravice in dostop",
+      "sections": [
+        {
+          "id": "sec_avtorske_pravice",
+          "label": "Avtorske in sorodne pravice"
+        }
+      ]
+    },
+    {
+      "id": "group_lastnistvo_pridobitev",
+      "label": "Lastništvo in pridobitev",
+      "sections": [
+        {
+          "id": "sec_lastnistvo_dok",
+          "label": "Lastništvo"
+        }
+      ]
+    },
+    {
+      "id": "group_repozitorij",
+      "label": "Repozitorij in hramba",
+      "sections": [
+        {
+          "id": "sec_repozitorij",
+          "label": "Repozitorij"
+        },
+        {
+          "id": "sec_kopije_lokacije",
+          "label": "Kopije in lokacije"
+        }
+      ]
+    },
+    {
+      "id": "group_tekstovni_vir",
+      "label": "Tekstovni vir",
+      "sections": [
+        {
+          "id": "sec_tekstovni_vir",
+          "label": "Tekstovni vir"
+        }
+      ]
+    },
+    {
+      "id": "group_administrativno_dok",
+      "label": "Administrativni podatki",
+      "sections": []
+    }
+  ],
+  "fields": [
+    {
+      "id": "identifikacijska_stevilka",
+      "label": "Identifikacijska številka dokumentirane enote",
+      "type": "text",
+      "required": true,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_identifikacija",
+      "section": "sec_identifikacija"
+    },
+    {
+      "id": "druge_stevilcne_oznake",
+      "label": "Druge številčne oznake",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_identifikacija",
+      "section": "sec_identifikacija",
+      "repeatable": true,
+      "subFields": [
+        {
+          "id": "stevilka",
+          "label": "Številka",
+          "type": "text",
+          "required": true,
+          "options": []
+        },
+        {
+          "id": "tip_stevilke",
+          "label": "Tip številke",
+          "type": "select",
+          "required": false,
+          "options": [
+            "evidenčna številka",
+            "signatura",
+            "črtna koda",
+            "izvorno ime datoteke",
+            "registracijska številka",
+            "številka negativa"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "naslov_dokumentirane_enote",
+      "label": "Naslov dokumentirane enote",
+      "type": "text",
+      "required": true,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje_vrsta",
+      "section": "sec_naslov"
+    },
+    {
+      "id": "tip_naslova",
+      "label": "Tip naslova",
+      "type": "select",
+      "required": false,
+      "options": [
+        "prednostni",
+        "opisni",
+        "izvorni",
+        "pripisani",
+        "objavljeni",
+        "prevedeni",
+        "nekdanji",
+        "drug"
+      ],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje_vrsta",
+      "section": "sec_naslov"
+    },
+    {
+      "id": "vrsta_dokumentacijske_enote",
+      "label": "Vrsta dokumentacijske enote",
+      "type": "select",
+      "required": false,
+      "options": [
+        "fotografija",
+        "digitalna slika",
+        "negativ",
+        "pozitiv",
+        "risba dokumentacijskega značaja",
+        "zvočni posnetek",
+        "videoposnetek",
+        "besedilni dokument",
+        "intervju",
+        "transkript",
+        "konservatorsko poročilo",
+        "zapisnik",
+        "korespondenca",
+        "druga dokumentacijska enota"
+      ],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje_vrsta",
+      "section": "sec_vrsta_dokumentacije",
+      "tooltip": "Od te vrednosti bo v naslednji fazi odvisno, katere kartice/sklopi se prikažejo (npr. \"Tekstovni vir\" pri besedilnih dokumentih)."
+    },
+    {
+      "id": "nacin_nastanka",
+      "label": "Način nastanka",
+      "type": "select",
+      "required": false,
+      "options": [
+        "izvorno digitalno",
+        "digitizirano",
+        "skenirano",
+        "digitalna reprodukcija",
+        "pretvorjeno iz analognega zapisa",
+        "prepis",
+        "transkript",
+        "drugo"
+      ],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje_vrsta",
+      "section": "sec_vrsta_dokumentacije"
+    },
+    {
+      "id": "klasifikacija",
+      "label": "Klasifikacija",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje_vrsta",
+      "section": "sec_vrsta_dokumentacije"
+    },
+    {
+      "id": "tip_klasifikacije",
+      "label": "Tip klasifikacije",
+      "type": "select",
+      "required": false,
+      "options": [
+        "Iconclass",
+        "AAT",
+        "lastna klasifikacija",
+        "drug sistem"
+      ],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje_vrsta",
+      "section": "sec_vrsta_dokumentacije"
+    },
+    {
+      "id": "dokumentirana_enota",
+      "label": "Dokumentirana enota dediščine",
+      "type": "reference",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_vsebina",
+      "section": "sec_dokumentirana_enota",
+      "targetModule": "inventarna",
+      "multiple": true,
+      "tooltip": "Poišči po inventarni številki ali kateri koli drugi številčni oznaki predmeta iz Inventarne knjige."
+    },
+    {
+      "id": "vrsta_odnosa",
+      "label": "Vrsta odnosa dokumenta do enote",
+      "type": "select",
+      "required": false,
+      "options": [
+        "dokumentacijski posnetek",
+        "konservatorski posnetek",
+        "historični posnetek",
+        "instalacijski posnetek",
+        "kontekstualni posnetek",
+        "reprodukcija",
+        "rekonstrukcija",
+        "vir podatkov o enoti",
+        "drugo"
+      ],
+      "color": "#B68B52",
+      "group": "group_vsebina",
+      "section": "sec_dokumentirana_enota"
+    },
+    {
+      "id": "opis_vsebine",
+      "label": "Opis vsebine",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_vsebina",
+      "section": "sec_vsebina",
+      "autoExpand": true,
+      "tooltip": "Zapis v skladu s slovenskim pravopisom."
+    },
+    {
+      "id": "predmet_tema",
+      "label": "Predmet/tema",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_vsebina",
+      "section": "sec_vsebina"
+    },
+    {
+      "id": "kljucne_besede",
+      "label": "Ključne besede",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_vsebina",
+      "section": "sec_vsebina",
+      "repeatable": true,
+      "subFields": [
+        {
+          "id": "beseda",
+          "label": "Ključna beseda",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "tooltip": "Male tiskane črke, zapis z malo začetnico."
+        },
+        {
+          "id": "tip",
+          "label": "Tip ključne besede",
+          "type": "select",
+          "required": false,
+          "options": [
+            "predmet",
+            "oseba",
+            "kraj",
+            "dejavnost",
+            "obdobje",
+            "tema",
+            "upodobljen motiv",
+            "material",
+            "tehnika"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "avtorstvo_dokumentacije",
+      "label": "Avtorstvo",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_izdelava_nastanek",
+      "section": "sec_avtorstvo_dok",
+      "repeatable": true,
+      "subFields": [
+        {
+          "id": "obseg_prispevka",
+          "label": "Obseg prispevka",
+          "type": "select",
+          "required": false,
+          "options": [
+            "digitizacija",
+            "nova reprodukcija",
+            "montaža",
+            "prevod",
+            "drugo"
+          ]
+        },
+        {
+          "id": "avtor_priimek",
+          "label": "Avtor — priimek",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "avtor_ime",
+          "label": "Avtor — ime",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "vrsta_avtorstva",
+          "label": "Vrsta avtorstva",
+          "type": "select",
+          "required": false,
+          "options": [
+            "fotograf",
+            "snemalec",
+            "digitizator",
+            "operater skeniranja",
+            "tonski snemalec",
+            "avtor besedila",
+            "intervjuvanec",
+            "izpraševalec",
+            "transkriptor",
+            "urednik",
+            "producent",
+            "založnik",
+            "tiskar",
+            "drugo"
+          ]
+        },
+        {
+          "id": "vloga",
+          "label": "Vloga",
+          "type": "select",
+          "required": false,
+          "options": [
+            "avtor",
+            "soavtor",
+            "izvajalec",
+            "drugo"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kraj_nastanka_dok",
+      "label": "Kraj nastanka",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_izdelava_nastanek",
+      "section": "sec_nastanek_dok"
+    },
+    {
+      "id": "cas_nastanka_datum",
+      "label": "Čas nastanka — točen datum",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_izdelava_nastanek",
+      "section": "sec_nastanek_dok",
+      "fixedPrecision": "day"
+    },
+    {
+      "id": "cas_nastanka_opis",
+      "label": "Čas nastanka — opis",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_izdelava_nastanek",
+      "section": "sec_nastanek_dok"
+    },
+    {
+      "id": "vir_dokumentacijske_enote",
+      "label": "Vir dokumentacijske enote",
+      "type": "select",
+      "required": false,
+      "options": [
+        "oseba",
+        "institucija",
+        "publikacija",
+        "arhivski fond",
+        "druga dokumentacijska enota",
+        "drugo"
+      ],
+      "color": "#45998B",
+      "group": "group_izvor",
+      "section": "sec_izvor"
+    },
+    {
+      "id": "izvorna_enota",
+      "label": "Izvorna enota",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_izvor",
+      "section": "sec_izvor"
+    },
+    {
+      "id": "odnos_izvor",
+      "label": "Odnos",
+      "type": "select",
+      "required": false,
+      "options": [
+        "skenirano iz",
+        "reproducirano iz"
+      ],
+      "color": "#45998B",
+      "group": "group_izvor",
+      "section": "sec_izvor"
+    },
+    {
+      "id": "format",
+      "label": "Format",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_skupni_tehnicni"
+    },
+    {
+      "id": "velikost_datoteke",
+      "label": "Velikost datoteke",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_skupni_tehnicni"
+    },
+    {
+      "id": "izvorno_ime_datoteke",
+      "label": "Izvorno ime datoteke",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_skupni_tehnicni"
+    },
+    {
+      "id": "trenutno_ime_datoteke",
+      "label": "Trenutno ime datoteke",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_skupni_tehnicni"
+    },
+    {
+      "id": "vloga_datoteke",
+      "label": "Vloga datoteke",
+      "type": "select",
+      "required": false,
+      "options": [
+        "arhivski master",
+        "produkcijski master",
+        "dostopna kopija",
+        "predogled",
+        "varnostna kopija"
+      ],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_skupni_tehnicni"
+    },
+    {
+      "id": "sirina_px",
+      "label": "Širina v px",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken"
+    },
+    {
+      "id": "visina_px",
+      "label": "Višina v px",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken"
+    },
+    {
+      "id": "locljivost",
+      "label": "Ločljivost",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken"
+    },
+    {
+      "id": "format_datoteke_slika",
+      "label": "Format datoteke",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken"
+    },
+    {
+      "id": "naprava_zajema",
+      "label": "Naprava zajema",
+      "type": "select",
+      "required": false,
+      "options": [
+        "digitalni fotoaparat",
+        "skener"
+      ],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken"
+    },
+    {
+      "id": "naziv_naprave_zajema",
+      "label": "Naziv naprave za zajem",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken"
+    },
+    {
+      "id": "trajanje_zvok",
+      "label": "Trajanje",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_zvok"
+    },
+    {
+      "id": "format_zvok",
+      "label": "Format",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_zvok"
+    },
+    {
+      "id": "trajanje_video",
+      "label": "Trajanje",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_video"
+    },
+    {
+      "id": "format_vsebnika",
+      "label": "Format vsebnika",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_video"
+    },
+    {
+      "id": "sirina_visina_video",
+      "label": "Širina x višina",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_video"
+    },
+    {
+      "id": "razmerje_stranic",
+      "label": "Razmerje stranic",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_video"
+    },
+    {
+      "id": "format_datoteke_tekst",
+      "label": "Format datoteke",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_tekstovna_dok"
+    },
+    {
+      "id": "stevilo_strani",
+      "label": "Število strani",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_tekstovna_dok"
+    },
+    {
+      "id": "jezik_dokumenta",
+      "label": "Jezik dokumenta",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_tekstovna_dok"
+    },
+    {
+      "id": "digitizirano_izvorno",
+      "label": "Digitizirano / izvorno gradivo",
+      "type": "select",
+      "required": false,
+      "options": [
+        "digitizirano",
+        "izvorno gradivo"
+      ],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_tekstovna_dok"
+    },
+    {
+      "id": "ocr",
+      "label": "OCR",
+      "type": "select",
+      "required": false,
+      "options": [
+        "da",
+        "ne"
+      ],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_tekstovna_dok"
+    },
+    {
+      "id": "status_avtorskih_pravic",
+      "label": "Status avtorskih pravic",
+      "type": "select",
+      "required": false,
+      "options": [
+        "avtorsko varovano",
+        "javna domena",
+        "status ni določen",
+        "drugo"
+      ],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice",
+      "tooltip": "Lastnik dokumentacije ni enako kot imetnik avtorskih pravic."
+    },
+    {
+      "id": "imetnik_pravic",
+      "label": "Imetnik pravic",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice",
+      "repeatable": true,
+      "subFields": [
+        {
+          "id": "naziv_imetnika",
+          "label": "Naziv imetnika pravic",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "vloga_imetnika",
+          "label": "Vloga",
+          "type": "select",
+          "required": false,
+          "options": [
+            "oseba",
+            "organizacija"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "datum_zacetka_pravic",
+      "label": "Datum začetka pravic",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice",
+      "fixedPrecision": "day"
+    },
+    {
+      "id": "datum_prenehanja_pravic",
+      "label": "Datum prenehanja pravic",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice",
+      "fixedPrecision": "day"
+    },
+    {
+      "id": "pogoji_uporabe",
+      "label": "Pogoji uporabe",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice"
+    },
+    {
+      "id": "omejitve_reprodukcije",
+      "label": "Omejitve reprodukcije",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice"
+    },
+    {
+      "id": "omejitve_objave",
+      "label": "Omejitve objave",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice"
+    },
+    {
+      "id": "omejitve_dostopa",
+      "label": "Omejitve dostopa",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice"
+    },
+    {
+      "id": "lastnik_dokumentacijske_enote",
+      "label": "Lastnik dokumentacijske enote",
+      "type": "select",
+      "required": false,
+      "options": [
+        "Narodni muzej Slovenije",
+        "Pokrajinski muzej Koper",
+        "Pilonova galerija Ajdovščina",
+        "Župnijski urad Radovljica",
+        "Arhiv Slovenije",
+        "Mestna knjižnica Otona Zupančiča"
+      ],
+      "color": "#8C6A3D",
+      "group": "group_lastnistvo_pridobitev",
+      "section": "sec_lastnistvo_dok"
+    },
+    {
+      "id": "nacin_pridobitve_dok",
+      "label": "Način pridobitve",
+      "type": "select",
+      "required": false,
+      "options": [
+        "donacija",
+        "nakup",
+        "volilo",
+        "naročilo",
+        "izdelano v ustanovi",
+        "prenos",
+        "depozit",
+        "drugo"
+      ],
+      "color": "#8C6A3D",
+      "group": "group_lastnistvo_pridobitev",
+      "section": "sec_lastnistvo_dok"
+    },
+    {
+      "id": "datum_pridobitve_dok",
+      "label": "Datum pridobitve",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_lastnistvo_pridobitev",
+      "section": "sec_lastnistvo_dok",
+      "fixedPrecision": "day"
+    },
+    {
+      "id": "dokumentacija_pridobitve",
+      "label": "Dokumentacija pridobitve",
+      "type": "reference",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_lastnistvo_pridobitev",
+      "section": "sec_lastnistvo_dok",
+      "targetModule": "dokumentacija",
+      "multiple": true,
+      "tooltip": "Poveži z drugim dokumentacijskim zapisom (npr. dokazilo o donaciji/nakupu)."
+    },
+    {
+      "id": "opomba_o_pridobitvi",
+      "label": "Opomba o pridobitvi",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_lastnistvo_pridobitev",
+      "section": "sec_lastnistvo_dok",
+      "autoExpand": true
+    },
+    {
+      "id": "repozitorij_skrbniska_ustanova",
+      "label": "Repozitorij / skrbniška ustanova",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_repozitorij"
+    },
+    {
+      "id": "oddelek_zbirka",
+      "label": "Oddelek / zbirka",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_repozitorij"
+    },
+    {
+      "id": "identifikacijska_stevilka_v_repozitoriju",
+      "label": "Identifikacijska številka v repozitoriju",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_repozitorij"
+    },
+    {
+      "id": "vloga_kopije",
+      "label": "Vloga kopije",
+      "type": "select",
+      "required": false,
+      "options": [
+        "arhivska",
+        "primarna delovna",
+        "dostopna",
+        "varnostna"
+      ],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_kopije_lokacije"
+    },
+    {
+      "id": "tip_hrambe",
+      "label": "Tip hrambe",
+      "type": "select",
+      "required": false,
+      "options": [
+        "strežnik",
+        "digitalni repozitorij",
+        "oblačna hramba",
+        "zunanji nosilec",
+        "optični nosilec",
+        "trak",
+        "oddaljena hramba",
+        "drugo"
+      ],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_kopije_lokacije"
+    },
+    {
+      "id": "pot_uri_identifikator",
+      "label": "Pot / URI / identifikator",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_kopije_lokacije"
+    },
+    {
+      "id": "fizicni_nosilec",
+      "label": "Fizični nosilec",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_kopije_lokacije",
+      "repeatable": false,
+      "subFields": [
+        {
+          "id": "stavba",
+          "label": "Stavba",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Narodni muzej Slovenije",
+            "Ogledni depo Pivka"
+          ]
+        },
+        {
+          "id": "depo",
+          "label": "Depo",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Depo 1",
+            "Depo 2",
+            "Podstrešni depo"
+          ]
+        },
+        {
+          "id": "omara",
+          "label": "Omara",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Omara 1",
+            "Omara 2",
+            "Kovinska omara"
+          ]
+        },
+        {
+          "id": "polica",
+          "label": "Polica",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Polica 1",
+            "Polica 2",
+            "Polica 3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "datum_preverjanja_kopije",
+      "label": "Datum preverjanja kopije",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_repozitorij",
+      "section": "sec_kopije_lokacije",
+      "fixedPrecision": "day"
+    },
+    {
+      "id": "tip_vira",
+      "label": "Tip vira",
+      "type": "select",
+      "required": false,
+      "options": [
+        "monografija",
+        "članek",
+        "katalog",
+        "pismo",
+        "pogodba",
+        "inventar",
+        "dnevnik",
+        "poročilo",
+        "zapisnik",
+        "konservatorsko poročilo",
+        "intervju",
+        "transkript",
+        "spletni vir",
+        "drugo"
+      ],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "naslov_vira",
+      "label": "Naslov",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "avtor_vira",
+      "label": "Avtor",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "urednik_vira",
+      "label": "Urednik",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "kraj_objave",
+      "label": "Kraj objave",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "zaloznik",
+      "label": "Založnik",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "leto_vira",
+      "label": "Leto",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "izdaja",
+      "label": "Izdaja",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "stran_folio_signatura",
+      "label": "Stran / folio / signatura",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tekstovni_vir",
+      "section": "sec_tekstovni_vir"
+    },
+    {
+      "id": "institucija",
+      "label": "Institucija",
+      "type": "select",
+      "required": false,
+      "options": [
+        "Narodni muzej Slovenije",
+        "Pokrajinski muzej Koper",
+        "Pilonova galerija Ajdovščina",
+        "Župnijski urad Radovljica",
+        "Arhiv Slovenije",
+        "Mestna knjižnica Otona Zupančiča"
+      ],
+      "color": "#B68B52",
+      "group": "group_administrativno_dok",
+      "section": null
+    },
+    {
+      "id": "dokumentiral",
+      "label": "Dokumentiral",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_administrativno_dok",
+      "section": null,
+      "repeatable": false,
+      "subFields": [
+        {
+          "id": "priimek",
+          "label": "Priimek",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "ime",
+          "label": "Ime",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ]
+    },
+    {
+      "id": "dejanje",
+      "label": "Dejanje",
+      "type": "select",
+      "required": false,
+      "options": [
+        "ustvaril zapis",
+        "dopolnil",
+        "spremenil",
+        "pregledal",
+        "odobril",
+        "objavil"
+      ],
+      "color": "#B68B52",
+      "group": "group_administrativno_dok",
+      "section": null
+    },
+    {
+      "id": "vloga_administrativna_dok",
+      "label": "Vloga",
+      "type": "select",
+      "required": false,
+      "options": [
+        "kustos zbirke",
+        "kustos dokumentalist",
+        "muzejski sodelavec",
+        "registrator",
+        "študent",
+        "prostovoljec"
+      ],
+      "color": "#B68B52",
+      "group": "group_administrativno_dok",
+      "section": null
+    },
+    {
+      "id": "datum_dokumentacije",
+      "label": "Datum dokumentacije",
+      "type": "date",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_administrativno_dok",
+      "section": null,
+      "fixedPrecision": "day"
+    },
+    {
+      "id": "zadnji_spremenil",
+      "label": "Zadnji spremenil",
+      "type": "group",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_administrativno_dok",
+      "section": null,
+      "repeatable": false,
+      "subFields": [
+        {
+          "id": "priimek",
+          "label": "Priimek",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "ime",
+          "label": "Ime",
+          "type": "text",
+          "required": false,
+          "options": []
+        }
+      ]
+    }
+  ]
+}

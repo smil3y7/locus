@@ -5,8 +5,8 @@
 import EventBus from './eventBus.js';
 import ConfigService from './configService.js';
 import FormBuilder from './formBuilder.js';
-import Storage from './storage.js';
-import Viewer from './viewer.js';
+import { createStorage } from './storage.js';
+import { createViewer } from './viewer.js';
 import UI from './ui.js';
 import Utils from './utils.js';
 import AdminAuth from './adminAuth.js';
@@ -14,7 +14,112 @@ import SessionService from './sessionService.js';
 import ExportImport from './exportImport.js';
 import DB from './db.js';
 
-async function openAddEntryModal() {
+// ---------------------------------------------------------------------
+// Module registry — "Inventarna knjiga" (module 1, original) and
+// "Dokumentacija o enoti" (module 2). Each module gets its own config
+// service, storage service, and viewer instance (see configService.js /
+// storage.js / viewer.js), all built off the same generic, schema-driven
+// machinery — only the module-specific bits (labels, identifier field,
+// title fields, available templates) are listed here.
+// ---------------------------------------------------------------------
+
+const MODULES = {
+  inventarna: {
+    id: 'inventarna',
+    label: 'Inventarna knjiga',
+    addButtonLabel: '+ Dodaj predmet',
+    addModalTitle: 'Dodaj predmet',
+    editModalTitle: 'Uredi predmet',
+    identifierFieldId: 'inventory_number',
+    numberGroupFieldId: 'druge_stevilcne_oznake',
+    numberSubFieldId: 'stevilka',
+    titleFieldIds: ['title', 'naziv'],
+    emptyStateTitle: 'Zbirka je še prazna.',
+    emptyStateHint: 'Dodaj prvi predmet, da začneš.',
+    configService: ConfigService.getConfigService('inventarna'),
+    templates: [
+      { label: 'SPECTRUM jedro', url: './templates/spectrum-core.json' },
+      { label: 'SPECTRUM podrobno (10 kartic)', url: './templates/spectrum-podrobno.json' },
+    ],
+  },
+  dokumentacija: {
+    id: 'dokumentacija',
+    label: 'Dokumentacija o enoti',
+    addButtonLabel: '+ Dodaj zapis',
+    addModalTitle: 'Dodaj dokumentacijski zapis',
+    editModalTitle: 'Uredi dokumentacijski zapis',
+    identifierFieldId: 'identifikacijska_stevilka',
+    numberGroupFieldId: 'druge_stevilcne_oznake',
+    numberSubFieldId: 'stevilka',
+    titleFieldIds: ['naslov_dokumentirane_enote', 'naslov'],
+    emptyStateTitle: 'Dokumentacija je še prazna.',
+    emptyStateHint: 'Dodaj prvi dokumentacijski zapis, da začneš.',
+    configService: ConfigService.getConfigService('dokumentacija'),
+    templates: [],
+  },
+};
+const MODULE_LIST = Object.values(MODULES);
+MODULE_LIST.forEach((m) => {
+  m.storage = createStorage(m.id, m.configService);
+  m.viewer = createViewer(m.id, m.configService, m.storage, m);
+});
+
+let activeModuleId = 'inventarna';
+function activeModule() {
+  return MODULES[activeModuleId];
+}
+// Tracks which module's form is currently open in the add/edit modal, so
+// the generic 'form:submitted' event (emitted by FormBuilder, which has no
+// concept of modules) is routed to the right module's storage.
+let openFormModuleId = null;
+
+// Builds display label + search text for one entry, generically, using its
+// own module's field-id conventions (see MODULES above) — used both for
+// reference-field search results and (implicitly) card titles.
+function referenceLabelForEntry(entry, moduleDef) {
+  const idVal = (moduleDef.identifierFieldId && entry.values[moduleDef.identifierFieldId]) || '';
+  const titleFieldId = (moduleDef.titleFieldIds || []).find((id) => entry.values[id]);
+  const title = titleFieldId ? entry.values[titleFieldId] : '';
+  const parts = [idVal, title].filter(Boolean);
+  return parts.join(' — ') || '(brez naziva)';
+}
+
+// Searchable per what we agreed with the curator: matches the identifier
+// field OR any "other number" in the numberGroupFieldId group, regardless
+// of that number's type (evidenčna, akcesijska ...).
+function referenceSearchTextForEntry(entry, moduleDef) {
+  const numbers = [entry.values[moduleDef.identifierFieldId]];
+  const group = entry.values[moduleDef.numberGroupFieldId];
+  if (Array.isArray(group)) {
+    group.forEach((item) => numbers.push(item && item[moduleDef.numberSubFieldId]));
+  }
+  const label = referenceLabelForEntry(entry, moduleDef);
+  return [...numbers, label].filter(Boolean).join(' ').toLowerCase();
+}
+
+// Given a config (the module currently being filled in), finds every
+// "reference" field's target module and preloads a flat, searchable
+// candidate list for each — so formBuilder's reference widget can filter
+// client-side with zero DB round-trips per keystroke.
+async function buildReferenceCandidates(config) {
+  const targetModuleIds = Array.from(
+    new Set(config.fields.filter((f) => f.type === 'reference' && f.targetModule).map((f) => f.targetModule))
+  );
+  const result = {};
+  for (const targetId of targetModuleIds) {
+    const targetModuleDef = MODULES[targetId];
+    if (!targetModuleDef) continue;
+    const entries = await DB.getAllEntries(targetId);
+    result[targetId] = entries.map((entry) => ({
+      id: entry.id,
+      label: referenceLabelForEntry(entry, targetModuleDef),
+      searchText: referenceSearchTextForEntry(entry, targetModuleDef),
+    }));
+  }
+  return result;
+}
+
+async function openAddEntryModal(moduleDef) {
   const session = await SessionService.getSession();
 
   if (!session || !session.userName) {
@@ -23,16 +128,20 @@ async function openAddEntryModal() {
     return;
   }
 
-  const config = await ConfigService.getLiveConfig();
+  const config = await moduleDef.configService.getLiveConfig();
+  const referenceCandidates = await buildReferenceCandidates(config);
   const container = document.createElement('div');
-  UI.openModal({ title: 'Dodaj predmet', content: container, wide: true, closeOnBackdrop: false });
-  FormBuilder.build(container, config);
+  openFormModuleId = moduleDef.id;
+  UI.openModal({ title: moduleDef.addModalTitle, content: container, wide: true, closeOnBackdrop: false });
+  FormBuilder.build(container, config, { referenceCandidates });
 }
 
-async function openEditEntryModal(entry, config) {
+async function openEditEntryModal(moduleDef, entry, config) {
+  const referenceCandidates = await buildReferenceCandidates(config);
   const container = document.createElement('div');
-  UI.openModal({ title: 'Uredi predmet', content: container, wide: true, closeOnBackdrop: false });
-  FormBuilder.build(container, config, { entry });
+  openFormModuleId = moduleDef.id;
+  UI.openModal({ title: moduleDef.editModalTitle, content: container, wide: true, closeOnBackdrop: false });
+  FormBuilder.build(container, config, { entry, referenceCandidates });
 }
 
 function fieldTypeOptions() {
@@ -46,7 +155,12 @@ function fieldTypeOptions() {
     <option value="link">Povezava (URL)</option>
     <option value="measurements">Mere (CDWA: vrsta + vrednost + enota)</option>
     <option value="group">Skupina (sklop pod-polj)</option>
+    <option value="reference">Povezava (relacija na zapis v drugem modulu)</option>
   `;
+}
+
+function targetModuleOptions(modules) {
+  return modules.map((m) => `<option value="${m.id}">${Utils.escapeHtml(m.label)}</option>`).join('');
 }
 
 function subFieldTypeOptions() {
@@ -122,10 +236,10 @@ function renderGroupsTabContent(config) {
   `;
 }
 
-function wireGroupsTab(wrapper, refresh) {
+function wireGroupsTab(wrapper, refresh, configService) {
   wrapper.querySelectorAll('.mf-move-group').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      await ConfigService.moveGroup(btn.dataset.id, btn.dataset.dir);
+      await configService.moveGroup(btn.dataset.id, btn.dataset.dir);
       await refresh();
     });
   });
@@ -137,14 +251,14 @@ function wireGroupsTab(wrapper, refresh) {
         'Odstrani skupino'
       );
       if (!confirmed) return;
-      await ConfigService.removeGroup(btn.dataset.id);
+      await configService.removeGroup(btn.dataset.id);
       await refresh();
     });
   });
 
   wrapper.querySelectorAll('.mf-move-section').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      await ConfigService.moveSection(btn.dataset.group, btn.dataset.id, btn.dataset.dir);
+      await configService.moveSection(btn.dataset.group, btn.dataset.id, btn.dataset.dir);
       await refresh();
     });
   });
@@ -156,7 +270,7 @@ function wireGroupsTab(wrapper, refresh) {
         'Odstrani razdelek'
       );
       if (!confirmed) return;
-      await ConfigService.removeSection(btn.dataset.group, btn.dataset.id);
+      await configService.removeSection(btn.dataset.group, btn.dataset.id);
       await refresh();
     });
   });
@@ -167,7 +281,7 @@ function wireGroupsTab(wrapper, refresh) {
       const label = input.value.trim();
       if (!label) return;
       try {
-        await ConfigService.addSection(btn.dataset.group, label);
+        await configService.addSection(btn.dataset.group, label);
         await refresh();
       } catch (err) {
         console.error('[App] addSection failed', err);
@@ -182,7 +296,7 @@ function wireGroupsTab(wrapper, refresh) {
       const label = wrapper.querySelector('#cg-label').value.trim();
       if (!label) return;
       try {
-        await ConfigService.addGroup({ label });
+        await configService.addGroup({ label });
         await refresh();
       } catch (err) {
         console.error('[App] addGroup failed', err);
@@ -248,7 +362,7 @@ function renderFieldsListMarkup(config) {
         .join('');
 }
 
-function renderFieldFormMarkup(config) {
+function renderFieldFormMarkup(config, modules) {
   const groupOptions = (config.groups || []).map((g) => `<option value="${g.id}">${Utils.escapeHtml(g.label)}</option>`).join('');
 
   return `
@@ -277,6 +391,20 @@ function renderFieldFormMarkup(config) {
       <div class="mf-field" id="cf-options-wrap" style="display:none">
         <label for="cf-options">Možnosti (ločene z vejico)</label>
         <input type="text" id="cf-options" autocomplete="off" placeholder="npr. Dobro, Slabo" />
+      </div>
+      <div class="mf-settings-list" id="cf-reference-wrap" style="display:none">
+        ${settingsRow({
+          id: 'cf-target-module',
+          label: 'Ciljni modul',
+          hint: 'V katerem modulu se iščejo in povezujejo zapisi (npr. Dokumentacija → Inventarna knjiga).',
+          control: `<select id="cf-target-module">${targetModuleOptions(modules || [])}</select>`,
+        })}
+        ${settingsRow({
+          id: 'cf-multiple',
+          checked: true,
+          label: 'Dovoli več povezav',
+          hint: 'Če je izklopljeno, lahko uporabnik izbere samo en povezan zapis.',
+        })}
       </div>
       <div class="mf-field" id="cf-placeholder-wrap">
         <label for="cf-placeholder">Namig (placeholder)</label>
@@ -363,7 +491,7 @@ function renderFieldFormMarkup(config) {
   `;
 }
 
-function wireFieldsTab(wrapper, config, refresh, restore) {
+function wireFieldsTab(wrapper, config, refresh, restore, configService) {
   const typeSelect = wrapper.querySelector('#cf-type');
   const optionsWrap = wrapper.querySelector('#cf-options-wrap');
   const placeholderWrap = wrapper.querySelector('#cf-placeholder-wrap');
@@ -381,6 +509,9 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
   const groupSelect = wrapper.querySelector('#cf-group');
   const sectionWrap = wrapper.querySelector('#cf-section-wrap');
   const sectionSelect = wrapper.querySelector('#cf-section');
+  const referenceWrap = wrapper.querySelector('#cf-reference-wrap');
+  const targetModuleSelect = wrapper.querySelector('#cf-target-module');
+  const multipleInput = wrapper.querySelector('#cf-multiple');
 
   let currentMeasurementTypes = [];
   let currentSubFields = [];
@@ -459,6 +590,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     placeholderWrap.style.display = ['image', 'document', 'measurements', 'group'].includes(type) ? 'none' : '';
     autoExpandWrap.style.display = type === 'text' ? '' : 'none';
     if (type !== 'text') autoExpandInput.checked = false;
+    referenceWrap.style.display = type === 'reference' ? '' : 'none';
   }
 
   typeSelect.addEventListener('change', updateVisibilityForType);
@@ -534,6 +666,8 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     bgHighlightInput.checked = Boolean(field.backgroundHighlight);
     autoExpandInput.checked = Boolean(field.autoExpand);
     fixedPrecisionInput.checked = Boolean(field.fixedPrecision);
+    if (field.targetModule) targetModuleSelect.value = field.targetModule;
+    multipleInput.checked = field.multiple !== false;
     repeatableInput.checked = field.repeatable !== false;
     currentMeasurementTypes = field.measurementTypes ? Utils.deepClone(field.measurementTypes) : [];
     renderMeasurementTypesList();
@@ -571,7 +705,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
 
   wrapper.querySelectorAll('.mf-move-field').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      await ConfigService.moveField(btn.dataset.id, btn.dataset.dir);
+      await configService.moveField(btn.dataset.id, btn.dataset.dir);
       await refresh();
     });
   });
@@ -580,7 +714,7 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
     btn.addEventListener('click', async () => {
       const confirmed = await UI.confirm('Odstraniti to polje iz obrazca?', 'Odstrani polje');
       if (!confirmed) return;
-      await ConfigService.removeField(btn.dataset.id);
+      await configService.removeField(btn.dataset.id);
       await refresh();
     });
   });
@@ -635,9 +769,9 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
 
     try {
       if (editingId) {
-        await ConfigService.updateField(editingId, fieldPayload);
+        await configService.updateField(editingId, fieldPayload);
       } else {
-        await ConfigService.addField({ id: Utils.slugify(label) + '_' + Date.now().toString(36).slice(-4), ...fieldPayload });
+        await configService.addField({ id: Utils.slugify(label) + '_' + Date.now().toString(36).slice(-4), ...fieldPayload });
       }
       await refresh();
     } catch (err) {
@@ -650,42 +784,50 @@ function wireFieldsTab(wrapper, config, refresh, restore) {
 // "Nastavitve in podatki" tab — PIN, schema publish/import/template, DB tools
 // ---------------------------------------------------------------------
 
-function renderSettingsTabContent() {
+function renderSettingsTabContent(moduleDef) {
+  const templateButtons = (moduleDef.templates || [])
+    .map(
+      (t, i) =>
+        `<button type="button" class="mf-btn mf-btn-ghost mf-load-template-btn" data-template-url="${Utils.escapeHtml(t.url)}" data-template-label="${Utils.escapeHtml(t.label)}">Naloži predlogo: ${Utils.escapeHtml(t.label)}</button>`
+    )
+    .join('');
+
   return `
     <div class="mf-config-toolbar">
       <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-change-pin-btn">Spremeni admin PIN</button>
     </div>
 
     <p class="mf-draft-notice">
-      Tu urejaš <strong>osnutek</strong> sheme — spremembe ne vplivajo na obrazec, ki ga trenutno vidijo uporabniki,
-      dokler osnutka ne izvoziš kot <code>config.json</code> in ga ne objaviš (zamenjaj datoteko v repozitoriju,
-      <code>git push</code>, Vercel samodejno objavi).
+      Tu urejaš <strong>osnutek</strong> sheme za modul "${Utils.escapeHtml(moduleDef.label)}" — spremembe ne
+      vplivajo na obrazec, ki ga trenutno vidijo uporabniki, dokler osnutka ne izvoziš in ga ne objaviš
+      (zamenjaj ustrezno datoteko v repozitoriju, <code>git push</code>, Vercel samodejno objavi).
     </p>
     <div class="mf-form-actions">
-      <button type="button" class="mf-btn mf-btn-primary" id="mf-export-schema-btn">Izvozi shemo obrazca (config.json)</button>
+      <button type="button" class="mf-btn mf-btn-primary" id="mf-export-schema-btn">Izvozi shemo obrazca</button>
       <button type="button" class="mf-btn mf-btn-ghost" id="mf-reset-draft-btn">Ponastavi osnutek na objavljeno shemo</button>
       <button type="button" class="mf-btn mf-btn-ghost" id="mf-import-schema-btn">Uvozi shemo (JSON)</button>
       <input type="file" id="mf-import-schema-input" accept="application/json" style="display:none" />
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-load-spectrum-btn">Naloži predlogo: SPECTRUM jedro</button>
-      <button type="button" class="mf-btn mf-btn-ghost" id="mf-load-spectrum-detailed-btn">Naloži predlogo: SPECTRUM podrobno (10 kartic)</button>
+      ${templateButtons}
     </div>
 
     <hr class="mf-divider" />
 
-    <p class="mf-config-section-title">Upravljanje podatkov</p>
+    <p class="mf-config-section-title">Upravljanje podatkov (vsi moduli)</p>
     <div class="mf-form-actions">
       <button type="button" class="mf-btn mf-btn-ghost" id="mf-export-btn">Izvozi bazo</button>
       <button type="button" class="mf-btn mf-btn-ghost" id="mf-import-btn">Uvozi bazo</button>
       <button type="button" class="mf-btn mf-btn-danger" id="mf-reset-btn">Ponastavi bazo</button>
       <input type="file" id="mf-import-input" accept="application/json" style="display:none" />
     </div>
-    <p class="mf-field-hint">Izvoz vključuje vse vnose, slike/dokumente in trenutno objavljeno konfiguracijo obrazca. Ponastavitev izbriše vnose in podatke seje na tem računalniku — objavljena shema in PIN ostaneta.</p>
+    <p class="mf-field-hint">Izvoz/uvoz in ponastavitev zajemajo vse module (Inventarno knjigo in Dokumentacijo) hkrati, ne le tega, ki ga trenutno urejaš — tako povezave med njimi ostanejo usklajene. Izvoz vključuje vse vnose, slike/dokumente in trenutno objavljene konfiguracije obrazcev. Ponastavitev izbriše vnose in podatke seje na tem računalniku — objavljene sheme in PIN ostanejo.</p>
   `;
 }
 
-function wireSettingsTab(wrapper, refresh) {
+function wireSettingsTab(wrapper, refresh, moduleDef) {
+  const configService = moduleDef.configService;
+
   wrapper.querySelector('#mf-export-schema-btn').addEventListener('click', () => {
-    ConfigService.exportDraftFile();
+    configService.exportDraftFile();
   });
 
   wrapper.querySelector('#mf-reset-draft-btn').addEventListener('click', async () => {
@@ -694,7 +836,7 @@ function wireSettingsTab(wrapper, refresh) {
       'Ponastavi osnutek'
     );
     if (!confirmed) return;
-    await ConfigService.resetDraftToLive();
+    await configService.resetDraftToLive();
     await refresh();
   });
 
@@ -711,7 +853,7 @@ function wireSettingsTab(wrapper, refresh) {
     if (!confirmed) return;
     try {
       const text = await file.text();
-      await ConfigService.importDraftFromObject(JSON.parse(text));
+      await configService.importDraftFromObject(JSON.parse(text));
       await refresh();
     } catch (err) {
       console.error('[App] Schema import failed', err);
@@ -719,32 +861,20 @@ function wireSettingsTab(wrapper, refresh) {
     }
   });
 
-  wrapper.querySelector('#mf-load-spectrum-btn').addEventListener('click', async () => {
-    const confirmed = await UI.confirm(
-      'To bo prepisalo trenutni osnutek s predlogo SPECTRUM jedro. Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?',
-      'Naloži predlogo'
-    );
-    if (!confirmed) return;
-    try {
-      await ConfigService.loadTemplate('./templates/spectrum-core.json');
-      await refresh();
-    } catch (err) {
-      console.error('[App] Template load failed', err);
-    }
-  });
-
-  wrapper.querySelector('#mf-load-spectrum-detailed-btn').addEventListener('click', async () => {
-    const confirmed = await UI.confirm(
-      'To bo prepisalo trenutni osnutek s podrobno predlogo SPECTRUM (10 kartic, ~65 polj). Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?',
-      'Naloži predlogo'
-    );
-    if (!confirmed) return;
-    try {
-      await ConfigService.loadTemplate('./templates/spectrum-podrobno.json');
-      await refresh();
-    } catch (err) {
-      console.error('[App] Template load failed', err);
-    }
+  wrapper.querySelectorAll('.mf-load-template-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const confirmed = await UI.confirm(
+        `To bo prepisalo trenutni osnutek s predlogo "${btn.dataset.templateLabel}". Neizvožene spremembe v osnutku bodo izgubljene. Nadaljujem?`,
+        'Naloži predlogo'
+      );
+      if (!confirmed) return;
+      try {
+        await configService.loadTemplate(btn.dataset.templateUrl);
+        await refresh();
+      } catch (err) {
+        console.error('[App] Template load failed', err);
+      }
+    });
   });
 
   wrapper.querySelector('#mf-change-pin-btn').addEventListener('click', changeAdminPin);
@@ -764,11 +894,11 @@ function wireSettingsTab(wrapper, refresh) {
 
   wrapper.querySelector('#mf-reset-btn').addEventListener('click', async () => {
     const confirmed = await UI.confirm(
-      'To bo trajno izbrisalo VSE vnesene predmete in podatke seje na tem računalniku. Konfiguracija obrazca in PIN ostaneta nespremenjena. Priporočamo, da pred tem izvoziš bazo. Nadaljujem?',
+      'To bo trajno izbrisalo VSE vnesene zapise (v vseh modulih) in podatke seje na tem računalniku. Konfiguracije obrazcev in PIN ostanejo nespremenjeni. Priporočamo, da pred tem izvoziš bazo. Nadaljujem?',
       'Ponastavi bazo'
     );
     if (!confirmed) return;
-    await Storage.clearAllEntries();
+    await Promise.all(MODULE_LIST.map((m) => m.storage.clearAllEntries()));
     await SessionService.clearSession();
     UI.toast({ type: 'success', message: 'Baza je ponastavljena in pripravljena za naslednjo skupino.' });
   });
@@ -778,8 +908,9 @@ function wireSettingsTab(wrapper, refresh) {
 // Top-level admin editor: outer tabs = Skupine | Polja | Nastavitve in podatki
 // ---------------------------------------------------------------------
 
-async function renderConfigEditorBody(restore = {}) {
-  const config = await ConfigService.getDraftConfig();
+async function renderConfigEditorBody(moduleDef, restore = {}) {
+  const configService = moduleDef.configService;
+  const config = await configService.getDraftConfig();
 
   const outerSections = [
     { id: 'groups', label: 'Skupine' },
@@ -789,33 +920,37 @@ async function renderConfigEditorBody(restore = {}) {
 
   const wrapper = document.createElement('div');
   wrapper.className = 'mf-config-editor';
-  wrapper.innerHTML = UI.renderTabsHtml(outerSections, (s) => {
-    if (s.id === 'groups') return `<div class="mf-outer-tab-panel">${renderGroupsTabContent(config)}</div>`;
-    if (s.id === 'fields')
-      return `
-        <div class="mf-outer-tab-panel">
-          <p class="mf-config-section-title">Polja obrazca</p>
-          <div id="mf-fields-list-wrap">${renderFieldsListMarkup(config)}</div>
-          <hr class="mf-divider" />
-          ${renderFieldFormMarkup(config)}
-        </div>
-      `;
-    return `<div class="mf-outer-tab-panel">${renderSettingsTabContent()}</div>`;
-  });
+  wrapper.dataset.moduleId = moduleDef.id;
+  wrapper.innerHTML = `
+    <p class="mf-config-module-label">Urejaš shemo za modul: <strong>${Utils.escapeHtml(moduleDef.label)}</strong></p>
+    ${UI.renderTabsHtml(outerSections, (s) => {
+      if (s.id === 'groups') return `<div class="mf-outer-tab-panel">${renderGroupsTabContent(config)}</div>`;
+      if (s.id === 'fields')
+        return `
+          <div class="mf-outer-tab-panel">
+            <p class="mf-config-section-title">Polja obrazca</p>
+            <div id="mf-fields-list-wrap">${renderFieldsListMarkup(config)}</div>
+            <hr class="mf-divider" />
+            ${renderFieldFormMarkup(config, MODULE_LIST)}
+          </div>
+        `;
+      return `<div class="mf-outer-tab-panel">${renderSettingsTabContent(moduleDef)}</div>`;
+    })}
+  `;
 
   const outerTabController = UI.tabify(wrapper);
   if (restore.activeOuterTab && outerTabController) outerTabController.activate(restore.activeOuterTab);
 
-  const refresh = () => refreshConfigEditor(wrapper);
+  const refresh = () => refreshConfigEditor(wrapper, moduleDef);
 
-  wireGroupsTab(wrapper, refresh);
-  wireFieldsTab(wrapper, config, refresh, restore);
-  wireSettingsTab(wrapper, refresh);
+  wireGroupsTab(wrapper, refresh, configService);
+  wireFieldsTab(wrapper, config, refresh, restore, configService);
+  wireSettingsTab(wrapper, refresh, moduleDef);
 
   return wrapper;
 }
 
-async function refreshConfigEditor(oldWrapper) {
+async function refreshConfigEditor(oldWrapper, moduleDef) {
   const activeOuterBtn = oldWrapper.querySelector('.mf-tab-btn-active');
   const innerFieldsWrap = oldWrapper.querySelector('#mf-fields-list-wrap');
   const activeInnerBtn = innerFieldsWrap ? innerFieldsWrap.querySelector('.mf-tab-btn-active') : null;
@@ -829,16 +964,16 @@ async function refreshConfigEditor(oldWrapper) {
   };
   const scrollTop = scrollParent ? scrollParent.scrollTop : 0;
 
-  const fresh = await renderConfigEditorBody(restore);
+  const fresh = await renderConfigEditorBody(moduleDef, restore);
   oldWrapper.replaceWith(fresh);
 
   const newScrollParent = fresh.closest('.mf-modal-body');
   if (newScrollParent) newScrollParent.scrollTop = scrollTop;
 }
 
-async function openConfigEditorModal() {
-  const body = await renderConfigEditorBody();
-  UI.openModal({ title: 'Uredi obrazec', content: body, wide: true, closeOnBackdrop: false });
+async function openConfigEditorModal(moduleDef) {
+  const body = await renderConfigEditorBody(moduleDef);
+  UI.openModal({ title: `Uredi obrazec — ${moduleDef.label}`, content: body, wide: true, closeOnBackdrop: false });
 }
 
 async function changeAdminPin() {
@@ -865,6 +1000,7 @@ async function changeAdminPin() {
 }
 
 async function guardedOpenConfigEditor() {
+  const moduleDef = activeModule();
   let pinAlreadySet;
   try {
     pinAlreadySet = await AdminAuth.hasPin();
@@ -886,7 +1022,7 @@ async function guardedOpenConfigEditor() {
     } catch (err) {
       return; // AdminAuth already emitted a toast/banner on failure
     }
-    openConfigEditorModal();
+    openConfigEditorModal(moduleDef);
     return;
   }
 
@@ -905,7 +1041,7 @@ async function guardedOpenConfigEditor() {
     return;
   }
 
-  openConfigEditorModal();
+  openConfigEditorModal(moduleDef);
 }
 
 async function openSessionSettingsModal() {
@@ -948,9 +1084,10 @@ async function openSessionSettingsModal() {
 }
 
 async function printCatalog() {
+  const moduleDef = activeModule();
   const [entries, config, session] = await Promise.all([
-    DB.getAllEntries(),
-    ConfigService.getLiveConfig(),
+    DB.getAllEntries(moduleDef.id),
+    moduleDef.configService.getLiveConfig(),
     SessionService.getSession(),
   ]);
 
@@ -959,24 +1096,27 @@ async function printCatalog() {
     return;
   }
 
-  // Keep the printed catalogue to a reasonable width: inventory number,
-  // title/naziv, and up to two more short, single-value fields. Document and
-  // group fields don't summarize well in a compact table cell, so they're
-  // left out of the catalogue view (still visible on each entry's own
-  // printed card).
+  const idFieldId = moduleDef.identifierFieldId;
+  const titleFieldId = (moduleDef.titleFieldIds || []).find((id) => config.fields.some((f) => f.id === id)) || moduleDef.titleFieldIds[0];
+
+  // Keep the printed catalogue to a reasonable width: identifier, title,
+  // and up to two more short, single-value fields. Document and group
+  // fields don't summarize well in a compact table cell, so they're left
+  // out of the catalogue view (still visible on each entry's own printed
+  // card).
   const previewFields = config.fields
-    .filter((f) => ['text', 'number', 'select', 'date', 'measurements', 'link'].includes(f.type) && f.id !== 'inventory_number' && f.id !== 'title')
+    .filter((f) => ['text', 'number', 'select', 'date', 'measurements', 'link'].includes(f.type) && f.id !== idFieldId && f.id !== titleFieldId)
     .slice(0, 3);
 
-  const headerCells = ['Inv. št.', 'Naziv', ...previewFields.map((f) => f.label), 'Datum vnosa']
+  const headerCells = ['Št.', 'Naziv', ...previewFields.map((f) => f.label), 'Datum vnosa']
     .map((h) => `<th>${Utils.escapeHtml(h)}</th>`)
     .join('');
 
   const rows = entries
     .sort((a, b) => a.created - b.created)
     .map((entry) => {
-      const inv = entry.values.inventory_number || '—';
-      const title = entry.values.title || '—';
+      const idVal = (idFieldId && entry.values[idFieldId]) || '—';
+      const title = (titleFieldId && entry.values[titleFieldId]) || '—';
       const cells = previewFields
         .map((f) => {
           let val;
@@ -986,16 +1126,16 @@ async function printCatalog() {
           return `<td>${Utils.escapeHtml(val) || '—'}</td>`;
         })
         .join('');
-      return `<tr><td>${Utils.escapeHtml(inv)}</td><td>${Utils.escapeHtml(title)}</td>${cells}<td>${Utils.formatDate(entry.created)}</td></tr>`;
+      return `<tr><td>${Utils.escapeHtml(idVal)}</td><td>${Utils.escapeHtml(title)}</td>${cells}<td>${Utils.formatDate(entry.created)}</td></tr>`;
     })
     .join('');
 
   const html = `
     <div class="mf-print-catalog">
       <div class="mf-print-header">
-        <span class="mf-print-eyebrow">Lokus · Inventarna knjiga</span>
-        <h2>${Utils.escapeHtml(session?.trainingTitle || 'Katalog predmetov')}</h2>
-        <span class="mf-print-inventory">${entries.length} predmetov ${session?.userName ? '· ' + Utils.escapeHtml(session.userName) : ''}</span>
+        <span class="mf-print-eyebrow">Lokus · ${Utils.escapeHtml(moduleDef.label)}</span>
+        <h2>${Utils.escapeHtml(session?.trainingTitle || 'Katalog')}</h2>
+        <span class="mf-print-inventory">${entries.length} zapisov ${session?.userName ? '· ' + Utils.escapeHtml(session.userName) : ''}</span>
       </div>
       <table>
         <thead><tr>${headerCells}</tr></thead>
@@ -1007,13 +1147,44 @@ async function printCatalog() {
   UI.printHtml(html);
 }
 
+function renderModuleSwitcher() {
+  const nav = document.getElementById('mf-module-switcher');
+  if (!nav) return;
+  nav.innerHTML = MODULE_LIST.map(
+    (m) => `<button type="button" class="mf-module-tab${m.id === activeModuleId ? ' mf-module-tab-active' : ''}" data-module-id="${m.id}">${Utils.escapeHtml(m.label)}</button>`
+  ).join('');
+  nav.querySelectorAll('.mf-module-tab').forEach((btn) => {
+    btn.addEventListener('click', () => switchActiveModule(btn.dataset.moduleId));
+  });
+}
+
+function switchActiveModule(moduleId) {
+  if (!MODULES[moduleId] || moduleId === activeModuleId) return;
+  activeModuleId = moduleId;
+  renderActiveModuleChrome();
+}
+
+function renderActiveModuleChrome() {
+  const moduleDef = activeModule();
+  renderModuleSwitcher();
+
+  const titleEl = document.getElementById('mf-collection-title');
+  if (titleEl) titleEl.textContent = moduleDef.label;
+
+  const addBtn = document.getElementById('mf-add-entry-btn');
+  if (addBtn) addBtn.textContent = moduleDef.addButtonLabel;
+
+  const listContainer = document.getElementById('mf-entries-list');
+  moduleDef.viewer.setContainer(listContainer);
+}
+
 function wireHeaderButtons() {
   const addBtn = document.getElementById('mf-add-entry-btn');
   const configBtn = document.getElementById('mf-edit-config-btn');
   const sessionBtn = document.getElementById('mf-session-btn');
   const printCatalogBtn = document.getElementById('mf-print-catalog-btn');
 
-  if (addBtn) addBtn.addEventListener('click', openAddEntryModal);
+  if (addBtn) addBtn.addEventListener('click', () => openAddEntryModal(activeModule()));
   if (configBtn) configBtn.addEventListener('click', guardedOpenConfigEditor);
   if (sessionBtn) sessionBtn.addEventListener('click', openSessionSettingsModal);
   if (printCatalogBtn) printCatalogBtn.addEventListener('click', printCatalog);
@@ -1021,18 +1192,38 @@ function wireHeaderButtons() {
 
 function wireGlobalFormSubmission() {
   EventBus.on('form:submitted', async (payload) => {
+    const moduleDef = MODULES[openFormModuleId] || activeModule();
     if (payload.entryId) {
-      const result = await Storage.updateEntry(payload.entryId, payload);
+      const result = await moduleDef.storage.updateEntry(payload.entryId, payload);
       if (result.success) UI.closeModal();
       return;
     }
 
-    const result = await Storage.saveEntry(payload);
+    const result = await moduleDef.storage.saveEntry(payload);
     if (result.success) UI.closeModal();
   });
 
-  EventBus.on('entry:editRequested', ({ entry, config }) => {
-    openEditEntryModal(entry, config);
+  EventBus.on('entry:editRequested', ({ moduleId, entry, config }) => {
+    const moduleDef = MODULES[moduleId] || activeModule();
+    openEditEntryModal(moduleDef, entry, config);
+  });
+
+  // Reference chip clicked in a detail view — jump to that entry, switching
+  // module first if it lives in a different one.
+  EventBus.on('nav:openEntry', async ({ moduleId, entryId }) => {
+    const moduleDef = MODULES[moduleId];
+    if (!moduleDef) return;
+    if (moduleId !== activeModuleId) switchActiveModule(moduleId);
+    try {
+      const [entry, config] = await Promise.all([DB.getEntry(entryId, moduleId), moduleDef.configService.getLiveConfig()]);
+      if (!entry) {
+        UI.toast({ type: 'error', message: 'Povezan zapis ne obstaja več (morda je bil izbrisan).' });
+        return;
+      }
+      moduleDef.viewer.openDetail(entry, config);
+    } catch (err) {
+      console.error('[App] Failed to open referenced entry', err);
+    }
   });
 }
 
@@ -1043,14 +1234,15 @@ async function bootstrap() {
   if (versionEl) versionEl.textContent = `Lokus v${Utils.APP_VERSION}`;
 
   try {
-    await ConfigService.getLiveConfig(); // warms the fetched/cached form schema; emits ui:fatal/ui:notify itself on failure
+    // Warms the fetched/cached form schema for every module; each call
+    // emits its own ui:fatal/ui:notify on failure, so one module failing
+    // to load doesn't block the other.
+    await Promise.all(MODULE_LIST.map((m) => m.configService.getLiveConfig()));
   } catch (err) {
     console.error('[App] Failed to initialize config — app will run in a degraded state', err);
   }
 
-  const listContainer = document.getElementById('mf-entries-list');
-  Viewer.init(listContainer);
-
+  renderActiveModuleChrome();
   wireHeaderButtons();
   wireGlobalFormSubmission();
 }

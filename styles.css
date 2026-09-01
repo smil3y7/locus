@@ -501,6 +501,53 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-group-chip-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .mf-group-chip-text { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Reference field (search + link to entries in another module) */
+
+.mf-reference-search-wrap { position: relative; }
+.mf-reference-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--mf-surface);
+  color: var(--mf-parchment);
+}
+.mf-reference-search-input:focus { border-color: var(--mf-brass); outline: none; }
+.mf-reference-results {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--mf-surface);
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--mf-shadow);
+}
+.mf-reference-result {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--mf-hairline);
+  background: var(--mf-surface);
+  color: var(--mf-parchment);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.mf-reference-result:last-child { border-bottom: none; }
+.mf-reference-result:hover { background: var(--mf-bg-elevated); }
+.mf-reference-result-empty { color: var(--mf-muted); cursor: default; }
+.mf-reference-result-empty:hover { background: var(--mf-surface); }
+.mf-reference-chip { cursor: default; }
+
 .mf-chip-remove {
   background: none;
   border: none;
@@ -821,6 +868,13 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 
 /* Field groups (admin editor) */
 
+.mf-config-module-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--mf-muted);
+  margin: 0 0 14px;
+}
+
 .mf-config-section-title {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -988,6 +1042,34 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-switch input:checked + .mf-switch-track { background: var(--mf-brass); }
 .mf-switch input:checked + .mf-switch-track::after { transform: translateX(16px); }
 .mf-switch input:focus-visible + .mf-switch-track { outline: 2px solid var(--mf-brass); outline-offset: 2px; }
+
+/* ---------------- Module switcher ---------------- */
+
+.mf-module-switcher {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--mf-hairline-strong);
+}
+.mf-module-tab {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mf-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.mf-module-tab:hover { color: var(--mf-parchment); }
+.mf-module-tab-active {
+  color: var(--mf-brass);
+  border-bottom-color: var(--mf-brass);
+  font-weight: 600;
+}
 
 /* ---------------- Responsive ---------------- */
 

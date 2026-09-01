@@ -10,6 +10,70 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.1.0] — modul "Dokumentacija o enoti" (v razvoju, faza 1+2 zaključeni)
+
+**Status: še ni objavljeno naročniku.** Ta različica je nastajala vzporedno
+z izdelavo v1.0.0 in je izhajala iz 0.4.5 po ločeni razvojni poti — ob
+uskladitvi je bila prenešena na produkcijsko osnovo (dokumentacija in
+`assets/logo.png` iz v1.0.0), koda modula pa je ostala nespremenjena.
+
+Doda drug, neodvisen modul poleg "Inventarne knjige": **"Dokumentacija o
+enoti"**, dostopen prek preklopnika modulov pod glavo strani. Vsa
+sprememba je dodajalna — obstoječi podatki, shema in nastavitve
+Inventarne knjige ostanejo popolnoma nedotaknjeni (preverjeno s testi).
+
+Manjka še: pogojno prikazovanje kartice "Tekstovni vir" (faza 3, po
+dogovoru z naročnikom sledi po odobritvi vsebine).
+
+### Dodano
+- Nov modul "Dokumentacija o enoti" — svoja ločena shramba v IndexedDB,
+  svoja shema (`config-dokumentacija.json`, 11 kartic, 78 polj po
+  specifikaciji naročnika) in svoj admin urejevalnik — vse po istem
+  mehanizmu kot Inventarna knjiga, brez podvajanja kode.
+- Vseh 11 kartic: Identifikacija; Poimenovanje in vrsta; Vsebina in
+  povezava z enoto dediščine; Izdelava in nastanek; Izvor in povezane
+  dokumentacijske enote; Tehnični podatki o dokumentaciji; Pravice in
+  dostop; Lastništvo in pridobitev; Repozitorij in hramba; Tekstovni vir;
+  Administrativni podatki. Sklopa "Avtorstvo" in "Ključne besede" sta
+  strukturno usklajena z Inventarno knjigo.
+- **Nov tip polja "Povezava" (reference)** — omogoča, da se en zapis poveže
+  z enim ali več zapisi v drugem (ali istem) modulu. Iskanje deluje po
+  identifikacijski številki ALI kateri koli "drugi številčni oznaki", ne
+  glede na njen tip. V pogledu podrobnosti je povezava klikljiva — odpre
+  povezan zapis, po potrebi s preklopom na njegov modul. Uporabljeno
+  dvakrat: "Dokumentirana enota dediščine" (Dokumentacija → Inventarna
+  knjiga) in "Dokumentacija pridobitve" (Dokumentacija → Dokumentacija,
+  samo-referenca).
+- Admin urejevalnik polj ima nov razdelek nastavitev za polja tipa
+  "Povezava" (ciljni modul, ena/več povezav).
+- Izvoz/uvoz baze zdaj zajema vse module hkrati; uvoz starejših,
+  enomodulnih izvozov ostaja podprt (obnovi se v Inventarno knjigo).
+
+### Opombe v vednost
+- "Datum zadnje spremembe" ni dodan kot polje v obrazcu — to že samodejno
+  spremlja aplikacija sama (prikazano v pogledu podrobnosti kot "Nazadnje
+  uredil ..."), ročno polje bi podvajalo obstoječo funkcionalnost.
+- Vsi sklopi kartice "Tehnični podatki o dokumentaciji" (fotografija/sken,
+  zvok, video, tekstovna dokumentacija) so trenutno **vedno vidni** —
+  pogojno prikazovanje po vrsti dokumentacije je predmet faze 3.
+- Opažena manjša neusklajenost imen: kartica "Tekstovni vir" naj bi se v
+  fazi 3 pogojno prikazala, "kadar je vrsta dokumentacije tekstovni vir",
+  medtem ko seznam vrednosti polja "Vrsta dokumentacijske enote" vsebuje
+  možnost "besedilni dokument" (ne dobesedno "tekstovni vir"). V fazi 3 bo
+  treba potrditi, katera vrednost naj sproži prikaz te kartice.
+
+### Tehnično
+- `configService.js`, `storage.js`, `viewer.js` so pretvorjeni v tovarne
+  (ena neodvisna instanca na modul).
+- `db.js`: baza dvignjena na verzijo 2, nova shramba dodana izključno
+  dodajalno (`onupgradeneeded`, brez poseganja v obstoječe podatke).
+- Register modulov v `js/app.js` (`MODULES`) — dodajanje novega modula v
+  prihodnje zahteva le vpis v ta register, ne pisanja nove UI/poslovne
+  logike.
+- Mimogrede odpravljena ista latentna napaka kot v v0.4.6 (tooltip/
+  autoExpand pri urejanju obstoječega polja) — enak popravek, prišel je
+  kot del prenove `configService.js`.
+
 ## [1.0.0] — predana verzija
 
 Prva stabilna izdaja, predana naročniku kot dokončan pogodbeni izdelek. 
