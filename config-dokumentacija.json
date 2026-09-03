@@ -151,6 +151,26 @@
       "section": "sec_identifikacija"
     },
     {
+      "id": "vizualni_vir",
+      "label": "Vizualni vir",
+      "type": "group",
+      "required": true,
+      "repeatable": true,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_identifikacija",
+      "section": "sec_identifikacija",
+      "subFields": [
+        {
+          "id": "slika",
+          "label": "Slika",
+          "type": "image",
+          "required": true,
+          "options": []
+        }
+      ]
+    },
+    {
       "id": "druge_stevilcne_oznake",
       "label": "Druge številčne oznake",
       "type": "group",
@@ -197,7 +217,7 @@
     {
       "id": "tip_naslova",
       "label": "Tip naslova",
-      "type": "select",
+      "type": "multiselect",
       "required": false,
       "options": [
         "prednostni",
@@ -336,7 +356,8 @@
       "options": [],
       "color": "#B68B52",
       "group": "group_vsebina",
-      "section": "sec_vsebina"
+      "section": "sec_vsebina",
+      "autoExpand": true
     },
     {
       "id": "kljucne_besede",
@@ -458,7 +479,8 @@
       "options": [],
       "color": "#8C6A3D",
       "group": "group_izdelava_nastanek",
-      "section": "sec_nastanek_dok"
+      "section": "sec_nastanek_dok",
+      "autoExpand": true
     },
     {
       "id": "cas_nastanka_datum",
@@ -479,7 +501,8 @@
       "options": [],
       "color": "#8C6A3D",
       "group": "group_izdelava_nastanek",
-      "section": "sec_nastanek_dok"
+      "section": "sec_nastanek_dok",
+      "autoExpand": true
     },
     {
       "id": "vir_dokumentacijske_enote",
@@ -506,7 +529,8 @@
       "options": [],
       "color": "#45998B",
       "group": "group_izvor",
-      "section": "sec_izvor"
+      "section": "sec_izvor",
+      "autoExpand": true
     },
     {
       "id": "odnos_izvor",
@@ -522,24 +546,75 @@
       "section": "sec_izvor"
     },
     {
-      "id": "format",
-      "label": "Format",
-      "type": "text",
+      "id": "nacin_nastanka_datoteke",
+      "label": "Način nastanka digitalne datoteke",
+      "type": "select",
       "required": false,
-      "options": [],
-      "color": "#2F6E63",
+      "options": [
+        "izvorno digitalna",
+        "digitizirana",
+        "pretvorjena datoteka"
+      ],
+      "color": "#45998B",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_skupni_tehnicni"
+    },
+    {
+      "id": "format_datoteke",
+      "label": "Format datoteke",
+      "type": "select",
+      "required": false,
+      "options": [
+        "TIFF",
+        "JPEG",
+        "PNG",
+        "WAV",
+        "FLAC",
+        "MP3",
+        "MP4",
+        "MOV",
+        "MXF",
+        "PDF",
+        "PDF/A",
+        "TXT",
+        "DOCX"
+      ],
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
       "section": "sec_skupni_tehnicni"
     },
     {
       "id": "velikost_datoteke",
       "label": "Velikost datoteke",
-      "type": "text",
+      "type": "group",
       "required": false,
+      "repeatable": false,
       "options": [],
-      "color": "#2F6E63",
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
-      "section": "sec_skupni_tehnicni"
+      "section": "sec_skupni_tehnicni",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "B",
+            "KB",
+            "MB",
+            "GB"
+          ]
+        }
+      ]
     },
     {
       "id": "izvorno_ime_datoteke",
@@ -547,9 +622,10 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#2F6E63",
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
-      "section": "sec_skupni_tehnicni"
+      "section": "sec_skupni_tehnicni",
+      "autoExpand": true
     },
     {
       "id": "trenutno_ime_datoteke",
@@ -557,9 +633,10 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#2F6E63",
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
-      "section": "sec_skupni_tehnicni"
+      "section": "sec_skupni_tehnicni",
+      "autoExpand": true
     },
     {
       "id": "vloga_datoteke",
@@ -567,75 +644,185 @@
       "type": "select",
       "required": false,
       "options": [
+        "izvorna datoteka",
         "arhivski master",
         "produkcijski master",
         "dostopna kopija",
-        "predogled",
+        "predogledna kopija",
         "varnostna kopija"
       ],
-      "color": "#2F6E63",
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
       "section": "sec_skupni_tehnicni"
     },
     {
-      "id": "sirina_px",
-      "label": "Širina v px",
+      "id": "lokacija_datoteke_uri",
+      "label": "Lokacija datoteke / URI",
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#2F6E63",
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
-      "section": "sec_foto_sken"
+      "section": "sec_skupni_tehnicni",
+      "autoExpand": true
     },
     {
-      "id": "visina_px",
-      "label": "Višina v px",
-      "type": "text",
+      "id": "sirina_slika",
+      "label": "Širina",
+      "type": "group",
       "required": false,
+      "repeatable": false,
       "options": [],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
-      "section": "sec_foto_sken"
+      "section": "sec_foto_sken",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "px"
+          ]
+        }
+      ]
     },
     {
-      "id": "locljivost",
-      "label": "Ločljivost",
-      "type": "text",
+      "id": "visina_slika",
+      "label": "Višina",
+      "type": "group",
       "required": false,
+      "repeatable": false,
       "options": [],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
-      "section": "sec_foto_sken"
+      "section": "sec_foto_sken",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "px"
+          ]
+        }
+      ]
     },
     {
-      "id": "format_datoteke_slika",
-      "label": "Format datoteke",
-      "type": "text",
+      "id": "prostorska_locljivost",
+      "label": "Prostorska ločljivost",
+      "type": "group",
       "required": false,
+      "repeatable": false,
       "options": [],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
-      "section": "sec_foto_sken"
+      "section": "sec_foto_sken",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "ppi"
+          ]
+        }
+      ]
     },
     {
-      "id": "naprava_zajema",
-      "label": "Naprava zajema",
+      "id": "nacin_zajema",
+      "label": "Način zajema",
       "type": "select",
       "required": false,
       "options": [
         "digitalni fotoaparat",
-        "skener"
+        "skener",
+        "mobilna naprava",
+        "drugo"
       ],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
       "section": "sec_foto_sken"
     },
     {
-      "id": "naziv_naprave_zajema",
-      "label": "Naziv naprave za zajem",
+      "id": "proizvajalec_model_naprave",
+      "label": "Proizvajalec in model naprave",
       "type": "text",
       "required": false,
       "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken"
+    },
+    {
+      "id": "bitna_globina_foto",
+      "label": "Bitna globina",
+      "type": "group",
+      "required": false,
+      "repeatable": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_foto_sken",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "bit"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "barvni_prostor",
+      "label": "Barvni prostor",
+      "type": "select",
+      "required": false,
+      "options": [
+        "sRGB",
+        "Adobe RGB",
+        "Display P3",
+        "Gray Gamma",
+        "drugo"
+      ],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
       "section": "sec_foto_sken"
@@ -646,19 +833,136 @@
       "type": "text",
       "required": false,
       "options": [],
-      "color": "#2F6E63",
+      "color": "#45998B",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_zvok",
+      "placeholder": "npr. 01:23:45",
+      "tooltip": "Strukturiran zapis: HH:MM:SS (ure:minute:sekunde)."
+    },
+    {
+      "id": "zvocni_kodek",
+      "label": "Zvočni kodek",
+      "type": "select",
+      "required": false,
+      "options": [
+        "PCM",
+        "FLAC",
+        "MP3",
+        "AAC",
+        "ALAC",
+        "drugo"
+      ],
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
       "section": "sec_zvok"
     },
     {
-      "id": "format_zvok",
-      "label": "Format",
-      "type": "text",
+      "id": "vzorcna_frekvenca",
+      "label": "Vzorčna frekvenca",
+      "type": "group",
       "required": false,
+      "repeatable": false,
       "options": [],
-      "color": "#2F6E63",
+      "color": "#45998B",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_zvok",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Hz",
+            "kHz"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bitna_globina_zvok",
+      "label": "Bitna globina",
+      "type": "group",
+      "required": false,
+      "repeatable": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_zvok",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "bit"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "konfiguracija_kanalov",
+      "label": "Konfiguracija kanalov",
+      "type": "select",
+      "required": false,
+      "options": [
+        "mono",
+        "stereo",
+        "5.1",
+        "7.1",
+        "drugo"
+      ],
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
       "section": "sec_zvok"
+    },
+    {
+      "id": "podatkovna_hitrost_zvok",
+      "label": "Podatkovna hitrost",
+      "type": "group",
+      "required": false,
+      "repeatable": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_zvok",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "kb/s",
+            "Mb/s"
+          ]
+        }
+      ]
     },
     {
       "id": "trajanje_video",
@@ -668,78 +972,214 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
-      "section": "sec_video"
+      "section": "sec_video",
+      "placeholder": "npr. 01:23:45",
+      "tooltip": "Strukturiran zapis: HH:MM:SS (ure:minute:sekunde)."
     },
     {
       "id": "format_vsebnika",
       "label": "Format vsebnika",
-      "type": "text",
+      "type": "select",
       "required": false,
-      "options": [],
+      "options": [
+        "MP4",
+        "MOV / QuickTime",
+        "MXF",
+        "Matroska",
+        "AVI",
+        "MPEG-TS",
+        "drugo"
+      ],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
       "section": "sec_video"
     },
     {
-      "id": "sirina_visina_video",
-      "label": "Širina x višina",
-      "type": "text",
+      "id": "video_kodek",
+      "label": "Video kodek",
+      "type": "select",
       "required": false,
-      "options": [],
+      "options": [
+        "H.264 / AVC",
+        "H.265 / HEVC",
+        "ProRes",
+        "DNxHD",
+        "DNxHR",
+        "MPEG-2 Video",
+        "FFV1",
+        "drugo"
+      ],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
       "section": "sec_video"
+    },
+    {
+      "id": "sirina_slika_video",
+      "label": "Širina slike",
+      "type": "group",
+      "required": false,
+      "repeatable": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_video",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "px"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "visina_slika_video",
+      "label": "Višina slike",
+      "type": "group",
+      "required": false,
+      "repeatable": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_video",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "px"
+          ]
+        }
+      ]
     },
     {
       "id": "razmerje_stranic",
       "label": "Razmerje stranic",
-      "type": "text",
+      "type": "select",
       "required": false,
-      "options": [],
+      "options": [
+        "4 : 3",
+        "16 : 9",
+        "1,85 : 1",
+        "2,39 : 1",
+        "drugo"
+      ],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
       "section": "sec_video"
     },
     {
-      "id": "format_datoteke_tekst",
-      "label": "Format datoteke",
-      "type": "text",
+      "id": "hitrost_slicic",
+      "label": "Hitrost sličic",
+      "type": "group",
       "required": false,
+      "repeatable": false,
       "options": [],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
-      "section": "sec_tekstovna_dok"
+      "section": "sec_video",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "fps"
+          ]
+        }
+      ]
     },
     {
-      "id": "stevilo_strani",
-      "label": "Število strani",
-      "type": "text",
+      "id": "video_podatkovna_hitrost",
+      "label": "Video podatkovna hitrost",
+      "type": "group",
       "required": false,
+      "repeatable": false,
       "options": [],
       "color": "#2F6E63",
       "group": "group_tehnicni_podatki",
-      "section": "sec_tekstovna_dok"
+      "section": "sec_video",
+      "inlineRow": true,
+      "subFields": [
+        {
+          "id": "vrednost",
+          "label": "Vrednost",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
+          "id": "enota",
+          "label": "Enota",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Mb/s"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bitna_globina_video",
+      "label": "Bitna globina videa",
+      "type": "select",
+      "required": false,
+      "options": [
+        "8 bit",
+        "10 bit",
+        "12 bit",
+        "drugo"
+      ],
+      "color": "#2F6E63",
+      "group": "group_tehnicni_podatki",
+      "section": "sec_video"
     },
     {
       "id": "jezik_dokumenta",
       "label": "Jezik dokumenta",
-      "type": "text",
-      "required": false,
-      "options": [],
-      "color": "#2F6E63",
-      "group": "group_tehnicni_podatki",
-      "section": "sec_tekstovna_dok"
-    },
-    {
-      "id": "digitizirano_izvorno",
-      "label": "Digitizirano / izvorno gradivo",
       "type": "select",
       "required": false,
       "options": [
-        "digitizirano",
-        "izvorno gradivo"
+        "slovenski",
+        "angleški",
+        "nemški",
+        "hrvaški",
+        "srbski",
+        "francoski",
+        "španski",
+        "drugo"
       ],
-      "color": "#2F6E63",
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
       "section": "sec_tekstovna_dok"
     },
@@ -752,7 +1192,7 @@
         "da",
         "ne"
       ],
-      "color": "#2F6E63",
+      "color": "#45998B",
       "group": "group_tehnicni_podatki",
       "section": "sec_tekstovna_dok"
     },
@@ -771,6 +1211,20 @@
       "group": "group_pravice",
       "section": "sec_avtorske_pravice",
       "tooltip": "Lastnik dokumentacije ni enako kot imetnik avtorskih pravic."
+    },
+    {
+      "id": "vrsta_pravic",
+      "label": "Vrsta pravic",
+      "type": "select",
+      "required": false,
+      "options": [
+        "materialne",
+        "moralne",
+        "materialne in moralne"
+      ],
+      "color": "#B68B52",
+      "group": "group_pravice",
+      "section": "sec_avtorske_pravice"
     },
     {
       "id": "imetnik_pravic",
@@ -832,7 +1286,8 @@
       "options": [],
       "color": "#B68B52",
       "group": "group_pravice",
-      "section": "sec_avtorske_pravice"
+      "section": "sec_avtorske_pravice",
+      "autoExpand": true
     },
     {
       "id": "omejitve_reprodukcije",
@@ -842,7 +1297,8 @@
       "options": [],
       "color": "#B68B52",
       "group": "group_pravice",
-      "section": "sec_avtorske_pravice"
+      "section": "sec_avtorske_pravice",
+      "autoExpand": true
     },
     {
       "id": "omejitve_objave",
@@ -852,7 +1308,8 @@
       "options": [],
       "color": "#B68B52",
       "group": "group_pravice",
-      "section": "sec_avtorske_pravice"
+      "section": "sec_avtorske_pravice",
+      "autoExpand": true
     },
     {
       "id": "omejitve_dostopa",
@@ -862,7 +1319,8 @@
       "options": [],
       "color": "#B68B52",
       "group": "group_pravice",
-      "section": "sec_avtorske_pravice"
+      "section": "sec_avtorske_pravice",
+      "autoExpand": true
     },
     {
       "id": "lastnik_dokumentacijske_enote",
@@ -943,7 +1401,8 @@
       "options": [],
       "color": "#45998B",
       "group": "group_repozitorij",
-      "section": "sec_repozitorij"
+      "section": "sec_repozitorij",
+      "autoExpand": true
     },
     {
       "id": "oddelek_zbirka",
@@ -953,7 +1412,8 @@
       "options": [],
       "color": "#45998B",
       "group": "group_repozitorij",
-      "section": "sec_repozitorij"
+      "section": "sec_repozitorij",
+      "autoExpand": true
     },
     {
       "id": "identifikacijska_stevilka_v_repozitoriju",
@@ -963,7 +1423,8 @@
       "options": [],
       "color": "#45998B",
       "group": "group_repozitorij",
-      "section": "sec_repozitorij"
+      "section": "sec_repozitorij",
+      "autoExpand": true
     },
     {
       "id": "vloga_kopije",
@@ -1007,7 +1468,8 @@
       "options": [],
       "color": "#45998B",
       "group": "group_repozitorij",
-      "section": "sec_kopije_lokacije"
+      "section": "sec_kopije_lokacije",
+      "autoExpand": true
     },
     {
       "id": "fizicni_nosilec",
@@ -1109,7 +1571,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "avtor_vira",
@@ -1119,7 +1582,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "urednik_vira",
@@ -1129,7 +1593,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "kraj_objave",
@@ -1139,7 +1604,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "zaloznik",
@@ -1149,7 +1615,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "leto_vira",
@@ -1159,7 +1626,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "izdaja",
@@ -1169,7 +1637,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "stran_folio_signatura",
@@ -1179,7 +1648,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_tekstovni_vir",
-      "section": "sec_tekstovni_vir"
+      "section": "sec_tekstovni_vir",
+      "autoExpand": true
     },
     {
       "id": "institucija",

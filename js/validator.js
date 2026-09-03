@@ -64,6 +64,21 @@ function validateField(field, rawValue) {
       }
       break;
     }
+    case 'multiselect': {
+      if (!Array.isArray(rawValue)) {
+        errors.push(`Polje "${field.label}" ima neveljavno obliko podatkov.`);
+        break;
+      }
+      if (Array.isArray(field.options) && field.options.length > 0) {
+        for (const v of rawValue) {
+          if (!field.options.includes(v)) {
+            errors.push(`Polje "${field.label}" vsebuje neveljavno vrednost.`);
+            break;
+          }
+        }
+      }
+      break;
+    }
     case 'link': {
       if (!Utils.isValidUrl(rawValue)) {
         errors.push(`Polje "${field.label}" mora biti veljavna spletna povezava (http:// ali https://).`);

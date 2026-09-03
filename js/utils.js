@@ -138,7 +138,7 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.1';
 
 // Second-level grouping WITHIN one tab/group's fields — "razdelki" (sections)
 // are visual sub-headers that further organize a tab's fields, defined per

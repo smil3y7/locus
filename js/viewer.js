@@ -52,23 +52,30 @@ function findPrimaryImageBlob(entry, config) {
   return null;
 }
 
-function documentLinkHtml(file, label) {
+function documentLinkHtml(file, label, interactive) {
   if (!(file instanceof Blob)) return '—';
   const url = blobUrl(file);
   const name = file.name || label;
-  return `<a href="${url}" download="${Utils.escapeHtml(name)}" class="mf-doc-link">&#128196; ${Utils.escapeHtml(name)}</a>`;
+  const isPdf = file.type === 'application/pdf';
+  const previewBtn =
+    interactive && isPdf
+      ? `<button type="button" class="mf-doc-preview-btn mf-lightbox-trigger" data-lightbox-src="${url}" data-lightbox-kind="pdf" title="Predogled" aria-label="Predogled dokumenta">&#128065;</button>`
+      : '';
+  return `<a href="${url}" download="${Utils.escapeHtml(name)}" class="mf-doc-link">&#128196; ${Utils.escapeHtml(name)}</a>${previewBtn}`;
 }
 
-function renderGroupItemHtml(item, subFields) {
+function renderGroupItemHtml(item, subFields, interactive) {
   const parts = (subFields || [])
     .map((sf) => {
       const v = item ? item[sf.id] : undefined;
       if (v === undefined || v === null || v === '') return '';
       if (sf.type === 'image') {
         const url = blobUrl(v);
-        return url ? `<span class="mf-group-item-photo"><img src="${url}" alt="" /></span>` : '';
+        if (!url) return '';
+        const triggerAttrs = interactive ? ` class="mf-lightbox-trigger" data-lightbox-src="${url}"` : '';
+        return `<span class="mf-group-item-photo"><img src="${url}" alt=""${triggerAttrs} /></span>`;
       }
-      if (sf.type === 'document') return documentLinkHtml(v, sf.label);
+      if (sf.type === 'document') return documentLinkHtml(v, sf.label, interactive);
       if (sf.type === 'date') return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${Utils.escapeHtml(Utils.formatPartialDate(v))}`;
       if (sf.type === 'link') return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${linkHtml(v)}`;
       return `<strong>${Utils.escapeHtml(sf.label)}:</strong> ${Utils.escapeHtml(v)}`;
@@ -111,17 +118,19 @@ function detailRowHtml(field, entry, { interactive }) {
   } else if (field.type === 'date') {
     valueHtml = Utils.escapeHtml(Utils.formatPartialDate(raw)) || '—';
   } else if (field.type === 'document') {
-    valueHtml = documentLinkHtml(raw, field.label);
+    valueHtml = documentLinkHtml(raw, field.label, interactive);
   } else if (field.type === 'link') {
     valueHtml = linkHtml(raw);
   } else if (field.type === 'reference') {
     valueHtml = interactive ? referenceValueHtml(raw) : referenceValueTextOnly(raw);
+  } else if (field.type === 'multiselect') {
+    valueHtml = Array.isArray(raw) && raw.length > 0 ? Utils.escapeHtml(raw.join(', ')) : '—';
   } else if (field.type === 'group') {
     if (field.repeatable === false) {
-      valueHtml = raw ? renderGroupItemHtml(raw, field.subFields) : '—';
+      valueHtml = raw ? renderGroupItemHtml(raw, field.subFields, interactive) : '—';
     } else {
       const items = Array.isArray(raw) ? raw : [];
-      valueHtml = items.length === 0 ? '—' : items.map((item) => renderGroupItemHtml(item, field.subFields)).join('');
+      valueHtml = items.length === 0 ? '—' : items.map((item) => renderGroupItemHtml(item, field.subFields, interactive)).join('');
     }
   } else {
     valueHtml = Utils.escapeHtml(raw) || '—';
@@ -267,7 +276,7 @@ function createViewer(moduleId, configService, storage, moduleDef) {
           Izbriši
         </button>
       </div>
-      ${imgUrl ? `<div class="mf-detail-photo"><img src="${imgUrl}" alt="" /></div>` : ''}
+      ${imgUrl ? `<div class="mf-detail-photo"><img src="${imgUrl}" alt="" class="mf-lightbox-trigger" data-lightbox-src="${imgUrl}" /></div>` : ''}
       <div class="mf-detail-meta">
         Vnesel: ${Utils.escapeHtml(entry.createdBy)} · ${Utils.formatDateTime(entry.created)}
       </div>
@@ -300,6 +309,15 @@ function createViewer(moduleId, configService, storage, moduleDef) {
       btn.addEventListener('click', () => {
         EventBus.emit('ui:closeModal');
         EventBus.emit('nav:openEntry', { moduleId: btn.dataset.refModule || moduleId, entryId: btn.dataset.refId });
+      });
+    });
+
+    // Images (main photo + any inside repeatable groups) and PDF preview
+    // buttons: click opens a full-size lightbox instead of doing nothing.
+    content.querySelectorAll('.mf-lightbox-trigger').forEach((el) => {
+      el.addEventListener('click', (event) => {
+        event.stopPropagation();
+        UI.openLightbox({ src: el.dataset.lightboxSrc, kind: el.dataset.lightboxKind || 'image' });
       });
     });
   }

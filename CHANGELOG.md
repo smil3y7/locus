@@ -10,6 +10,53 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.1.1] — modul "Dokumentacija o enoti": korekture po pregledu (v razvoju)
+
+**Status: še ni objavljeno naročniku.** Popravki na podlagi dveh dokumentov
+s korekturami ("Korekture Dokumentacija o enoti", "Kartica Tehnični
+podatki") po pregledu vsebine iz faze 2.
+
+### Dodano
+- Identifikacija: novo obvezno, ponovljivo polje "Vizualni vir" (ena ali
+  več slik).
+- Nov tip polja **"Več-izbira" (multiselect)** — checkboxi namesto
+  spustnega seznama, kjer je dovoljena izbira več vrednosti hkrati.
+  Uporabljen pri "Tip naslova".
+- Pravice in dostop: novo polje "Vrsta pravic" (materialne / moralne /
+  materialne in moralne).
+- **Celovita prenova kartice "Tehnični podatki o dokumentaciji"** po novi
+  specifikaciji — 5 sklopov (Skupni tehnični podatki; Fotografija/sken;
+  Zvočni posnetek; Video; Tekstovna dokumentacija), številske vrednosti z
+  enoto so povsod ločen par polj (npr. Velikost datoteke, Širina/Višina
+  slike, Bitna globina, Vzorčna frekvenca ...), Trajanje (zvok/video) je
+  strukturiran zapis HH:MM:SS.
+- **Predogled slik in PDF-jev**: klik na sličico (v pregledu predmeta ali
+  znotraj ponovljivih skupin, npr. "Vizualni vir", "Viri – slike") odpre
+  celozaslonski predogled ("lightbox") — zapre se s klikom zunaj slike, na
+  "×" ali Esc. PDF priloge dobijo dodatno ikono za predogled poleg
+  obstoječe povezave za prenos. Velja za oba modula (skupna koda v
+  `viewer.js`).
+
+### Spremenjeno
+- Vseh ~25 besedilnih polj iz korektur je zdaj samodejno rastoča textarea
+  (npr. Predmet/tema, Kraj nastanka, Opomba o pridobitvi, vsa polja
+  kartice Tekstovni vir ...).
+- Jezik dokumenta: iz besedilnega polja v spustni seznam.
+
+### Opombe v vednost
+- Kartica "Tekstovni vir" po dogovoru z naročnikom zaenkrat ostaja
+  nespremenjena (le dodano samodejno raščanje besedilnih polj) —
+  ugotovljeno je bilo, da bi si zaslužila lasten modul, povezljiv s
+  predmetom v Inventarni knjigi enako kot Dokumentacija; to se rešuje v
+  eni od naslednjih faz.
+- Nova specifikacija kartice "Tehnični podatki o dokumentaciji" ne
+  vključuje več polja "Število strani" (bilo je del prejšnje različice
+  kartice) — odstranjeno kot del celovite prenove; opozarjamo, če je šlo
+  za nenameren izpust.
+- Polje "Dokumentirana enota dediščine" (povezava z Inventarno knjigo,
+  klik odpre povezan predmet) je bilo že implementirano v fazi 1 — korekture
+  so le potrdile obstoječe vedenje, brez potrebnih sprememb kode.
+
 ## [1.1.0] — modul "Dokumentacija o enoti" (v razvoju, faza 1+2 zaključeni)
 
 **Status: še ni objavljeno naročniku.** Ta različica je nastajala vzporedno

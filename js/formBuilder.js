@@ -677,6 +677,21 @@ function fieldInputHtml(field, value) {
           <div class="mf-reference-results" id="refresults_${field.id}" hidden></div>
         </div>
       `;
+    case 'multiselect': {
+      const selected = Array.isArray(value) ? value : [];
+      const optionsHtml = (field.options || [])
+        .map((opt) => {
+          const checked = selected.includes(opt) ? ' checked' : '';
+          return `
+            <label class="mf-multiselect-option">
+              <input type="checkbox" name="${field.id}" value="${Utils.escapeHtml(opt)}"${checked} />
+              ${Utils.escapeHtml(opt)}
+            </label>
+          `;
+        })
+        .join('');
+      return `<div class="mf-multiselect" id="ms_${field.id}">${optionsHtml}</div>`;
+    }
     default:
       return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} value="${Utils.escapeHtml(val)}"${placeholder} />`;
   }
@@ -711,7 +726,7 @@ function updateTabDots(container, sections) {
     const dot = container.querySelector(`[data-tab-dot="${section.id}"]`);
     if (!dot) return;
     const incomplete = section.fields.some((field) => {
-      if (!field.required || ['image', 'document', 'group', 'measurements', 'reference'].includes(field.type)) return false;
+      if (!field.required || ['image', 'document', 'group', 'measurements', 'reference', 'multiselect'].includes(field.type)) return false;
       const el = container.querySelector(`#f_${field.id}`);
       if (!el) return false;
       return !el.value || !el.value.trim();
@@ -922,6 +937,8 @@ function build(container, config, options) {
         } else {
           values[field.id] = groupFieldItems[field.id] || [];
         }
+      } else if (field.type === 'multiselect') {
+        values[field.id] = formData.getAll(field.id);
       } else {
         values[field.id] = formData.get(field.id);
       }
@@ -934,6 +951,7 @@ function build(container, config, options) {
           if (!f.required) return false;
           if (f.type === 'measurements') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
           if (f.type === 'reference') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
+          if (f.type === 'multiselect') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
           if (f.type === 'group') {
             if (f.repeatable === false) return false; // sub-field-level required is enforced by Validator
             return !Array.isArray(values[f.id]) || values[f.id].length === 0;

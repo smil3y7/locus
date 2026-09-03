@@ -548,6 +548,24 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-reference-result-empty:hover { background: var(--mf-surface); }
 .mf-reference-chip { cursor: default; }
 
+/* Multiselect field (checkboxes) */
+
+.mf-multiselect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.mf-multiselect-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--mf-parchment);
+  cursor: pointer;
+}
+.mf-multiselect-option input[type="checkbox"] { accent-color: var(--mf-brass); }
+
 .mf-chip-remove {
   background: none;
   border: none;
@@ -1070,6 +1088,71 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   border-bottom-color: var(--mf-brass);
   font-weight: 600;
 }
+
+/* ---------------- Lightbox (full-size image/PDF preview) ---------------- */
+
+.mf-lightbox-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+}
+.mf-lightbox-root.mf-lightbox-open { display: block; }
+.mf-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 14, 13, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  box-sizing: border-box;
+  cursor: zoom-out;
+}
+.mf-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+.mf-lightbox-pdf {
+  width: min(900px, 100%);
+  height: 100%;
+  border: none;
+  background: #fff;
+  cursor: default;
+}
+.mf-lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+}
+.mf-lightbox-close:hover { opacity: 1; }
+
+.mf-lightbox-trigger { cursor: zoom-in; }
+.mf-doc-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--mf-muted);
+  cursor: pointer;
+  font-size: 14px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.mf-doc-preview-btn:hover { color: var(--mf-brass); }
 
 /* ---------------- Responsive ---------------- */
 

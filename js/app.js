@@ -150,6 +150,7 @@ function fieldTypeOptions() {
     <option value="number">Število</option>
     <option value="date">Datum</option>
     <option value="select">Izbira (select)</option>
+    <option value="multiselect">Več-izbira (checkboxi)</option>
     <option value="image">Slika</option>
     <option value="document">Dokument (PDF ipd.)</option>
     <option value="link">Povezava (URL)</option>
@@ -583,11 +584,11 @@ function wireFieldsTab(wrapper, config, refresh, restore, configService) {
 
   function updateVisibilityForType() {
     const type = typeSelect.value;
-    optionsWrap.style.display = type === 'select' ? '' : 'none';
+    optionsWrap.style.display = ['select', 'multiselect'].includes(type) ? '' : 'none';
     measurementTypesWrap.style.display = type === 'measurements' ? '' : 'none';
     subFieldsWrap.style.display = type === 'group' ? '' : 'none';
     fixedPrecisionWrap.style.display = type === 'date' ? '' : 'none';
-    placeholderWrap.style.display = ['image', 'document', 'measurements', 'group'].includes(type) ? 'none' : '';
+    placeholderWrap.style.display = ['image', 'document', 'measurements', 'group', 'multiselect'].includes(type) ? 'none' : '';
     autoExpandWrap.style.display = type === 'text' ? '' : 'none';
     if (type !== 'text') autoExpandInput.checked = false;
     referenceWrap.style.display = type === 'reference' ? '' : 'none';
