@@ -205,6 +205,16 @@
       "section": "sec_poimenovanje"
     },
     {
+      "id": "drugo_ime_predmeta",
+      "label": "Drugo ime predmeta",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje",
+      "section": "sec_poimenovanje"
+    },
+    {
       "id": "naslov",
       "label": "Naslov",
       "type": "text",
@@ -306,7 +316,9 @@
         "Arheološka zbirka",
         "Etnološka zbirka",
         "Zbirka razglednic",
-        "Zbirka fotografske opreme"
+        "Zbirka fotografske opreme",
+        "Zbirka novejše zgodovine",
+        "Športna zbirka"
       ],
       "color": "#2F6E63",
       "group": "group_poimenovanje",
@@ -347,6 +359,17 @@
       "section": "sec_klasifikacija"
     },
     {
+      "id": "klasifikacijske_oznake",
+      "label": "Klasifikacijske oznake",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_poimenovanje",
+      "section": "sec_klasifikacija",
+      "placeholder": "npr. koda po izbranem klasifikacijskem sistemu"
+    },
+    {
       "id": "tip_klasifikacije",
       "label": "Tip klasifikacije",
       "type": "select",
@@ -361,17 +384,6 @@
       "color": "#2F6E63",
       "group": "group_poimenovanje",
       "section": "sec_klasifikacija"
-    },
-    {
-      "id": "klasifikacijske_oznake",
-      "label": "Klasifikacijske oznake",
-      "type": "text",
-      "required": false,
-      "options": [],
-      "color": "#2F6E63",
-      "group": "group_poimenovanje",
-      "section": "sec_klasifikacija",
-      "placeholder": "npr. koda po izbranem klasifikacijskem sistemu"
     },
     {
       "id": "kljucne_besede",
@@ -406,7 +418,8 @@
             "tema",
             "upodobljen motiv",
             "material",
-            "tehnika"
+            "tehnika",
+            "podjetje"
           ]
         }
       ]
@@ -462,6 +475,13 @@
             "izdelovalec",
             "soavtor"
           ]
+        },
+        {
+          "id": "naziv_izdelovalca",
+          "label": "Naziv izdelovalca",
+          "type": "text",
+          "required": false,
+          "options": []
         }
       ]
     },
@@ -495,6 +515,7 @@
             "začetek",
             "sredina",
             "prva polovica",
+            "druga četrtina",
             "tretja četrtina",
             "konec"
           ]
@@ -520,6 +541,17 @@
         }
       ],
       "inlineRow": true
+    },
+    {
+      "id": "opomba_casa_izdelave",
+      "label": "Opomba časa izdelave",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#B68B52",
+      "group": "group_izdelava",
+      "section": "sec_nastanek",
+      "autoExpand": true
     },
     {
       "id": "kraj_najdbe",
@@ -551,7 +583,8 @@
       "color": "#B68B52",
       "group": "group_izdelava",
       "section": "sec_najdba",
-      "tooltip": "Zapis v skladu s slovenskim pravopisom."
+      "tooltip": "Zapis v skladu s slovenskim pravopisom.",
+      "autoExpand": true
     },
     {
       "id": "fizicni_opis_celote",
@@ -601,7 +634,30 @@
       "color": "#2F6E63",
       "group": "group_opis",
       "section": "sec_opis",
-      "tooltip": "Zapis v skladu s slovenskim pravopisom."
+      "tooltip": "Zapis v skladu s slovenskim pravopisom.",
+      "autoExpand": true
+    },
+    {
+      "id": "pomen_napisa",
+      "label": "Pomen napisa",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_opis",
+      "section": "sec_opis",
+      "autoExpand": true
+    },
+    {
+      "id": "polozaj_napisa",
+      "label": "Položaj napisa",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#2F6E63",
+      "group": "group_opis",
+      "section": "sec_opis",
+      "autoExpand": true
     },
     {
       "id": "signatura",
@@ -633,7 +689,8 @@
       "options": [],
       "color": "#2F6E63",
       "group": "group_opis",
-      "section": "sec_interpretacija"
+      "section": "sec_interpretacija",
+      "autoExpand": true
     },
     {
       "id": "viri_slike",
@@ -738,7 +795,11 @@
             "sredina",
             "prva polovica",
             "tretja četrtina",
-            "konec"
+            "konec",
+            "okoli",
+            "približno",
+            "pred",
+            "po"
           ]
         },
         {
@@ -798,6 +859,17 @@
       "tooltip": "Zapis v skladu s slovenskim pravopisom."
     },
     {
+      "id": "provenienca",
+      "label": "Provenienca",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_uporaba",
+      "section": null,
+      "autoExpand": true
+    },
+    {
       "id": "materiali",
       "label": "Materiali",
       "type": "group",
@@ -823,7 +895,18 @@
             "papir",
             "plastika",
             "litoželezo",
-            "usnje"
+            "usnje",
+            "žgana glina",
+            "emajl",
+            "poliuretan sintetični material",
+            "tekstil",
+            "guma",
+            "termoplastična masa",
+            "kovina",
+            "baker",
+            "elektronske komponente",
+            "bombaž",
+            "platno"
           ]
         },
         {
@@ -876,7 +959,19 @@
             "modeliranje",
             "klesanje",
             "kovanje",
-            "tisk"
+            "tisk",
+            "litje",
+            "emajliranje",
+            "oblikovanje",
+            "laminiranje",
+            "termično spajanje panelov",
+            "tisk",
+            "industrijska proizvodnja",
+            "brizganje termoplastične mase",
+            "strojna izdelava",
+            "elektronska montaža",
+            "sestavljanje",
+            "šivanje"
           ]
         },
         {
@@ -1211,21 +1306,24 @@
     {
       "id": "povezava_dokumentacija_pridobitve",
       "label": "Povezava na dokumentacijo pridobitve",
-      "type": "group",
+      "type": "reference",
       "required": false,
-      "repeatable": true,
       "options": [],
       "color": "#8C6A3D",
       "group": "group_lastnistvo",
-      "subFields": [
-        {
-          "id": "povezava",
-          "label": "Povezava",
-          "type": "link",
-          "required": true,
-          "options": []
-        }
-      ],
+      "section": null,
+      "targetModule": "dokumentacija",
+      "multiple": true,
+      "tooltip": "Poveži z ustreznim zapisom v modulu Dokumentacija o enoti (npr. tekstovni vir, ki dokazuje pridobitev)."
+    },
+    {
+      "id": "dokument_pridobitve",
+      "label": "Dokument pridobitve",
+      "type": "document",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_lastnistvo",
       "section": null
     },
     {

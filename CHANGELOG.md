@@ -10,6 +10,67 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.2.0] — novi šifranti in popravki v obeh modulih (v razvoju)
+
+**Status: še ni objavljeno naročniku.**
+
+### Popravljeno
+- **Globalno**: pritisk tipke Enter znotraj enovrstičnega besedilnega polja
+  ne sproži več nehotene oddaje (shranitve) celotnega obrazca — velja za
+  vsa polja v obeh modulih. Znotraj samodejno rastočih polj (textarea, npr.
+  "Napis") Enter še vedno pravilno vstavi novo vrstico.
+
+### Dodano — Inventarna knjiga (novi šifranti)
+- Zbirka: "Zbirka novejše zgodovine", "Športna zbirka".
+- Ključne besede: "podjetje".
+- Avtorstvo: novo podpolje "Naziv izdelovalca" (za primere, ko je
+  "avtor"/izdelovalec pravna oseba, ne posameznik).
+- Čas izdelave — Položaj: "druga četrtina".
+- Čas uporabe — Položaj: "okoli", "približno", "pred", "po".
+- Material: 11 novih vrednosti (žgana glina, emajl, poliuretan sintetični
+  material, tekstil, guma, termoplastična masa, kovina, baker, elektronske
+  komponente, bombaž, platno).
+- Tehnika: 12 novih vrednosti (litje, emajliranje, oblikovanje,
+  laminiranje, termično spajanje panelov, tisk, industrijska proizvodnja,
+  brizganje termoplastične mase, strojna izdelava, elektronska montaža,
+  sestavljanje, šivanje).
+
+### Dodano — Inventarna knjiga (nova polja)
+- "Drugo ime predmeta" (besedilno), takoj pred poljem "Naslov".
+- "Pomen napisa" in "Položaj napisa" (obe samodejno rastoči), ob polju
+  "Napis".
+- "Opomba časa izdelave" (samodejno rastoče), ob sklopu "Čas izdelave".
+- "Provenienca" (samodejno rastoče), takoj za poljem "Predhodno
+  lastništvo".
+- "Dokument pridobitve" (nalaganje datoteke) in "Povezava na dokumentacijo
+  pridobitve" (relacija na zapis v modulu Dokumentacija o enoti) — dve
+  ločeni polji, ki skupaj omogočata oboje: neposredno prilogo ali
+  povezavo na obstoječ dokumentacijski zapis.
+
+### Spremenjeno — Inventarna knjiga
+- Okoliščine najdbe, Zgodovinski kontekst: samodejno rastoča polja.
+- Vrstni red: "Tip klasifikacije" je zdaj takoj za "Klasifikacijske
+  oznake" (prej obratno).
+- Polje "Povezava na dokumentacijo pridobitve" je bilo v shemi že
+  prisotno v starejši, šibkejši obliki (splošna URL povezava) — nadomeščeno
+  s pravo relacijo na modul Dokumentacija o enoti.
+
+### Dodano — Dokumentacija o enoti
+- Identifikacija: novo polje "Tekstovni vir" (nalaganje datoteke), ob
+  polju "Vizualni vir".
+- Avtorstvo/ustvarjalec — Obseg prispevka: "prepis".
+- Izvor — Odnos: "prepisano iz".
+
+### Odprto — čaka pojasnilo
+- "Materialnost predmeta – Obseg": v korekturah naveden nov šifrant za
+  polje "Obseg", ki v shemi še ne obstaja; nejasno je, katere konkretne
+  vrednosti naj vsebuje spustni seznam. Ni implementirano.
+- "Identifikacija dokumentacijske enote – možnost izbire, kateri vir
+  (vizualni/zvočni/tekstovni/video/drug) je obvezen": polje "Tekstovni
+  vir" je dodano, mehanizem za konfigurabilno izbiro obveznega tipa vira
+  pa še ni implementiran — čaka pojasnilo, ali gre za nastavitev sheme
+  (enotno za vse zapise) ali izbiro na ravni posameznega zapisa.
+
 ## [1.1.1] — modul "Dokumentacija o enoti": korekture po pregledu (v razvoju)
 
 **Status: še ni objavljeno naročniku.** Popravki na podlagi dveh dokumentov

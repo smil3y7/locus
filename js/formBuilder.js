@@ -898,6 +898,18 @@ function build(container, config, options) {
     true // capture: 'focus' does not bubble
   );
 
+  // Pressing Enter inside a single-line <input> submits the form by native
+  // browser behavior — surprising and destructive mid-entry (e.g. while
+  // typing "Napis"). <textarea> fields are unaffected: Enter there is
+  // supposed to insert a newline, not submit.
+  currentForm.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const target = event.target;
+    if (target && target.tagName === 'INPUT' && !['submit', 'button', 'checkbox', 'radio'].includes(target.type)) {
+      event.preventDefault();
+    }
+  });
+
   currentForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(currentForm);

@@ -171,6 +171,17 @@
       ]
     },
     {
+      "id": "tekstovni_vir_datoteka",
+      "label": "Tekstovni vir",
+      "type": "document",
+      "required": false,
+      "options": [],
+      "color": "#45998B",
+      "group": "group_identifikacija",
+      "section": "sec_identifikacija",
+      "tooltip": "Priloži datoteko tekstovnega vira (npr. sken dokumenta). Glej tudi kartico \"Tekstovni vir\" za bibliografske podatke."
+    },
+    {
       "id": "druge_stevilcne_oznake",
       "label": "Druge številčne oznake",
       "type": "group",
@@ -418,7 +429,8 @@
             "nova reprodukcija",
             "montaža",
             "prevod",
-            "drugo"
+            "drugo",
+            "prepis"
           ]
         },
         {
@@ -539,7 +551,8 @@
       "required": false,
       "options": [
         "skenirano iz",
-        "reproducirano iz"
+        "reproducirano iz",
+        "prepisano iz"
       ],
       "color": "#45998B",
       "group": "group_izvor",
