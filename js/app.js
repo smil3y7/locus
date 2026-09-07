@@ -67,7 +67,7 @@ const MODULES = {
 // naloži config-*.json, in se zanj nikoli ne pokliče createStorage().
 //
 // Modula "dokumentacija" ne dodajte sem, dokler ni odobreno za produkcijo.
-const ENABLED_MODULES = ['inventarna'];
+const ENABLED_MODULES = ['inventarna', 'dokumentacija'];
 
 Object.keys(MODULES).forEach((id) => {
   if (!ENABLED_MODULES.includes(id)) delete MODULES[id];
