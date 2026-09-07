@@ -28,7 +28,7 @@ assets/
   favicon.svg/.ico, favicon-192.png, apple-touch-icon.png – ikona zavihka brskalnika
 js/
   eventBus.js       – globalni pub/sub
-  utils.js          – čiste pomožne funkcije; APP_VERSION je tu
+  utils.js          – čiste pomožne funkcije; APP_VERSION, APP_ENV/IS_DEV_ENV (samodejno zaznano iz domene) so tu
   db.js             – edini modul, ki dostopa do IndexedDB; ena shramba na vsak podatkovni modul + skupna shramba za sejo/PIN
   adminAuth.js      – PIN zaščita za urejevalnik obrazca (deterrent, ne prava avtentikacija; skupna za vse module)
   sessionService.js – ime vnašalca in naslov izobraževanja za trenutno sejo (skupna za vse module)
@@ -114,21 +114,53 @@ Gita.
 
 Predana različica 1.0.0 predstavlja izhodišče za nadaljnji razvoj.
 
-### Priporočena veja za razvoj novih modulov
+### Delovni tok: main ↔ razvoj
 
-Da produkcijska koda (ki jo naročnik uporablja za resnične vnose) in
-nedokončano razvojno delo (npr. modul "Dokumentacija o enoti") ne prideta
-v konflikt, priporočamo ločeno razvojno vejo:
+Dejansko stanje (od v1.3.0 dalje) se razlikuje od prvotnega načrta zgoraj:
+namesto ene razvojne veje, ki se z `main` združi šele ob zaključku modula,
+teče **stalno vzporedno** dvoje ločenih Vercel projektov iz dveh stalnih
+vej:
 
-```bash
-git checkout -b razvoj/dokumentacija-modul
-```
+- `main` → produkcija, `https://lokus-spdm.vercel.app/` — kar dejansko
+  uporablja naročnik.
+- `razvoj` → razvojno okolje, `https://lokus-razvoj.vercel.app/` — tekoč
+  razvoj (trenutno modul "Dokumentacija o enoti").
 
-Veja `main` naj vedno predstavlja to, kar dejansko teče v naročnikovi
-produkciji (torej trenutno objavljeno različico). Ko je nov modul
-dokončan in odobren, se razvojna veja z `main` združi (in objavi) šele
-takrat — pred tem ostane `main` nedotaknjen. Pred vsakim takim
-združevanjem preveri, ali je naročnik med tem sam spremenil `config.json`
-ali `assets/logo.png` prek admin urejevalnika oz. neposredno v
-repozitoriju — te spremembe imajo vedno prednost pred tistimi v razvojni
-veji (glejte opombo v `README.md`, razdelek "Moduli").
+Katero okolje aplikacija misli, da je (produkcija/razvoj — vpliva na
+pasico na vrhu strani, `[Dev]` v naslovu zavihka in na to, kateri moduli so
+vidni), se **ugotovi samodejno iz domene** (`DEV_HOSTNAMES` v
+`js/utils.js`) — koda je zato na obeh vejah dobesedno identična in med
+njima ni ročnih stikal, ki bi jih bilo treba usklajevati.
+
+**Vidnost modulov v produkciji** se upravlja samo prek
+`PRODUCTION_APPROVED_MODULES` v `js/app.js` (glejte komentar tam) — to je
+edino mesto v celotni kodni bazi, ki ga urediš, ko naročnik odobri nov
+modul. V razvojnem okolju so ne glede na ta seznam vedno vidni vsi
+registrirani moduli.
+
+**Prenos sprememb med vejama:**
+
+- Popravki, narejeni na `razvoj` (npr. bug v modulu Inventarna knjiga, ki
+  je nastal med razvojem modula Dokumentacija), gredo v produkcijo prek:
+  ```bash
+  git checkout main
+  git cherry-pick <commit-sha>   # samo izbrani commit(i)
+  # ali, če želiš prenesti vse spremembe naenkrat:
+  git merge razvoj
+  git push
+  ```
+- Ker sta okoljska logika in `PRODUCTION_APPROVED_MODULES` zdaj enaka na
+  obeh vejah, tovrstni `merge`/`cherry-pick` **ne povzroča konfliktov na
+  teh dveh mestih** — konflikt lahko nastane le, če je isti del kode (npr.
+  isto polje sheme) med tem hkrati spremenjen na obeh vejah, kar je
+  normalen Git konflikt in se rešuje kot običajno.
+- Ko naročnik odobri modul "Dokumentacija o enoti" za produkcijo:
+  1. na `razvoj` (ali kjerkoli, saj je koda enaka) uredi
+     `PRODUCTION_APPROVED_MODULES` v `js/app.js`, da vključuje
+     `'dokumentacija'`;
+  2. prenesi to spremembo v `main` (merge/cherry-pick) in objavi;
+  3. dokumentiraj v `CHANGELOG.md`.
+- Pred vsakim tovrstnim usklajevanjem preveri tudi, ali je naročnik med
+  tem sam spremenil `config.json` ali `assets/logo.png` prek admin
+  urejevalnika oz. neposredno v repozitoriju na `main` — te spremembe
+  imajo vedno prednost (glejte opombo v `README.md`, razdelek "Moduli").

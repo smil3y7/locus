@@ -138,14 +138,26 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
-// Single source of truth for which environment this deployment is. Ker gre
-// za dva ločena Vercel projekta (main = produkcija, razvoj = razvojno
-// okolje), je to edina vrstica, ki naj se razlikuje med vejama main in
-// razvoj. Na veji main naj bo vedno 'production'.
-const APP_ENV = 'development';
-const IS_DEV_ENV = APP_ENV === 'development';
+// Okolje se ugotovi samodejno iz domene (window.location.hostname), zato je
+// ta koda odslej DOBESEDNO ENAKA na vejah main in razvoj — ni je več treba
+// ročno spreminjati ob vsakem mergu, ni več merge-konfliktov na tej vrstici.
+//
+// Varovalo (fail-safe): kar koli ni izrecno navedeno spodaj kot razvojna
+// domena, šteje za PRODUKCIJO. To je namerno — če se produkcijska domena
+// kdaj spremeni ali ta seznam pozabimo posodobiti, naj aplikacija ostane
+// "zaklenjena" (brez pasice, brez neodobrenih modulov), ne pa da po pomoti
+// razkrije modul, ki ga naročnik še ni odobril.
+const DEV_HOSTNAMES = [
+  'localhost',
+  '127.0.0.1',
+  'lokus-razvoj.vercel.app',
+];
+
+const CURRENT_HOSTNAME = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
+const IS_DEV_ENV = DEV_HOSTNAMES.includes(CURRENT_HOSTNAME);
+const APP_ENV = IS_DEV_ENV ? 'development' : 'production';
 
 // Second-level grouping WITHIN one tab/group's fields — "razdelki" (sections)
 // are visual sub-headers that further organize a tab's fields, defined per

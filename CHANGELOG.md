@@ -10,9 +10,64 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
-## [1.2.0] — novi šifranti in popravki v obeh modulih (v razvoju)
+## [1.3.0] — objava modula (publish switch), samodejno zaznavanje okolja, preostala odprta vprašanja iz 1.2.0
 
-**Status: še ni objavljeno naročniku.**
+**Status: 1.3.0 gre na obe veji (main in razvoj) — koda je od te verzije
+dalje na obeh vejah identična, glejte spodaj.**
+
+### Dodano — Inventarna knjiga
+- Materialnost predmeta → Mere: nov šifrant "obseg" (enote cm/mm/m), tudi
+  v predlogi "SPECTRUM podrobno". Rešuje odprto vprašanje iz 1.2.0.
+- Izdelava in nastanek → Avtorstvo: spremenjen vrstni red podpolj, da si
+  sledijo Vrsta avtorstva → Avtor (priimek) → Avtor (ime) → Naziv
+  izdelovalca → Vloga.
+
+### Dodano — Dokumentacija o enoti
+- Identifikacija dokumentacijske enote: polji "Vizualni vir" in "Tekstovni
+  vir" zdaj uveljavljata pravilo "vsaj eno od dveh je obvezno" (ne več oba
+  posebej, ne več samo "Vizualni vir" obvezen) — validirano tako v
+  obrazcu (skok na pravi zavihek, fokus) kot v shrambi (`storage.js`,
+  avtoritativna zaščita pred shranjevanjem neveljavnega zapisa). Rešuje
+  odprto vprašanje iz 1.2.0 — izbran je bil model "vsaj eden od dveh", ne
+  konfigurabilna izbira med več tipi vira.
+- Shema (`config-dokumentacija.json`) dvignjena na verzijo 3.
+
+### Dodano — objava modulov v produkcijo ("publish switch")
+- Nov mehanizem v `js/app.js`: `PRODUCTION_APPROVED_MODULES` — en sam,
+  jasno označen seznam modulov, odobrenih za produkcijsko domeno. Modul, ki
+  ni na seznamu, v produkciji dobesedno ne obstaja: se ne izriše v
+  preklopniku, zanj se ob zagonu ne naloži pripadajoči `config-*.json`, v
+  admin urejevalniku ni ponujen, njegova shramba (`createStorage()`) se
+  nikoli ne inicializira. V razvojnem okolju (glejte spodaj) so vedno
+  omogočeni vsi registrirani moduli, ne glede na ta seznam.
+- To omogoča ločen razvoj modula "Dokumentacija o enoti" na veji `razvoj`
+  brez tveganja, da bi po pomoti pristal viden na produkcijski domeni pred
+  odobritvijo naročnika — tudi če je koda modula že del iste datoteke, ki
+  se z `main` deli.
+
+### Dodano — samodejno zaznavanje okolja (produkcija/razvoj)
+- `js/utils.js`: `Utils.APP_ENV`/`Utils.IS_DEV_ENV` se od te verzije
+  ugotovita samodejno iz `window.location.hostname`, namesto da bi bila
+  ročno nastavljena konstanta, ki bi se razlikovala med vejama main in
+  razvoj. Seznam razvojnih domen (`DEV_HOSTNAMES`) trenutno vsebuje
+  `localhost`, `127.0.0.1` in `lokus-razvoj.vercel.app`; vse ostalo
+  (vključno s produkcijsko `lokus-spdm.vercel.app`) šteje za produkcijo
+  (varovalo: privzeto je aplikacija "zaklenjena" v produkcijski način).
+- V razvojnem okolju se prikaže nevsiljiva pasica na vrhu strani
+  ("Razvojno okolje — ni produkcijska različica") in predpona `[Dev]` pred
+  imenom aplikacije v zavihku brskalnika. V produkciji ni nobenega od
+  tega.
+- **Posledica za delovni tok**: ker sta `PRODUCTION_APPROVED_MODULES` in
+  `DEV_HOSTNAMES`/okoljska logika zdaj enaka na obeh vejah, `git merge
+  main` v `razvoj` (in obratno) od te verzije dalje ne povzroča več
+  merge-konfliktov na teh mestih. Glejte nov razdelek "Delovni tok:
+  main ↔ razvoj" v `DEVELOPMENT.md`.
+
+## [1.2.0] — novi šifranti in popravki v obeh modulih
+
+**Status: objavljeno na produkciji (modul "Inventarna knjiga" samo) — glejte
+razdelek 1.3.0 spodaj za mehanizem, ki to omogoča, in za rešitev spodnjih
+odprtih vprašanj.**
 
 ### Popravljeno
 - **Globalno**: pritisk tipke Enter znotraj enovrstičnega besedilnega polja
@@ -61,15 +116,15 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 - Avtorstvo/ustvarjalec — Obseg prispevka: "prepis".
 - Izvor — Odnos: "prepisano iz".
 
-### Odprto — čaka pojasnilo
-- "Materialnost predmeta – Obseg": v korekturah naveden nov šifrant za
+### Odprto — čaka pojasnilo (rešeno v 1.3.0, glejte spodaj)
+- ~~"Materialnost predmeta – Obseg": v korekturah naveden nov šifrant za
   polje "Obseg", ki v shemi še ne obstaja; nejasno je, katere konkretne
-  vrednosti naj vsebuje spustni seznam. Ni implementirano.
-- "Identifikacija dokumentacijske enote – možnost izbire, kateri vir
+  vrednosti naj vsebuje spustni seznam. Ni implementirano.~~ — dodano v 1.3.0.
+- ~~"Identifikacija dokumentacijske enote – možnost izbire, kateri vir
   (vizualni/zvočni/tekstovni/video/drug) je obvezen": polje "Tekstovni
   vir" je dodano, mehanizem za konfigurabilno izbiro obveznega tipa vira
-  pa še ni implementiran — čaka pojasnilo, ali gre za nastavitev sheme
-  (enotno za vse zapise) ali izbiro na ravni posameznega zapisa.
+  pa še ni implementiran.~~ — rešeno v 1.3.0 (pravilo "vsaj eden od dveh",
+  ne poljubna izbira med več tipi vira).
 
 ## [1.1.1] — modul "Dokumentacija o enoti": korekture po pregledu (v razvoju)
 

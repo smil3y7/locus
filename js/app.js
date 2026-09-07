@@ -59,15 +59,26 @@ const MODULES = {
   },
 };
 // ---------------------------------------------------------------------
-// ENOTNO STIKALO ZA OBJAVO MODULOV — edino mesto, ki ga je treba spremeniti
-// ob objavi novega modula v produkcijo. Vse v aplikaciji (preklopnik med
-// moduli, nalaganje sheme ob zagonu, admin urejevalnik, IndexedDB shrambe)
-// se napaja iz MODULES/MODULE_LIST spodaj, zato modul, ki ni naveden tu,
-// dobesedno ne obstaja za ostanek aplikacije — se ne izriše, se zanj ne
-// naloži config-*.json, in se zanj nikoli ne pokliče createStorage().
+// ENOTNO STIKALO ZA OBJAVO MODULOV — edino mesto, ki ga je treba spremeniti,
+// ko naročnik odobri nov modul za produkcijo. Vse v aplikaciji (preklopnik
+// med moduli, nalaganje sheme ob zagonu, admin urejevalnik, IndexedDB
+// shrambe) se napaja iz MODULES/MODULE_LIST spodaj, zato modul, ki ni med
+// omogočenimi, dobesedno ne obstaja za ostanek aplikacije — se ne izriše,
+// se zanj ne naloži config-*.json, in se zanj nikoli ne pokliče
+// createStorage().
+//
+// V razvojnem okolju (glej Utils.IS_DEV_ENV — ugotovljeno iz domene, glej
+// utils.js) so vedno omogočeni VSI registrirani moduli, ne glede na spodnji
+// seznam — tako razvijalec vedno vidi vse, kar je v delu. Spodnji seznam
+// PRODUCTION_APPROVED_MODULES velja samo za produkcijsko domeno in je
+// EDINO mesto v celotni datoteki, ki ga urejate, ko je modul odobren.
+// Ker je ta koda odslej enaka na main in razvoj, se sprememba samodejno
+// prenese na obe okolji brez merge konfliktov.
 //
 // Modula "dokumentacija" ne dodajte sem, dokler ni odobreno za produkcijo.
-const ENABLED_MODULES = ['inventarna', 'dokumentacija'];
+const PRODUCTION_APPROVED_MODULES = ['inventarna'];
+
+const ENABLED_MODULES = Utils.IS_DEV_ENV ? Object.keys(MODULES) : PRODUCTION_APPROVED_MODULES;
 
 Object.keys(MODULES).forEach((id) => {
   if (!ENABLED_MODULES.includes(id)) delete MODULES[id];
