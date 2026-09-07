@@ -138,7 +138,14 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.2.0';
+
+// Single source of truth for which environment this deployment is. Ker gre
+// za dva ločena Vercel projekta (main = produkcija, razvoj = razvojno
+// okolje), je to edina vrstica, ki naj se razlikuje med vejama main in
+// razvoj. Na veji main naj bo vedno 'production'.
+const APP_ENV = 'production';
+const IS_DEV_ENV = APP_ENV === 'development';
 
 // Second-level grouping WITHIN one tab/group's fields — "razdelki" (sections)
 // are visual sub-headers that further organize a tab's fields, defined per
@@ -198,6 +205,8 @@ const Utils = {
   DEFAULT_FIELD_COLOR,
   formatPartialDate,
   APP_VERSION,
+  APP_ENV,
+  IS_DEV_ENV,
   isValidUrl,
   hexToRgba,
 };

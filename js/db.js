@@ -5,13 +5,50 @@
 import Utils from './utils.js';
 
 const DB_NAME = 'LokusDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_ENTRIES = 'entries';
 const STORE_META = 'meta';
-const LIVE_CONFIG_CACHE_KEY = 'liveConfigCache';
-const DRAFT_CONFIG_KEY = 'configDraft';
 const PIN_KEY = 'adminPinHash';
 const SESSION_KEY = 'session';
+
+// --- Modules ---------------------------------------------------------
+// Module 1 ("inventarna" / Inventarna knjiga) is the original, single
+// module this app shipped with. Its object store name (STORE_ENTRIES,
+// literally 'entries') and its meta keys (LIVE_CONFIG_CACHE_KEY /
+// DRAFT_CONFIG_KEY, unprefixed) are kept EXACTLY as they always were —
+// existing installations upgrade with zero data movement.
+//
+// Module 2 ("dokumentacija" / Dokumentacija o enoti) is additive: a new
+// object store + new, module-suffixed meta keys, created in a fresh
+// onupgradeneeded branch. Nothing about module 1's storage is touched.
+const STORE_ENTRIES_DOKUMENTACIJA = 'entries_dokumentacija';
+const LIVE_CONFIG_CACHE_KEY = 'liveConfigCache';
+const DRAFT_CONFIG_KEY = 'configDraft';
+const LIVE_CONFIG_CACHE_KEY_DOKUMENTACIJA = 'liveConfigCache:dokumentacija';
+const DRAFT_CONFIG_KEY_DOKUMENTACIJA = 'configDraft:dokumentacija';
+
+const MODULE_STORES = {
+  inventarna: STORE_ENTRIES,
+  dokumentacija: STORE_ENTRIES_DOKUMENTACIJA,
+};
+const MODULE_LIVE_CONFIG_KEYS = {
+  inventarna: LIVE_CONFIG_CACHE_KEY,
+  dokumentacija: LIVE_CONFIG_CACHE_KEY_DOKUMENTACIJA,
+};
+const MODULE_DRAFT_CONFIG_KEYS = {
+  inventarna: DRAFT_CONFIG_KEY,
+  dokumentacija: DRAFT_CONFIG_KEY_DOKUMENTACIJA,
+};
+
+function storeNameForModule(moduleId) {
+  return MODULE_STORES[moduleId] || STORE_ENTRIES;
+}
+function liveConfigKeyForModule(moduleId) {
+  return MODULE_LIVE_CONFIG_KEYS[moduleId] || LIVE_CONFIG_CACHE_KEY;
+}
+function draftConfigKeyForModule(moduleId) {
+  return MODULE_DRAFT_CONFIG_KEYS[moduleId] || DRAFT_CONFIG_KEY;
+}
 
 let dbPromise = null;
 
@@ -51,6 +88,14 @@ function attemptOpen() {
         }
         if (!db.objectStoreNames.contains(STORE_META)) {
           db.createObjectStore(STORE_META, { keyPath: 'key' });
+        }
+      }
+      if (oldVersion < 2) {
+        // Adds the "Dokumentacija o enoti" module's own store. Purely
+        // additive — module 1's store/keys above are untouched.
+        if (!db.objectStoreNames.contains(STORE_ENTRIES_DOKUMENTACIJA)) {
+          const store = db.createObjectStore(STORE_ENTRIES_DOKUMENTACIJA, { keyPath: 'id' });
+          store.createIndex('created', 'created', { unique: false });
         }
       }
       // Future migrations append here as `if (oldVersion < N) { ... }`
@@ -120,19 +165,19 @@ function runTransaction(storeName, mode, executor) {
   );
 }
 
-async function saveEntry(entry) {
+async function saveEntry(entry, moduleId = 'inventarna') {
   const clone = Utils.deepClone(entry);
-  await runTransaction(STORE_ENTRIES, 'readwrite', (store) => {
+  await runTransaction(storeNameForModule(moduleId), 'readwrite', (store) => {
     store.put(clone);
   });
   return Utils.deepClone(clone);
 }
 
-async function getAllEntries() {
+async function getAllEntries(moduleId = 'inventarna') {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ENTRIES, 'readonly');
-    const store = tx.objectStore(STORE_ENTRIES);
+    const tx = db.transaction(storeNameForModule(moduleId), 'readonly');
+    const store = tx.objectStore(storeNameForModule(moduleId));
     const request = store.getAll();
 
     request.onsuccess = () => {
@@ -146,11 +191,11 @@ async function getAllEntries() {
   });
 }
 
-async function getEntry(id) {
+async function getEntry(id, moduleId = 'inventarna') {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_ENTRIES, 'readonly');
-    const store = tx.objectStore(STORE_ENTRIES);
+    const tx = db.transaction(storeNameForModule(moduleId), 'readonly');
+    const store = tx.objectStore(storeNameForModule(moduleId));
     const request = store.get(id);
 
     request.onsuccess = () => resolve(request.result ? Utils.deepClone(request.result) : null);
@@ -161,27 +206,27 @@ async function getEntry(id) {
   });
 }
 
-async function deleteEntry(id) {
-  await runTransaction(STORE_ENTRIES, 'readwrite', (store) => {
+async function deleteEntry(id, moduleId = 'inventarna') {
+  await runTransaction(storeNameForModule(moduleId), 'readwrite', (store) => {
     store.delete(id);
   });
   return id;
 }
 
-async function saveLiveConfigCache(config) {
+async function saveLiveConfigCache(config, moduleId = 'inventarna') {
   const clone = Utils.deepClone(config);
   await runTransaction(STORE_META, 'readwrite', (store) => {
-    store.put({ key: LIVE_CONFIG_CACHE_KEY, value: clone });
+    store.put({ key: liveConfigKeyForModule(moduleId), value: clone });
   });
   return Utils.deepClone(clone);
 }
 
-async function getLiveConfigCache() {
+async function getLiveConfigCache(moduleId = 'inventarna') {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_META, 'readonly');
     const store = tx.objectStore(STORE_META);
-    const request = store.get(LIVE_CONFIG_CACHE_KEY);
+    const request = store.get(liveConfigKeyForModule(moduleId));
 
     request.onsuccess = () => {
       resolve(request.result ? Utils.deepClone(request.result.value) : null);
@@ -193,20 +238,20 @@ async function getLiveConfigCache() {
   });
 }
 
-async function saveDraftConfig(config) {
+async function saveDraftConfig(config, moduleId = 'inventarna') {
   const clone = Utils.deepClone(config);
   await runTransaction(STORE_META, 'readwrite', (store) => {
-    store.put({ key: DRAFT_CONFIG_KEY, value: clone });
+    store.put({ key: draftConfigKeyForModule(moduleId), value: clone });
   });
   return Utils.deepClone(clone);
 }
 
-async function getDraftConfig() {
+async function getDraftConfig(moduleId = 'inventarna') {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_META, 'readonly');
     const store = tx.objectStore(STORE_META);
-    const request = store.get(DRAFT_CONFIG_KEY);
+    const request = store.get(draftConfigKeyForModule(moduleId));
 
     request.onsuccess = () => {
       resolve(request.result ? Utils.deepClone(request.result.value) : null);
@@ -273,13 +318,14 @@ async function clearSession() {
   });
 }
 
-async function clearEntries() {
-  await runTransaction(STORE_ENTRIES, 'readwrite', (store) => {
+async function clearEntries(moduleId = 'inventarna') {
+  await runTransaction(storeNameForModule(moduleId), 'readwrite', (store) => {
     store.clear();
   });
 }
 
 const DB = {
+  MODULE_IDS: Object.keys(MODULE_STORES),
   saveEntry,
   getAllEntries,
   getEntry,

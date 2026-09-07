@@ -10,6 +10,178 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.2.0] — novi šifranti in popravki v obeh modulih (v razvoju)
+
+**Status: še ni objavljeno naročniku.**
+
+### Popravljeno
+- **Globalno**: pritisk tipke Enter znotraj enovrstičnega besedilnega polja
+  ne sproži več nehotene oddaje (shranitve) celotnega obrazca — velja za
+  vsa polja v obeh modulih. Znotraj samodejno rastočih polj (textarea, npr.
+  "Napis") Enter še vedno pravilno vstavi novo vrstico.
+
+### Dodano — Inventarna knjiga (novi šifranti)
+- Zbirka: "Zbirka novejše zgodovine", "Športna zbirka".
+- Ključne besede: "podjetje".
+- Avtorstvo: novo podpolje "Naziv izdelovalca" (za primere, ko je
+  "avtor"/izdelovalec pravna oseba, ne posameznik).
+- Čas izdelave — Položaj: "druga četrtina".
+- Čas uporabe — Položaj: "okoli", "približno", "pred", "po".
+- Material: 11 novih vrednosti (žgana glina, emajl, poliuretan sintetični
+  material, tekstil, guma, termoplastična masa, kovina, baker, elektronske
+  komponente, bombaž, platno).
+- Tehnika: 12 novih vrednosti (litje, emajliranje, oblikovanje,
+  laminiranje, termično spajanje panelov, tisk, industrijska proizvodnja,
+  brizganje termoplastične mase, strojna izdelava, elektronska montaža,
+  sestavljanje, šivanje).
+
+### Dodano — Inventarna knjiga (nova polja)
+- "Drugo ime predmeta" (besedilno), takoj pred poljem "Naslov".
+- "Pomen napisa" in "Položaj napisa" (obe samodejno rastoči), ob polju
+  "Napis".
+- "Opomba časa izdelave" (samodejno rastoče), ob sklopu "Čas izdelave".
+- "Provenienca" (samodejno rastoče), takoj za poljem "Predhodno
+  lastništvo".
+- "Dokument pridobitve" (nalaganje datoteke) in "Povezava na dokumentacijo
+  pridobitve" (relacija na zapis v modulu Dokumentacija o enoti) — dve
+  ločeni polji, ki skupaj omogočata oboje: neposredno prilogo ali
+  povezavo na obstoječ dokumentacijski zapis.
+
+### Spremenjeno — Inventarna knjiga
+- Okoliščine najdbe, Zgodovinski kontekst: samodejno rastoča polja.
+- Vrstni red: "Tip klasifikacije" je zdaj takoj za "Klasifikacijske
+  oznake" (prej obratno).
+- Polje "Povezava na dokumentacijo pridobitve" je bilo v shemi že
+  prisotno v starejši, šibkejši obliki (splošna URL povezava) — nadomeščeno
+  s pravo relacijo na modul Dokumentacija o enoti.
+
+### Dodano — Dokumentacija o enoti
+- Identifikacija: novo polje "Tekstovni vir" (nalaganje datoteke), ob
+  polju "Vizualni vir".
+- Avtorstvo/ustvarjalec — Obseg prispevka: "prepis".
+- Izvor — Odnos: "prepisano iz".
+
+### Odprto — čaka pojasnilo
+- "Materialnost predmeta – Obseg": v korekturah naveden nov šifrant za
+  polje "Obseg", ki v shemi še ne obstaja; nejasno je, katere konkretne
+  vrednosti naj vsebuje spustni seznam. Ni implementirano.
+- "Identifikacija dokumentacijske enote – možnost izbire, kateri vir
+  (vizualni/zvočni/tekstovni/video/drug) je obvezen": polje "Tekstovni
+  vir" je dodano, mehanizem za konfigurabilno izbiro obveznega tipa vira
+  pa še ni implementiran — čaka pojasnilo, ali gre za nastavitev sheme
+  (enotno za vse zapise) ali izbiro na ravni posameznega zapisa.
+
+## [1.1.1] — modul "Dokumentacija o enoti": korekture po pregledu (v razvoju)
+
+**Status: še ni objavljeno naročniku.** Popravki na podlagi dveh dokumentov
+s korekturami ("Korekture Dokumentacija o enoti", "Kartica Tehnični
+podatki") po pregledu vsebine iz faze 2.
+
+### Dodano
+- Identifikacija: novo obvezno, ponovljivo polje "Vizualni vir" (ena ali
+  več slik).
+- Nov tip polja **"Več-izbira" (multiselect)** — checkboxi namesto
+  spustnega seznama, kjer je dovoljena izbira več vrednosti hkrati.
+  Uporabljen pri "Tip naslova".
+- Pravice in dostop: novo polje "Vrsta pravic" (materialne / moralne /
+  materialne in moralne).
+- **Celovita prenova kartice "Tehnični podatki o dokumentaciji"** po novi
+  specifikaciji — 5 sklopov (Skupni tehnični podatki; Fotografija/sken;
+  Zvočni posnetek; Video; Tekstovna dokumentacija), številske vrednosti z
+  enoto so povsod ločen par polj (npr. Velikost datoteke, Širina/Višina
+  slike, Bitna globina, Vzorčna frekvenca ...), Trajanje (zvok/video) je
+  strukturiran zapis HH:MM:SS.
+- **Predogled slik in PDF-jev**: klik na sličico (v pregledu predmeta ali
+  znotraj ponovljivih skupin, npr. "Vizualni vir", "Viri – slike") odpre
+  celozaslonski predogled ("lightbox") — zapre se s klikom zunaj slike, na
+  "×" ali Esc. PDF priloge dobijo dodatno ikono za predogled poleg
+  obstoječe povezave za prenos. Velja za oba modula (skupna koda v
+  `viewer.js`).
+
+### Spremenjeno
+- Vseh ~25 besedilnih polj iz korektur je zdaj samodejno rastoča textarea
+  (npr. Predmet/tema, Kraj nastanka, Opomba o pridobitvi, vsa polja
+  kartice Tekstovni vir ...).
+- Jezik dokumenta: iz besedilnega polja v spustni seznam.
+
+### Opombe v vednost
+- Kartica "Tekstovni vir" po dogovoru z naročnikom zaenkrat ostaja
+  nespremenjena (le dodano samodejno raščanje besedilnih polj) —
+  ugotovljeno je bilo, da bi si zaslužila lasten modul, povezljiv s
+  predmetom v Inventarni knjigi enako kot Dokumentacija; to se rešuje v
+  eni od naslednjih faz.
+- Nova specifikacija kartice "Tehnični podatki o dokumentaciji" ne
+  vključuje več polja "Število strani" (bilo je del prejšnje različice
+  kartice) — odstranjeno kot del celovite prenove; opozarjamo, če je šlo
+  za nenameren izpust.
+- Polje "Dokumentirana enota dediščine" (povezava z Inventarno knjigo,
+  klik odpre povezan predmet) je bilo že implementirano v fazi 1 — korekture
+  so le potrdile obstoječe vedenje, brez potrebnih sprememb kode.
+
+## [1.1.0] — modul "Dokumentacija o enoti" (v razvoju, faza 1+2 zaključeni)
+
+**Status: še ni objavljeno naročniku.** Ta različica je nastajala vzporedno
+z izdelavo v1.0.0 in je izhajala iz 0.4.5 po ločeni razvojni poti — ob
+uskladitvi je bila prenešena na produkcijsko osnovo (dokumentacija in
+`assets/logo.png` iz v1.0.0), koda modula pa je ostala nespremenjena.
+
+Doda drug, neodvisen modul poleg "Inventarne knjige": **"Dokumentacija o
+enoti"**, dostopen prek preklopnika modulov pod glavo strani. Vsa
+sprememba je dodajalna — obstoječi podatki, shema in nastavitve
+Inventarne knjige ostanejo popolnoma nedotaknjeni (preverjeno s testi).
+
+Manjka še: pogojno prikazovanje kartice "Tekstovni vir" (faza 3, po
+dogovoru z naročnikom sledi po odobritvi vsebine).
+
+### Dodano
+- Nov modul "Dokumentacija o enoti" — svoja ločena shramba v IndexedDB,
+  svoja shema (`config-dokumentacija.json`, 11 kartic, 78 polj po
+  specifikaciji naročnika) in svoj admin urejevalnik — vse po istem
+  mehanizmu kot Inventarna knjiga, brez podvajanja kode.
+- Vseh 11 kartic: Identifikacija; Poimenovanje in vrsta; Vsebina in
+  povezava z enoto dediščine; Izdelava in nastanek; Izvor in povezane
+  dokumentacijske enote; Tehnični podatki o dokumentaciji; Pravice in
+  dostop; Lastništvo in pridobitev; Repozitorij in hramba; Tekstovni vir;
+  Administrativni podatki. Sklopa "Avtorstvo" in "Ključne besede" sta
+  strukturno usklajena z Inventarno knjigo.
+- **Nov tip polja "Povezava" (reference)** — omogoča, da se en zapis poveže
+  z enim ali več zapisi v drugem (ali istem) modulu. Iskanje deluje po
+  identifikacijski številki ALI kateri koli "drugi številčni oznaki", ne
+  glede na njen tip. V pogledu podrobnosti je povezava klikljiva — odpre
+  povezan zapis, po potrebi s preklopom na njegov modul. Uporabljeno
+  dvakrat: "Dokumentirana enota dediščine" (Dokumentacija → Inventarna
+  knjiga) in "Dokumentacija pridobitve" (Dokumentacija → Dokumentacija,
+  samo-referenca).
+- Admin urejevalnik polj ima nov razdelek nastavitev za polja tipa
+  "Povezava" (ciljni modul, ena/več povezav).
+- Izvoz/uvoz baze zdaj zajema vse module hkrati; uvoz starejših,
+  enomodulnih izvozov ostaja podprt (obnovi se v Inventarno knjigo).
+
+### Opombe v vednost
+- "Datum zadnje spremembe" ni dodan kot polje v obrazcu — to že samodejno
+  spremlja aplikacija sama (prikazano v pogledu podrobnosti kot "Nazadnje
+  uredil ..."), ročno polje bi podvajalo obstoječo funkcionalnost.
+- Vsi sklopi kartice "Tehnični podatki o dokumentaciji" (fotografija/sken,
+  zvok, video, tekstovna dokumentacija) so trenutno **vedno vidni** —
+  pogojno prikazovanje po vrsti dokumentacije je predmet faze 3.
+- Opažena manjša neusklajenost imen: kartica "Tekstovni vir" naj bi se v
+  fazi 3 pogojno prikazala, "kadar je vrsta dokumentacije tekstovni vir",
+  medtem ko seznam vrednosti polja "Vrsta dokumentacijske enote" vsebuje
+  možnost "besedilni dokument" (ne dobesedno "tekstovni vir"). V fazi 3 bo
+  treba potrditi, katera vrednost naj sproži prikaz te kartice.
+
+### Tehnično
+- `configService.js`, `storage.js`, `viewer.js` so pretvorjeni v tovarne
+  (ena neodvisna instanca na modul).
+- `db.js`: baza dvignjena na verzijo 2, nova shramba dodana izključno
+  dodajalno (`onupgradeneeded`, brez poseganja v obstoječe podatke).
+- Register modulov v `js/app.js` (`MODULES`) — dodajanje novega modula v
+  prihodnje zahteva le vpis v ta register, ne pisanja nove UI/poslovne
+  logike.
+- Mimogrede odpravljena ista latentna napaka kot v v0.4.6 (tooltip/
+  autoExpand pri urejanju obstoječega polja) — enak popravek, prišel je
+  kot del prenove `configService.js`.
+
 ## [1.0.0] — predana verzija
 
 Prva stabilna izdaja, predana naročniku kot dokončan pogodbeni izdelek. 

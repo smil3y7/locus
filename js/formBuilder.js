@@ -22,6 +22,25 @@ const DOCUMENT_ACCEPT = '.pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.csv';
 // label text itself and a small info icon next to it get a native `title`
 // attribute — hovering (or focusing, for keyboard users) either one shows
 // the explanatory text via the browser's usual tooltip mechanism.
+// Mirrors the "is this field's value present" checks used by the per-tab
+// required-field guard below — reused by the requireOneOf guard so both
+// treat every field type (measurements/reference/multiselect/group/date/
+// image/document/text) exactly the same way.
+function valueIsEmptyForField(field, values) {
+  if (!field) return true;
+  const v = values[field.id];
+  if (field.type === 'measurements') return !Array.isArray(v) || v.length === 0;
+  if (field.type === 'reference') return !Array.isArray(v) || v.length === 0;
+  if (field.type === 'multiselect') return !Array.isArray(v) || v.length === 0;
+  if (field.type === 'group') {
+    if (field.repeatable === false) return !v || Object.values(v).every((x) => !x);
+    return !Array.isArray(v) || v.length === 0;
+  }
+  if (field.type === 'date') return !v || !v.value;
+  if (field.type === 'image' || field.type === 'document') return !v;
+  return !v || !String(v).trim();
+}
+
 function labelHtml(labelText, { required, tooltip, forId } = {}) {
   const reqSpan = required ? ' <span class="mf-required">*</span>' : '';
   const forAttr = forId ? ` for="${forId}"` : '';
@@ -379,6 +398,99 @@ function readNonRepeatableGroupValue(form, field, existingItem) {
 }
 
 // ---------------------------------------------------------------------
+// Reference field — links to one or more entries in another module (e.g.
+// Dokumentacija o enoti -> Inventarna knjiga). `candidates` is a flat,
+// precomputed array of { id, label, searchText } built by the caller
+// (app.js), which is the only layer that knows how to label/search
+// another module's schema-driven entries. This widget just searches
+// `searchText`, displays `label`, and stores the picked {id, label} pairs.
+// ---------------------------------------------------------------------
+
+function attachReferenceField(field, form, existingValue, candidates) {
+  if (field.type !== 'reference') return;
+
+  const hiddenInput = form.querySelector(`#f_${field.id}`);
+  const chipsEl = form.querySelector(`#refchips_${field.id}`);
+  const searchInput = form.querySelector(`#refsearch_${field.id}`);
+  const resultsEl = form.querySelector(`#refresults_${field.id}`);
+  if (!hiddenInput || !chipsEl || !searchInput || !resultsEl) return;
+
+  const pool = Array.isArray(candidates) ? candidates : [];
+  let picked = Array.isArray(existingValue) ? [...existingValue] : [];
+
+  function sync() {
+    hiddenInput.value = JSON.stringify(picked);
+    renderChips();
+  }
+
+  function renderChips() {
+    chipsEl.innerHTML = picked
+      .map(
+        (ref, idx) => `
+        <span class="mf-measurement-chip mf-reference-chip" data-idx="${idx}">
+          ${Utils.escapeHtml(ref.label || '(brez oznake)')}
+          <button type="button" class="mf-chip-remove" data-remove-ref="${idx}" aria-label="Odstrani povezavo">&times;</button>
+        </span>
+      `
+      )
+      .join('');
+  }
+
+  function renderResults(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      resultsEl.hidden = true;
+      resultsEl.innerHTML = '';
+      return;
+    }
+    const pickedIds = new Set(picked.map((p) => p.id));
+    const matches = pool.filter((c) => !pickedIds.has(c.id) && c.searchText.includes(q)).slice(0, 8);
+    if (matches.length === 0) {
+      resultsEl.innerHTML = '<div class="mf-reference-result mf-reference-result-empty">Ni zadetkov.</div>';
+      resultsEl.hidden = false;
+      return;
+    }
+    resultsEl.innerHTML = matches
+      .map((c) => `<button type="button" class="mf-reference-result" data-pick-ref="${Utils.escapeHtml(c.id)}">${Utils.escapeHtml(c.label)}</button>`)
+      .join('');
+    resultsEl.hidden = false;
+  }
+
+  searchInput.addEventListener('input', () => renderResults(searchInput.value));
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.trim()) renderResults(searchInput.value);
+  });
+  form.addEventListener('click', (event) => {
+    if (!resultsEl.contains(event.target) && event.target !== searchInput) resultsEl.hidden = true;
+  });
+
+  resultsEl.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-pick-ref]');
+    if (!btn) return;
+    const id = btn.dataset.pickRef;
+    const candidate = pool.find((c) => c.id === id);
+    if (!candidate) return;
+    if (!field.multiple) picked = [];
+    picked.push({ id: candidate.id, label: candidate.label, module: field.targetModule });
+    sync();
+    searchInput.value = '';
+    resultsEl.hidden = true;
+    resultsEl.innerHTML = '';
+    searchInput.focus();
+  });
+
+  chipsEl.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-remove-ref]');
+    if (!btn) return;
+    const idx = Number(btn.dataset.removeRef);
+    picked.splice(idx, 1);
+    sync();
+  });
+
+  sync();
+}
+
+// ---------------------------------------------------------------------
 // Measurements field (CDWA Type/Value/Unit) — unchanged from before
 // ---------------------------------------------------------------------
 
@@ -572,6 +684,33 @@ function fieldInputHtml(field, value) {
         <div class="mf-measurement-add-form" id="addgroupform_${field.id}" hidden></div>
       `;
     }
+    case 'reference':
+      // Real widget is attached after render (attachReferenceField) — this
+      // hidden input is what FormData actually reads on submit (JSON array
+      // of {id, label} referencing entries in another module).
+      return `
+        <input type="hidden" id="f_${field.id}" name="${field.id}" value="[]" />
+        <div class="mf-measurements-chips" id="refchips_${field.id}"></div>
+        <div class="mf-reference-search-wrap">
+          <input type="text" class="mf-reference-search-input" id="refsearch_${field.id}" placeholder="Išči po inventarni ali drugi številki …" autocomplete="off" />
+          <div class="mf-reference-results" id="refresults_${field.id}" hidden></div>
+        </div>
+      `;
+    case 'multiselect': {
+      const selected = Array.isArray(value) ? value : [];
+      const optionsHtml = (field.options || [])
+        .map((opt) => {
+          const checked = selected.includes(opt) ? ' checked' : '';
+          return `
+            <label class="mf-multiselect-option">
+              <input type="checkbox" name="${field.id}" value="${Utils.escapeHtml(opt)}"${checked} />
+              ${Utils.escapeHtml(opt)}
+            </label>
+          `;
+        })
+        .join('');
+      return `<div class="mf-multiselect" id="ms_${field.id}">${optionsHtml}</div>`;
+    }
     default:
       return `<input type="text" id="f_${field.id}" name="${field.id}" ${req} value="${Utils.escapeHtml(val)}"${placeholder} />`;
   }
@@ -606,7 +745,7 @@ function updateTabDots(container, sections) {
     const dot = container.querySelector(`[data-tab-dot="${section.id}"]`);
     if (!dot) return;
     const incomplete = section.fields.some((field) => {
-      if (!field.required || ['image', 'document', 'group', 'measurements'].includes(field.type)) return false;
+      if (!field.required || ['image', 'document', 'group', 'measurements', 'reference', 'multiselect'].includes(field.type)) return false;
       const el = container.querySelector(`#f_${field.id}`);
       if (!el) return false;
       return !el.value || !el.value.trim();
@@ -738,6 +877,10 @@ function build(container, config, options) {
     else if (field.type === 'group' && field.repeatable === false)
       attachNonRepeatableGroup(field, currentForm, existingValues ? existingValues[field.id] : null);
     else if (field.type === 'group') groupFieldItems[field.id] = attachGroupWidget(field, currentForm, existingValues);
+    else if (field.type === 'reference') {
+      const candidates = (options && options.referenceCandidates && options.referenceCandidates[field.targetModule]) || [];
+      attachReferenceField(field, currentForm, existingValues ? existingValues[field.id] : null, candidates);
+    }
   });
 
   let tabController = null;
@@ -774,6 +917,18 @@ function build(container, config, options) {
     true // capture: 'focus' does not bubble
   );
 
+  // Pressing Enter inside a single-line <input> submits the form by native
+  // browser behavior — surprising and destructive mid-entry (e.g. while
+  // typing "Napis"). <textarea> fields are unaffected: Enter there is
+  // supposed to insert a newline, not submit.
+  currentForm.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const target = event.target;
+    if (target && target.tagName === 'INPUT' && !['submit', 'button', 'checkbox', 'radio'].includes(target.type)) {
+      event.preventDefault();
+    }
+  });
+
   currentForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(currentForm);
@@ -799,12 +954,22 @@ function build(container, config, options) {
           console.error('[FormBuilder] Failed to parse JSON field', field.id, err);
           values[field.id] = [];
         }
+      } else if (field.type === 'reference') {
+        const raw = formData.get(field.id);
+        try {
+          values[field.id] = raw ? JSON.parse(raw) : [];
+        } catch (err) {
+          console.error('[FormBuilder] Failed to parse JSON field', field.id, err);
+          values[field.id] = [];
+        }
       } else if (field.type === 'group') {
         if (field.repeatable === false) {
           values[field.id] = readNonRepeatableGroupValue(currentForm, field, existingValues ? existingValues[field.id] : null);
         } else {
           values[field.id] = groupFieldItems[field.id] || [];
         }
+      } else if (field.type === 'multiselect') {
+        values[field.id] = formData.getAll(field.id);
       } else {
         values[field.id] = formData.get(field.id);
       }
@@ -816,6 +981,8 @@ function build(container, config, options) {
         .find((f) => {
           if (!f.required) return false;
           if (f.type === 'measurements') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
+          if (f.type === 'reference') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
+          if (f.type === 'multiselect') return !Array.isArray(values[f.id]) || values[f.id].length === 0;
           if (f.type === 'group') {
             if (f.repeatable === false) return false; // sub-field-level required is enforced by Validator
             return !Array.isArray(values[f.id]) || values[f.id].length === 0;
@@ -834,6 +1001,34 @@ function build(container, config, options) {
         EventBus.emit('ui:notify', {
           type: 'error',
           message: `Manjka obvezno polje "${missing.label}" v skupini "${sectionLabel}".`,
+        });
+        return;
+      }
+    }
+
+    if (Array.isArray(config.requireOneOf)) {
+      const fieldsById = new Map(config.fields.map((f) => [f.id, f]));
+      const failedGroup = config.requireOneOf.find((group) =>
+        (group.fields || []).every((id) => valueIsEmptyForField(fieldsById.get(id), values))
+      );
+
+      if (failedGroup) {
+        const firstFieldId = (failedGroup.fields || [])[0];
+        if (useTabs) {
+          const sectionEntry = sections
+            .flatMap((s) => s.fields.map((f) => ({ ...f, sectionId: s.id })))
+            .find((f) => f.id === firstFieldId);
+          if (sectionEntry) {
+            tabController.activate(sectionEntry.sectionId);
+            if (updateTabPositionUi) updateTabPositionUi();
+          }
+        }
+        const input = currentForm.querySelector(`#f_${firstFieldId}`);
+        if (input) input.focus();
+        const labels = (failedGroup.fields || []).map((id) => (fieldsById.get(id) || {}).label || id);
+        EventBus.emit('ui:notify', {
+          type: 'error',
+          message: `Izpolni vsaj eno od polj: ${labels.join(' ali ')}.`,
         });
         return;
       }

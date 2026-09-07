@@ -965,6 +965,15 @@
           ]
         },
         {
+          "id": "obseg",
+          "label": "obseg",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
           "id": "teza",
           "label": "teža",
           "units": [

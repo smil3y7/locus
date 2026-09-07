@@ -501,6 +501,71 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-group-chip-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .mf-group-chip-text { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Reference field (search + link to entries in another module) */
+
+.mf-reference-search-wrap { position: relative; }
+.mf-reference-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--mf-surface);
+  color: var(--mf-parchment);
+}
+.mf-reference-search-input:focus { border-color: var(--mf-brass); outline: none; }
+.mf-reference-results {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--mf-surface);
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--mf-shadow);
+}
+.mf-reference-result {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--mf-hairline);
+  background: var(--mf-surface);
+  color: var(--mf-parchment);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.mf-reference-result:last-child { border-bottom: none; }
+.mf-reference-result:hover { background: var(--mf-bg-elevated); }
+.mf-reference-result-empty { color: var(--mf-muted); cursor: default; }
+.mf-reference-result-empty:hover { background: var(--mf-surface); }
+.mf-reference-chip { cursor: default; }
+
+/* Multiselect field (checkboxes) */
+
+.mf-multiselect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.mf-multiselect-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--mf-parchment);
+  cursor: pointer;
+}
+.mf-multiselect-option input[type="checkbox"] { accent-color: var(--mf-brass); }
+
 .mf-chip-remove {
   background: none;
   border: none;
@@ -789,6 +854,28 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 }
 .mf-fatal-dismiss:hover { color: var(--mf-rust); }
 
+/* ---------------- Dev environment strip ---------------- */
+/* Nevsiljiva, nedismissable pasica — samo informativna oznaka, da gre za
+   razvojno okolje, ne opozorilo o napaki, zato je vizualno ločena od
+   .mf-fatal-banner (nevtralen accent odtenek, ne rdeča/rust). */
+
+.mf-dev-strip {
+  position: sticky;
+  top: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--mf-accent);
+  color: var(--mf-on-brass);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* Field groups (form) */
 
 .mf-group {
@@ -820,6 +907,13 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 }
 
 /* Field groups (admin editor) */
+
+.mf-config-module-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--mf-muted);
+  margin: 0 0 14px;
+}
 
 .mf-config-section-title {
   font-family: var(--font-mono);
@@ -988,6 +1082,99 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 .mf-switch input:checked + .mf-switch-track { background: var(--mf-brass); }
 .mf-switch input:checked + .mf-switch-track::after { transform: translateX(16px); }
 .mf-switch input:focus-visible + .mf-switch-track { outline: 2px solid var(--mf-brass); outline-offset: 2px; }
+
+/* ---------------- Module switcher ---------------- */
+
+.mf-module-switcher {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--mf-hairline-strong);
+}
+.mf-module-tab {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mf-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.mf-module-tab:hover { color: var(--mf-parchment); }
+.mf-module-tab-active {
+  color: var(--mf-brass);
+  border-bottom-color: var(--mf-brass);
+  font-weight: 600;
+}
+
+/* ---------------- Lightbox (full-size image/PDF preview) ---------------- */
+
+.mf-lightbox-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+}
+.mf-lightbox-root.mf-lightbox-open { display: block; }
+.mf-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 14, 13, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  box-sizing: border-box;
+  cursor: zoom-out;
+}
+.mf-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+.mf-lightbox-pdf {
+  width: min(900px, 100%);
+  height: 100%;
+  border: none;
+  background: #fff;
+  cursor: default;
+}
+.mf-lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+}
+.mf-lightbox-close:hover { opacity: 1; }
+
+.mf-lightbox-trigger { cursor: zoom-in; }
+.mf-doc-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--mf-muted);
+  cursor: pointer;
+  font-size: 14px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.mf-doc-preview-btn:hover { color: var(--mf-brass); }
 
 /* ---------------- Responsive ---------------- */
 

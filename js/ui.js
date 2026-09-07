@@ -124,6 +124,65 @@ function openModal({ title = '', content = '', closeOnBackdrop = true, wide = fa
   return body; // caller can populate/query body further
 }
 
+let lightboxRoot = null;
+
+function ensureLightboxRoot() {
+  if (!lightboxRoot) {
+    lightboxRoot = document.createElement('div');
+    lightboxRoot.className = 'mf-lightbox-root';
+    lightboxRoot.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(lightboxRoot);
+  }
+}
+
+function closeLightbox() {
+  if (!lightboxRoot) return;
+  lightboxRoot.classList.remove('mf-lightbox-open');
+  lightboxRoot.setAttribute('aria-hidden', 'true');
+  setTimeout(() => {
+    if (lightboxRoot) lightboxRoot.innerHTML = '';
+  }, 180);
+  document.removeEventListener('keydown', handleLightboxEscape);
+}
+
+function handleLightboxEscape(event) {
+  if (event.key === 'Escape') closeLightbox();
+}
+
+// Full-size preview for an image (or, opportunistically, an inline-viewable
+// PDF) — click anywhere on the backdrop, the "×", or Esc to close. Deliberately
+// separate from openModal(): a lightbox has no title bar/padding, so the
+// image/document can fill as much of the screen as possible.
+function openLightbox({ src, alt = '', kind = 'image' } = {}) {
+  ensureLightboxRoot();
+  lightboxRoot.innerHTML = '';
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'mf-lightbox-backdrop';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'mf-lightbox-close';
+  closeBtn.setAttribute('aria-label', 'Zapri');
+  closeBtn.innerHTML = '&times;';
+  closeBtn.addEventListener('click', closeLightbox);
+
+  const media = kind === 'pdf' ? document.createElement('iframe') : document.createElement('img');
+  media.className = kind === 'pdf' ? 'mf-lightbox-pdf' : 'mf-lightbox-img';
+  media.src = src;
+  if (kind !== 'pdf') media.alt = alt;
+
+  backdrop.appendChild(closeBtn);
+  backdrop.appendChild(media);
+  backdrop.addEventListener('click', (event) => {
+    if (event.target === backdrop) closeLightbox();
+  });
+
+  lightboxRoot.appendChild(backdrop);
+  lightboxRoot.classList.add('mf-lightbox-open');
+  lightboxRoot.setAttribute('aria-hidden', 'false');
+  document.addEventListener('keydown', handleLightboxEscape);
+}
+
 function alertDialog(message, title = 'Obvestilo') {
   return new Promise((resolve) => {
     const body = openModal({
@@ -351,6 +410,8 @@ const UI = {
   promptPin,
   openModal,
   closeModal,
+  openLightbox,
+  closeLightbox,
   banner,
   printHtml,
   tabify,

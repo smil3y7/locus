@@ -103,25 +103,39 @@ function triggerDownload(filename, blob) {
 
 async function exportArchive() {
   try {
-    const [config, entries, session] = await Promise.all([ConfigService.getLiveConfig(), DB.getAllEntries(), DB.getSession()]);
+    const session = await DB.getSession();
 
-    const serializedEntries = await Promise.all(entries.map((entry) => serializeEntry(entry)));
+    const moduleIds = DB.MODULE_IDS; // e.g. ['inventarna', 'dokumentacija']
+    const modules = {};
+    let totalCount = 0;
+
+    for (const moduleId of moduleIds) {
+      const configService = ConfigService.getConfigService(moduleId);
+      const [config, entries] = await Promise.all([configService.getLiveConfig(), DB.getAllEntries(moduleId)]);
+      const serializedEntries = await Promise.all(entries.map((entry) => serializeEntry(entry)));
+      modules[moduleId] = { config, entries: serializedEntries };
+      totalCount += entries.length;
+    }
 
     const payload = {
       exportedAt: Date.now(),
-      appVersion: 2, // archive FORMAT version (bump only if the export/import shape changes)
+      appVersion: 3, // archive FORMAT version (bump only if the export/import shape changes)
       lokusVersion: Utils.APP_VERSION, // which Lokus app build produced this export
       session: session || null,
-      config,
-      entries: serializedEntries,
+      modules,
+      // Legacy top-level mirror of module 1 ("inventarna"), kept only so an
+      // OLDER build of this app could still read a NEW export if it ever
+      // needed to. Current imports read `modules` instead.
+      config: modules.inventarna ? modules.inventarna.config : undefined,
+      entries: modules.inventarna ? modules.inventarna.entries : [],
     };
 
     const filename = buildFileName(session);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     triggerDownload(filename, blob);
 
-    EventBus.emit('ui:notify', { type: 'success', message: `Izvoz pripravljen: ${filename}` });
-    return { success: true, filename, count: entries.length };
+    EventBus.emit('ui:notify', { type: 'success', message: `Izvoz pripravljen: ${filename} (${totalCount} zapisov, vsi moduli)` });
+    return { success: true, filename, count: totalCount };
   } catch (err) {
     console.error('[ExportImport] Export failed', err);
     EventBus.emit('ui:notify', { type: 'error', message: 'Izvoz ni uspel.' });
@@ -134,21 +148,33 @@ async function importArchive(file) {
     const text = await file.text();
     const payload = JSON.parse(text);
 
-    if (!payload || !Array.isArray(payload.entries)) {
-      throw new Error('Datoteka ni v pričakovani obliki (manjka seznam predmetov).');
+    // New-format archives (0.5.0+) carry a `modules` map, one entry per
+    // registered module. Older archives only have flat top-level
+    // `entries` — those are restored into module 1 ("inventarna") only,
+    // exactly like before, so old backups still import correctly.
+    const moduleEntries = payload && payload.modules
+      ? Object.entries(payload.modules).map(([moduleId, m]) => [moduleId, Array.isArray(m.entries) ? m.entries : []])
+      : payload && Array.isArray(payload.entries)
+        ? [['inventarna', payload.entries]]
+        : null;
+
+    if (!moduleEntries) {
+      throw new Error('Datoteka ni v pričakovani obliki (manjka seznam zapisov).');
     }
 
     let imported = 0;
-    for (const entry of payload.entries) {
-      const deserialized = deserializeEntry(entry);
-      await DB.saveEntry(deserialized);
-      imported++;
+    for (const [moduleId, entries] of moduleEntries) {
+      for (const entry of entries) {
+        const deserialized = deserializeEntry(entry);
+        await DB.saveEntry(deserialized, moduleId);
+        imported++;
+      }
+      EventBus.emit('entry:created', { moduleId }); // reuse existing event so that module's viewer refreshes
     }
 
-    EventBus.emit('entry:created'); // reuse existing event so Viewer refreshes its list
     EventBus.emit('ui:notify', {
       type: 'success',
-      message: `Uvoženih ${imported} predmetov iz "${file.name}".`,
+      message: `Uvoženih ${imported} zapisov iz "${file.name}".`,
     });
     return { success: true, imported };
   } catch (err) {

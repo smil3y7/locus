@@ -48,14 +48,15 @@
   <div class="mf-header-actions">
     <button type="button" class="mf-btn mf-btn-ghost" id="mf-session-btn">Nastavitve seje</button>
     <button type="button" class="mf-btn mf-btn-ghost" id="mf-edit-config-btn">Uredi obrazec</button>
-    <button type="button" class="mf-btn mf-btn-primary" id="mf-add-entry-btn">+ Dodaj predmet</button>
+    <button type="button" class="mf-btn mf-btn-primary" id="mf-add-entry-btn">+ Dodaj</button>
   </div>
 </header>
 
 <main class="mf-main">
+  <nav class="mf-module-switcher" id="mf-module-switcher" aria-label="Preklop med moduli"></nav>
   <section class="mf-collection">
     <div class="mf-collection-heading">
-      <h2>Inventarna knjiga</h2>
+      <h2 id="mf-collection-title">Inventarna knjiga</h2>
       <button type="button" class="mf-btn mf-btn-ghost mf-btn-small" id="mf-print-catalog-btn">Natisni katalog</button>
     </div>
     <div class="mf-entries-list" id="mf-entries-list">

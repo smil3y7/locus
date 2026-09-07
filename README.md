@@ -14,6 +14,20 @@ strežnika/baze v ozadju.
 - **Tehnična dokumentacija** (za razvijalca, ki bo nadaljeval delo na
   kodi): glejte `DEVELOPMENT.md`.
 
+## Moduli
+
+Aplikacija je zasnovana tako, da lahko poleg glavnega obrazca gosti tudi
+dodatne, med seboj povezane module — vsak s svojo shemo in svojo lokalno
+zbirko podatkov, dostopne prek preklopnika modulov pod glavo strani.
+
+- **Inventarna knjiga** — glavni, v produkciji objavljeni modul. Shema:
+  `config.json` (glejte spodaj, "Kako deluje objava sprememb obrazca").
+- **Dokumentacija o enoti** — drugi modul, **trenutno še v razvoju in ni
+  del objavljene produkcijske različice**. Zapisi se lahko povežejo z
+  enim ali več predmeti v Inventarni knjigi. Shema:
+  `config-dokumentacija.json`. Ko bo dokončan in odobren, bo dodan v
+  `navodila_lokus.md` samostojen razdelek z navodili za uporabo.
+
 ## Kako deluje objava sprememb obrazca
 
 Vsi obiskovalci strani vidijo **isto** shemo obrazca — bere se iz
