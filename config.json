@@ -309,16 +309,18 @@
       "type": "select",
       "required": false,
       "options": [
-        "Zbirka uporabna umetnost",
-        "Zbirka glasbila",
-        "Zbirka prazgodovina",
-        "Umetnostnozgodovinska zbirka",
         "Arheološka zbirka",
         "Etnološka zbirka",
-        "Zbirka razglednic",
+        "Športna zbirka",
+        "Tehniška zbirka",
+        "Umetnostnozgodovinska zbirka",
         "Zbirka fotografske opreme",
+        "Zbirka glasbila",
         "Zbirka novejše zgodovine",
-        "Športna zbirka"
+        "Zbirka prazgodovina",
+        "Zbirka razglednic",
+        "Zbirka tekstila",
+        "Zbirka uporabna umetnost"
       ],
       "color": "#2F6E63",
       "group": "group_poimenovanje",
@@ -517,7 +519,11 @@
             "prva polovica",
             "druga četrtina",
             "tretja četrtina",
-            "konec"
+            "konec",
+            "okoli",
+            "približno",
+            "pred",
+            "po"
           ]
         },
         {
@@ -826,6 +832,17 @@
       "inlineRow": true
     },
     {
+      "id": "opomba_casa_uporabe",
+      "label": "Opomba časa uporabe",
+      "type": "text",
+      "required": false,
+      "options": [],
+      "color": "#8C6A3D",
+      "group": "group_uporaba",
+      "section": null,
+      "autoExpand": true
+    },
+    {
       "id": "nacin_uporabe",
       "label": "Način uporabe",
       "type": "text",
@@ -885,28 +902,29 @@
           "type": "select",
           "required": true,
           "options": [
-            "les",
-            "marmor",
-            "kamen",
-            "steklo",
-            "glina",
-            "mavec",
+            "baker",
+            "bombaž",
             "bron",
+            "elektronske komponente",
+            "emajl",
+            "glina",
+            "guma",
+            "kamen",
+            "kovina",
+            "les",
+            "litoželezo",
+            "marmor",
+            "mavec",
             "papir",
             "plastika",
-            "litoželezo",
-            "usnje",
-            "žgana glina",
-            "emajl",
+            "platno",
+            "poliester",
             "poliuretan sintetični material",
+            "steklo",
             "tekstil",
-            "guma",
             "termoplastična masa",
-            "kovina",
-            "baker",
-            "elektronske komponente",
-            "bombaž",
-            "platno"
+            "usnje",
+            "žgana glina"
           ]
         },
         {
@@ -1075,6 +1093,11 @@
             "g",
             "kg"
           ]
+        },
+        {
+          "id": "konfekcijska_stevilka",
+          "label": "konfekcijska številka",
+          "units": []
         }
       ],
       "section": null
@@ -1183,9 +1206,14 @@
       "type": "select",
       "required": false,
       "options": [
+        "Gorenjski muzej",
+        "Mestni muzej Ljubljana",
+        "Narodna galerija",
         "Narodni muzej Slovenije",
+        "Pilonova galerija Ajdovščina",
         "Pokrajinski muzej Koper",
-        "Pilonova galerija Ajdovščina"
+        "Tehniški muzej Slovenije",
+        "Tržiški muzej"
       ],
       "color": "#8C6A3D",
       "group": "group_lastnistvo",

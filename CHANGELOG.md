@@ -10,6 +10,31 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.3.1] — dopolnitve šifrantov (Inventarna knjiga)
+
+**Status: objavljeno takoj v produkcijo (main) in razvoj (razvoj) — brez
+čakanja na modul "Dokumentacija o enoti", ker sprememba zadeva izključno
+modul "Inventarna knjiga".**
+
+### Spremenjeno
+- Poimenovanje in klasifikacija → Klasifikacija → Zbirka: dodani "Tehniška
+  zbirka" in "Zbirka tekstila", cel seznam urejen po abecedi.
+- Izdelava in nastanek → Nastanek → Čas izdelave → Položaj: dodane
+  vrednosti "okoli", "približno", "pred", "po" (enak nabor kot že obstaja
+  pri polju "Čas uporabe").
+- Uporaba in življenjska pot → Čas uporabe: dodano novo besedilno polje
+  "Opomba časa uporabe" (po vzoru že obstoječega "Opomba časa izdelave").
+- Materialnost predmeta → Material: dodan "poliester", cel seznam urejen
+  po abecedi ("bombaž" je bil v seznamu že prej).
+- Materialnost predmeta → Mere: dodana vrsta mere "konfekcijska
+  številka" (brez enote). **Opomba:** polje "Mere" sprejema samo številske
+  vrednosti — če se v praksi izkaže, da so potrebne tudi črkovne oznake
+  (S/M/L) ali kombinacije (npr. "40/42"), bo treba to prestaviti v ločeno
+  besedilno polje; preverja se.
+- Lastništvo in lokacija → Ustanova: dodani "Gorenjski muzej", "Tehniški
+  muzej Slovenije", "Narodna galerija", "Mestni muzej Ljubljana",
+  "Tržiški muzej", cel seznam urejen po abecedi.
+
 ## [1.3.0] — objava modula (publish switch), samodejno zaznavanje okolja, preostala odprta vprašanja iz 1.2.0
 
 **Status: 1.3.0 gre na obe veji (main in razvoj) — koda je od te verzije
