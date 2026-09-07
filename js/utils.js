@@ -140,6 +140,13 @@ function formatPartialDate(dateValue) {
 // CHANGELOG.md at the repo root for what each version contains.
 const APP_VERSION = '1.2.0';
 
+// Single source of truth for which environment this deployment is. Ker gre
+// za dva ločena Vercel projekta (main = produkcija, razvoj = razvojno
+// okolje), je to edina vrstica, ki naj se razlikuje med vejama main in
+// razvoj. Na veji main naj bo vedno 'production'.
+const APP_ENV = 'development';
+const IS_DEV_ENV = APP_ENV === 'development';
+
 // Second-level grouping WITHIN one tab/group's fields — "razdelki" (sections)
 // are visual sub-headers that further organize a tab's fields, defined per
 // group (group.sections = [{id,label}]), referenced by field.section. If a
@@ -198,6 +205,8 @@ const Utils = {
   DEFAULT_FIELD_COLOR,
   formatPartialDate,
   APP_VERSION,
+  APP_ENV,
+  IS_DEV_ENV,
   isValidUrl,
   hexToRgba,
 };

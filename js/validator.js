@@ -140,6 +140,19 @@ function validateField(field, rawValue) {
   return errors;
 }
 
+// "Vsaj eno od" pravilo: skupina polj (po id-jih), od katerih mora biti
+// izpolnjeno vsaj eno, ne da bi bilo vsako posamezno polje označeno kot
+// required (kar bi ju naredilo OBA obvezna). Definirano na nivoju sheme:
+// config.requireOneOf = [{ fields: ['a','b'], label: 'Prikazni naziv skupine' }]
+function validateRequireOneOfGroup(group, fieldsById, values) {
+  const fieldIds = group.fields || [];
+  const anyFilled = fieldIds.some((id) => !isEmpty(values[id]));
+  if (anyFilled) return [];
+  const labels = fieldIds.map((id) => (fieldsById.get(id) ? fieldsById.get(id).label : id));
+  const groupLabel = group.label || labels.join(' / ');
+  return [`Izpolni vsaj eno od polj: ${labels.join(' ali ')} (${groupLabel}).`];
+}
+
 function validateEntry(data, config) {
   const errors = [];
 
@@ -148,10 +161,17 @@ function validateEntry(data, config) {
   }
 
   const values = (data && data.values) || {};
+  const fieldsById = new Map(config.fields.map((f) => [f.id, f]));
 
   for (const field of config.fields) {
     const fieldErrors = validateField(field, values[field.id]);
     errors.push(...fieldErrors);
+  }
+
+  if (Array.isArray(config.requireOneOf)) {
+    for (const group of config.requireOneOf) {
+      errors.push(...validateRequireOneOfGroup(group, fieldsById, values));
+    }
   }
 
   return { valid: errors.length === 0, errors };

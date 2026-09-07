@@ -854,6 +854,28 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 }
 .mf-fatal-dismiss:hover { color: var(--mf-rust); }
 
+/* ---------------- Dev environment strip ---------------- */
+/* Nevsiljiva, nedismissable pasica — samo informativna oznaka, da gre za
+   razvojno okolje, ne opozorilo o napaki, zato je vizualno ločena od
+   .mf-fatal-banner (nevtralen accent odtenek, ne rdeča/rust). */
+
+.mf-dev-strip {
+  position: sticky;
+  top: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--mf-accent);
+  color: var(--mf-on-brass);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* Field groups (form) */
 
 .mf-group {

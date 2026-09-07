@@ -1,5 +1,11 @@
 {
-  "version": 2,
+  "version": 3,
+  "requireOneOf": [
+    {
+      "fields": ["vizualni_vir", "tekstovni_vir_datoteka"],
+      "label": "Identifikacija dokumentacijske enote — vizualni ali tekstovni vir"
+    }
+  ],
   "groups": [
     {
       "id": "group_identifikacija",
@@ -154,12 +160,13 @@
       "id": "vizualni_vir",
       "label": "Vizualni vir",
       "type": "group",
-      "required": true,
+      "required": false,
       "repeatable": true,
       "options": [],
       "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_identifikacija",
+      "tooltip": "Obvezen je vizualni ali tekstovni vir (vsaj eden od obeh).",
       "subFields": [
         {
           "id": "slika",
@@ -179,7 +186,7 @@
       "color": "#45998B",
       "group": "group_identifikacija",
       "section": "sec_identifikacija",
-      "tooltip": "Priloži datoteko tekstovnega vira (npr. sken dokumenta). Glej tudi kartico \"Tekstovni vir\" za bibliografske podatke."
+      "tooltip": "Obvezen je vizualni ali tekstovni vir (vsaj eden od obeh). Priloži datoteko tekstovnega vira (npr. sken dokumenta). Glej tudi kartico \"Tekstovni vir\" za bibliografske podatke."
     },
     {
       "id": "druge_stevilcne_oznake",

@@ -466,6 +466,13 @@
           "options": []
         },
         {
+          "id": "naziv_izdelovalca",
+          "label": "Naziv izdelovalca",
+          "type": "text",
+          "required": false,
+          "options": []
+        },
+        {
           "id": "vloga",
           "label": "Vloga",
           "type": "select",
@@ -475,13 +482,6 @@
             "izdelovalec",
             "soavtor"
           ]
-        },
-        {
-          "id": "naziv_izdelovalca",
-          "label": "Naziv izdelovalca",
-          "type": "text",
-          "required": false,
-          "options": []
         }
       ]
     },
@@ -1053,6 +1053,15 @@
         {
           "id": "polmer",
           "label": "polmer",
+          "units": [
+            "cm",
+            "mm",
+            "m"
+          ]
+        },
+        {
+          "id": "obseg",
+          "label": "obseg",
           "units": [
             "cm",
             "mm",

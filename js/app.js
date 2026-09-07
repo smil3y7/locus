@@ -58,13 +58,28 @@ const MODULES = {
     templates: [],
   },
 };
+// ---------------------------------------------------------------------
+// ENOTNO STIKALO ZA OBJAVO MODULOV — edino mesto, ki ga je treba spremeniti
+// ob objavi novega modula v produkcijo. Vse v aplikaciji (preklopnik med
+// moduli, nalaganje sheme ob zagonu, admin urejevalnik, IndexedDB shrambe)
+// se napaja iz MODULES/MODULE_LIST spodaj, zato modul, ki ni naveden tu,
+// dobesedno ne obstaja za ostanek aplikacije — se ne izriše, se zanj ne
+// naloži config-*.json, in se zanj nikoli ne pokliče createStorage().
+//
+// Modula "dokumentacija" ne dodajte sem, dokler ni odobreno za produkcijo.
+const ENABLED_MODULES = ['inventarna'];
+
+Object.keys(MODULES).forEach((id) => {
+  if (!ENABLED_MODULES.includes(id)) delete MODULES[id];
+});
+
 const MODULE_LIST = Object.values(MODULES);
 MODULE_LIST.forEach((m) => {
   m.storage = createStorage(m.id, m.configService);
   m.viewer = createViewer(m.id, m.configService, m.storage, m);
 });
 
-let activeModuleId = 'inventarna';
+let activeModuleId = MODULE_LIST[0].id;
 function activeModule() {
   return MODULES[activeModuleId];
 }
@@ -1228,7 +1243,23 @@ function wireGlobalFormSubmission() {
   });
 }
 
+// Nevsiljiva vizualna oznaka razvojnega okolja: tanka pasica na vrhu strani
+// + "[Dev] " pred imenom aplikacije v zavihku brskalnika. Nič od tega se ne
+// izvede v produkciji (Utils.IS_DEV_ENV = false na veji main).
+function applyDevEnvironmentMarkers() {
+  if (!Utils.IS_DEV_ENV) return;
+
+  document.title = `[Dev] ${document.title}`;
+
+  const strip = document.createElement('div');
+  strip.className = 'mf-dev-strip';
+  strip.setAttribute('role', 'status');
+  strip.textContent = 'Razvojno okolje — ni produkcijska različica';
+  document.body.prepend(strip);
+}
+
 async function bootstrap() {
+  applyDevEnvironmentMarkers();
   UI.init();
 
   const versionEl = document.getElementById('mf-app-version');

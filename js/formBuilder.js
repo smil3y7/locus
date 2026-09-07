@@ -22,6 +22,25 @@ const DOCUMENT_ACCEPT = '.pdf,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.csv';
 // label text itself and a small info icon next to it get a native `title`
 // attribute — hovering (or focusing, for keyboard users) either one shows
 // the explanatory text via the browser's usual tooltip mechanism.
+// Mirrors the "is this field's value present" checks used by the per-tab
+// required-field guard below — reused by the requireOneOf guard so both
+// treat every field type (measurements/reference/multiselect/group/date/
+// image/document/text) exactly the same way.
+function valueIsEmptyForField(field, values) {
+  if (!field) return true;
+  const v = values[field.id];
+  if (field.type === 'measurements') return !Array.isArray(v) || v.length === 0;
+  if (field.type === 'reference') return !Array.isArray(v) || v.length === 0;
+  if (field.type === 'multiselect') return !Array.isArray(v) || v.length === 0;
+  if (field.type === 'group') {
+    if (field.repeatable === false) return !v || Object.values(v).every((x) => !x);
+    return !Array.isArray(v) || v.length === 0;
+  }
+  if (field.type === 'date') return !v || !v.value;
+  if (field.type === 'image' || field.type === 'document') return !v;
+  return !v || !String(v).trim();
+}
+
 function labelHtml(labelText, { required, tooltip, forId } = {}) {
   const reqSpan = required ? ' <span class="mf-required">*</span>' : '';
   const forAttr = forId ? ` for="${forId}"` : '';
@@ -982,6 +1001,34 @@ function build(container, config, options) {
         EventBus.emit('ui:notify', {
           type: 'error',
           message: `Manjka obvezno polje "${missing.label}" v skupini "${sectionLabel}".`,
+        });
+        return;
+      }
+    }
+
+    if (Array.isArray(config.requireOneOf)) {
+      const fieldsById = new Map(config.fields.map((f) => [f.id, f]));
+      const failedGroup = config.requireOneOf.find((group) =>
+        (group.fields || []).every((id) => valueIsEmptyForField(fieldsById.get(id), values))
+      );
+
+      if (failedGroup) {
+        const firstFieldId = (failedGroup.fields || [])[0];
+        if (useTabs) {
+          const sectionEntry = sections
+            .flatMap((s) => s.fields.map((f) => ({ ...f, sectionId: s.id })))
+            .find((f) => f.id === firstFieldId);
+          if (sectionEntry) {
+            tabController.activate(sectionEntry.sectionId);
+            if (updateTabPositionUi) updateTabPositionUi();
+          }
+        }
+        const input = currentForm.querySelector(`#f_${firstFieldId}`);
+        if (input) input.focus();
+        const labels = (failedGroup.fields || []).map((id) => (fieldsById.get(id) || {}).label || id);
+        EventBus.emit('ui:notify', {
+          type: 'error',
+          message: `Izpolni vsaj eno od polj: ${labels.join(' ali ')}.`,
         });
         return;
       }
