@@ -1097,7 +1097,9 @@
         {
           "id": "konfekcijska_stevilka",
           "label": "konfekcijska številka",
-          "units": []
+          "units": [],
+          "valueType": "text",
+          "placeholder": "npr. 40, M, 40/42"
         }
       ],
       "section": null

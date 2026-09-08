@@ -521,9 +521,10 @@ function attachMeasurementsWidget(field, form, existingValues) {
         const typeDef = types.find((t) => t.id === row.type);
         const label = typeDef ? typeDef.label : row.type;
         const extent = row.extent ? ` (${Utils.escapeHtml(row.extent)})` : '';
+        const unit = row.unit ? ` ${Utils.escapeHtml(row.unit)}` : '';
         return `
           <span class="mf-measurement-chip">
-            ${Utils.escapeHtml(label)}: ${Utils.escapeHtml(row.value)} ${Utils.escapeHtml(row.unit)}${extent}
+            ${Utils.escapeHtml(label)}: ${Utils.escapeHtml(row.value)}${unit}${extent}
             <button type="button" class="mf-chip-remove" data-index="${index}" aria-label="Odstrani mero">&times;</button>
           </span>
         `;
@@ -562,30 +563,52 @@ function attachMeasurementsWidget(field, form, existingValues) {
     const valueInput = addFormEl.querySelector('.mf-mvalue-input');
     const extentInput = addFormEl.querySelector('.mf-mextent-input');
 
-    function refreshUnits() {
+    // Privzeto pričakuje številsko vrednost + enoto (npr. "42 cm"). Vrsta
+    // mere lahko to preglasi z "valueType": "text" (npr. konfekcijska
+    // številka — "40", "M", "40/42" ... ni fizikalna meritev, zato nima
+    // smiselne enote). V tem primeru se enota skrije namesto praznega
+    // spustnega seznama, vrednost pa sprejme poljubno besedilo.
+    function refreshTypeDependentInputs() {
       const typeDef = types.find((t) => t.id === typeSelect.value) || types[0];
       const units = (typeDef && typeDef.units) || [];
+      const isTextValue = typeDef && typeDef.valueType === 'text';
+
       unitSelect.innerHTML = units.map((u) => `<option value="${Utils.escapeHtml(u)}">${Utils.escapeHtml(u)}</option>`).join('');
+      unitSelect.hidden = units.length === 0;
+
+      valueInput.type = isTextValue ? 'text' : 'number';
+      if (isTextValue) {
+        valueInput.removeAttribute('step');
+      } else {
+        valueInput.setAttribute('step', 'any');
+      }
+      valueInput.placeholder = (typeDef && typeDef.placeholder) || 'Vrednost';
     }
-    typeSelect.addEventListener('change', refreshUnits);
-    refreshUnits();
+    typeSelect.addEventListener('change', refreshTypeDependentInputs);
+    refreshTypeDependentInputs();
 
     addFormEl.querySelector('.mf-madd-cancel').addEventListener('click', () => {
       addFormEl.hidden = true;
     });
 
     addFormEl.querySelector('.mf-madd-confirm').addEventListener('click', async () => {
+      const newType = typeSelect.value;
+      const typeDef = types.find((t) => t.id === newType);
+      const isTextValue = typeDef && typeDef.valueType === 'text';
+
       const value = valueInput.value.trim();
-      if (!value || Number.isNaN(Number(value))) {
+      if (!value) {
+        EventBus.emit('ui:notify', { type: 'error', message: 'Vnesi vrednost mere.' });
+        return;
+      }
+      if (!isTextValue && Number.isNaN(Number(value))) {
         EventBus.emit('ui:notify', { type: 'error', message: 'Vnesi veljavno številsko vrednost mere.' });
         return;
       }
 
-      const newType = typeSelect.value;
       const newExtent = extentInput.value.trim();
       const isDuplicate = !newExtent && rows.some((r) => r.type === newType && !r.extent);
       if (isDuplicate) {
-        const typeDef = types.find((t) => t.id === newType);
         const confirmed = await UI.confirm(
           `Mera "${typeDef ? typeDef.label : newType}" je že dodana. Če gre za drug del predmeta, vpiši opis dela predmeta (npr. "ustje"). Ali vseeno dodam še eno enako mero?`,
           'Podvojena vrsta mere'
@@ -595,8 +618,8 @@ function attachMeasurementsWidget(field, form, existingValues) {
 
       rows.push({
         type: newType,
-        value: Number(value),
-        unit: unitSelect.value,
+        value: isTextValue ? value : Number(value),
+        unit: unitSelect.hidden ? '' : unitSelect.value,
         extent: newExtent || undefined,
       });
       sync();

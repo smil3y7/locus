@@ -10,6 +10,24 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.3.2] — konfekcijska številka: besedilna vrednost, brez prazne enote
+
+**Status: objavljeno takoj v produkcijo (main) in razvoj — sprememba
+zadeva izključno modul "Inventarna knjiga".**
+
+### Spremenjeno
+- Widget "Mere" zdaj podpira vrste mer brez fizikalne enote in z
+  ne-številsko vrednostjo (nov atribut vrste mere `valueType: "text"` v
+  `config.json`). Uporablja se za "konfekcijsko številko", ki zdaj
+  sprejme tudi črkovne oznake in kombinacije (npr. "M", "40/42"), ne le
+  čistih številk.
+- Ko izbrana vrsta mere nima definiranih enot, se spustni seznam enote
+  skrije namesto da ostane prazen in nesmiseln.
+- Prikaz mere (kartica, tiskanje) ne prikazuje več odvečnega presledka za
+  merami brez enote.
+- Mehanizem je splošen — enako uporaben za katero koli prihodnjo vrsto
+  mere brez enote, ne le za konfekcijsko številko.
+
 ## [1.3.1] — dopolnitve šifrantov (Inventarna knjiga)
 
 **Status: objavljeno takoj v produkcijo (main) in razvoj (razvoj) — brez

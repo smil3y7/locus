@@ -63,7 +63,8 @@ function formatMeasurements(rows, field) {
     .map((row) => {
       const label = typesById.get(row.type) || row.type;
       const extent = row.extent ? ` (${row.extent})` : '';
-      return `${label}: ${row.value} ${row.unit}${extent}`;
+      const unit = row.unit ? ` ${row.unit}` : '';
+      return `${label}: ${row.value}${unit}${extent}`;
     })
     .join(', ');
 }
@@ -138,7 +139,7 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.3.2';
 
 // Okolje se ugotovi samodejno iz domene (window.location.hostname), zato je
 // ta koda odslej DOBESEDNO ENAKA na vejah main in razvoj — ni je več treba
