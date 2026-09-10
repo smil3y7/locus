@@ -10,6 +10,26 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.5.0] — shranjevanje vedno pusti obrazec odprt, dodan Ctrl+E
+
+**Status: objavljeno takoj v produkcijo (main) in razvoj — sprememba je
+splošna, deluje v obeh modulih.**
+
+### Spremenjeno
+- Klik na gumb "Shrani" (enako kot Ctrl+S iz 1.4.0) obrazca za
+  dodajanje/urejanje zapisa **ne zapre več** — obrazec ostane odprt po
+  vsakem shranjevanju. Zapre ga izključno "Prekliči"/X/Escape.
+- Ko je zapis v tej seji enkrat shranjen, se gumb "Prekliči" preimenuje v
+  "Zapri" (ni več česa razveljaviti nazaj na prejšnje stanje).
+
+### Dodano
+- Globalna bližnjica **Ctrl+E** (oz. **Cmd+E** na Macu): kadar je odprt
+  podroben pregled zapisa (kartica predmeta/dokumentacijske enote), takoj
+  odpre obrazec za urejanje tega zapisa — enako kot klik na gumb "Uredi".
+  Brez učinka, kadar ta gumb ni na voljo (npr. med urejanjem, na seznamu
+  ...), da ne prepreči morebitne privzete bližnjice brskalnika po
+  nepotrebnem.
+
 ## [1.4.0] — Ctrl+S: shrani in ostani v obrazcu
 
 **Status: objavljeno takoj v produkcijo (main) in razvoj — sprememba je

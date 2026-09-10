@@ -64,9 +64,10 @@ function autoExpandTextarea(el) {
 let currentContainer = null;
 let currentForm = null;
 
-// Ctrl+S / Cmd+S ("shrani in ostani odprto") state — glej triggerSave() in
+// Trenutni "živ" ID zapisa, ki ga ta obrazec ureja — glej triggerSave() in
 // markEntrySaved() na dnu datoteke ter globalno bližnjico v app.js.
-let saveKeepOpen = false;
+// Shranjevanje (klik na "Shrani" ALI Ctrl+S — oboje enako) obrazca nikoli
+// ne zapre; edini način zapiranja je "Prekliči"/X/Escape.
 let liveEntryId = null;
 
 // ---------------------------------------------------------------------
@@ -961,12 +962,6 @@ function build(container, config, options) {
   currentForm.addEventListener('submit', (event) => {
     event.preventDefault();
 
-    // Ali je bila ta oddaja sprožena prek Ctrl+S/Cmd+S (glej triggerSave()
-    // spodaj)? Preberi in takoj počisti zastavico, da naslednji navaden
-    // klik na "Shrani" ne podeduje "ostani odprto" vedenja.
-    const keepOpenRequested = saveKeepOpen;
-    saveKeepOpen = false;
-
     const formData = new FormData(currentForm);
     const values = {};
 
@@ -1072,7 +1067,6 @@ function build(container, config, options) {
 
     const payload = { values, configVersion: config.version };
     if (liveEntryId) payload.entryId = liveEntryId;
-    if (keepOpenRequested) payload.keepOpen = true;
 
     EventBus.emit('form:submitted', payload);
   });
@@ -1094,19 +1088,18 @@ function destroy() {
   if (currentContainer) currentContainer.innerHTML = '';
   currentContainer = null;
   currentForm = null;
-  saveKeepOpen = false;
   liveEntryId = null;
 }
 
 // ---------------------------------------------------------------------
-// Ctrl+S / Cmd+S: "shrani, obrazec naj ostane odprt" — glej globalno
-// bližnjico v app.js (wireGlobalKeyboardShortcuts). Ponovno uporabi
-// celotno obstoječo pot zbiranja vrednosti/validacije s tem, da sproži
-// pravi 'submit' dogodek na trenutnem obrazcu (requestSubmit prek
-// event listenerja zgoraj), namesto da bi podvajala to logiko.
+// Ctrl+S / Cmd+S — glej globalno bližnjico v app.js
+// (wireGlobalKeyboardShortcuts). Ponovno uporabi celotno obstoječo pot
+// zbiranja vrednosti/validacije s tem, da sproži pravi 'submit' dogodek na
+// trenutnem obrazcu (requestSubmit prek event listenerja zgoraj), namesto
+// da bi podvajala to logiko. Shranjevanje (od tod ali s klikom na gumb)
+// obrazca nikoli ne zapre.
 function triggerSave() {
   if (!currentForm) return false;
-  saveKeepOpen = true;
   if (typeof currentForm.requestSubmit === 'function') {
     currentForm.requestSubmit();
   } else {
@@ -1115,12 +1108,11 @@ function triggerSave() {
   return true;
 }
 
-// Kliče app.js po uspešnem "shrani in ostani odprto" shranjevanju NOVEGA
-// zapisa: obrazec od tega trenutka naprej velja za urejanje tega zapisa
-// (naslednji Ctrl+S/klik na "Shrani" ga posodobi, namesto da ustvari
-// podvojen zapis). Slikovna/dokumentna polja od zdaj upoštevajo "brez
-// nove izbrane datoteke = ne spreminjaj obstoječe" (glej liveEntryId
-// zgoraj v build()).
+// Kliče app.js po uspešnem shranjevanju povsem NOVEGA zapisa: obrazec od
+// tega trenutka naprej velja za urejanje tega zapisa (naslednje
+// shranjevanje ga posodobi, namesto da ustvari podvojen zapis).
+// Slikovna/dokumentna polja od zdaj upoštevajo "brez nove izbrane
+// datoteke = ne spreminjaj obstoječe" (glej liveEntryId zgoraj v build()).
 function markEntrySaved(entry) {
   liveEntryId = entry.id;
   const submitBtn = currentForm && currentForm.querySelector('button[type="submit"]');

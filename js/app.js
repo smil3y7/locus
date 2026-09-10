@@ -1223,24 +1223,29 @@ function wireGlobalFormSubmission() {
   EventBus.on('form:submitted', async (payload) => {
     const moduleDef = MODULES[openFormModuleId] || activeModule();
 
+    // Shranjevanje (gumb "Shrani" ali Ctrl+S — oboje enako) obrazca nikoli
+    // ne zapre. Zapre ga izključno "Prekliči"/X/Escape. Ko je zapis enkrat
+    // shranjen v tej seji, "Prekliči" ne bi imel več česa razveljaviti,
+    // zato ga preimenujemo v "Zapri".
+    const renameCancelToClose = () => {
+      const cancelBtn = document.getElementById('mf-form-cancel');
+      if (cancelBtn) cancelBtn.textContent = 'Zapri';
+    };
+
     if (payload.entryId) {
       const result = await moduleDef.storage.updateEntry(payload.entryId, payload);
-      if (result.success && !payload.keepOpen) UI.closeModal();
+      if (result.success) renameCancelToClose();
       return;
     }
 
     const result = await moduleDef.storage.saveEntry(payload);
     if (!result.success) return;
+    renameCancelToClose();
 
-    if (!payload.keepOpen) {
-      UI.closeModal();
-      return;
-    }
-
-    // Ctrl+S na povsem novem zapisu: obrazec ostane odprt, a od zdaj
-    // velja za UREJANJE ravnokar shranjenega zapisa (glej markEntrySaved),
-    // sicer bi naslednji Ctrl+S ustvaril podvojen zapis namesto posodobil
-    // tega.
+    // Prvo shranjevanje povsem novega zapisa: obrazec ostane odprt, a od
+    // zdaj velja za UREJANJE ravnokar shranjenega zapisa (glej
+    // markEntrySaved), sicer bi naslednje shranjevanje ustvarilo podvojen
+    // zapis namesto posodobilo tega.
     FormBuilder.markEntrySaved(result.entry);
     const titleEl = document.querySelector('.mf-modal-title');
     if (titleEl) titleEl.textContent = moduleDef.editModalTitle;
@@ -1307,19 +1312,31 @@ async function bootstrap() {
   wireGlobalKeyboardShortcuts();
 }
 
-// Ctrl+S / Cmd+S — deluje globalno, v obeh modulih, kadar koli je odprt
-// obrazec za dodajanje/urejanje zapisa. Prepreči privzeto "Shrani stran"
-// vedenje brskalnika in namesto tega sproži isto shranjevanje kot klik na
-// gumb "Shrani", le da obrazec ostane odprt (glej FormBuilder.triggerSave
-// in wireGlobalFormSubmission zgoraj za "ostani odprto" logiko).
+// Ctrl+S / Cmd+S in Ctrl+E / Cmd+E — delujeta globalno, v obeh modulih.
+// Ctrl+S: kadar koli je odprt obrazec za dodajanje/urejanje zapisa, sproži
+// isto shranjevanje kot klik na gumb "Shrani" (obrazec ostane odprt, glej
+// FormBuilder.triggerSave in wireGlobalFormSubmission zgoraj). Ctrl+E:
+// kadar je odprt podroben pregled zapisa (ne obrazec), sproži isto kot
+// klik na gumb "Uredi" (#mf-edit-entry, glej viewer.js openDetail) — brez
+// učinka, če ta gumb ni prisoten (npr. ker je odprt obrazec ali kaj
+// drugega), da ne prepreči privzete bližnjice brskalnika po nepotrebnem.
 function wireGlobalKeyboardShortcuts() {
   document.addEventListener('keydown', (event) => {
-    const isSaveCombo = (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 's';
-    if (!isSaveCombo) return;
-    if (!FormBuilder.isFormOpen()) return;
+    if (event.shiftKey || event.altKey || !(event.ctrlKey || event.metaKey)) return;
+    const key = event.key.toLowerCase();
 
-    event.preventDefault();
-    FormBuilder.triggerSave();
+    if (key === 's' && FormBuilder.isFormOpen()) {
+      event.preventDefault();
+      FormBuilder.triggerSave();
+      return;
+    }
+
+    if (key === 'e') {
+      const editBtn = document.getElementById('mf-edit-entry');
+      if (!editBtn) return;
+      event.preventDefault();
+      editBtn.click();
+    }
   });
 }
 
