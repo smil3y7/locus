@@ -1218,16 +1218,32 @@ function wireHeaderButtons() {
 }
 
 function wireGlobalFormSubmission() {
+  EventBus.on('ui:modalClosed', () => FormBuilder.destroy());
+
   EventBus.on('form:submitted', async (payload) => {
     const moduleDef = MODULES[openFormModuleId] || activeModule();
+
     if (payload.entryId) {
       const result = await moduleDef.storage.updateEntry(payload.entryId, payload);
-      if (result.success) UI.closeModal();
+      if (result.success && !payload.keepOpen) UI.closeModal();
       return;
     }
 
     const result = await moduleDef.storage.saveEntry(payload);
-    if (result.success) UI.closeModal();
+    if (!result.success) return;
+
+    if (!payload.keepOpen) {
+      UI.closeModal();
+      return;
+    }
+
+    // Ctrl+S na povsem novem zapisu: obrazec ostane odprt, a od zdaj
+    // velja za UREJANJE ravnokar shranjenega zapisa (glej markEntrySaved),
+    // sicer bi naslednji Ctrl+S ustvaril podvojen zapis namesto posodobil
+    // tega.
+    FormBuilder.markEntrySaved(result.entry);
+    const titleEl = document.querySelector('.mf-modal-title');
+    if (titleEl) titleEl.textContent = moduleDef.editModalTitle;
   });
 
   EventBus.on('entry:editRequested', ({ moduleId, entry, config }) => {
@@ -1288,6 +1304,23 @@ async function bootstrap() {
   renderActiveModuleChrome();
   wireHeaderButtons();
   wireGlobalFormSubmission();
+  wireGlobalKeyboardShortcuts();
+}
+
+// Ctrl+S / Cmd+S — deluje globalno, v obeh modulih, kadar koli je odprt
+// obrazec za dodajanje/urejanje zapisa. Prepreči privzeto "Shrani stran"
+// vedenje brskalnika in namesto tega sproži isto shranjevanje kot klik na
+// gumb "Shrani", le da obrazec ostane odprt (glej FormBuilder.triggerSave
+// in wireGlobalFormSubmission zgoraj za "ostani odprto" logiko).
+function wireGlobalKeyboardShortcuts() {
+  document.addEventListener('keydown', (event) => {
+    const isSaveCombo = (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 's';
+    if (!isSaveCombo) return;
+    if (!FormBuilder.isFormOpen()) return;
+
+    event.preventDefault();
+    FormBuilder.triggerSave();
+  });
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);

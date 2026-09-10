@@ -10,6 +10,34 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.4.0] — Ctrl+S: shrani in ostani v obrazcu
+
+**Status: objavljeno takoj v produkcijo (main) in razvoj — sprememba je
+splošna, deluje v obeh modulih, ne posega v obliko podatkov.**
+
+### Dodano
+- Globalna bližnjica **Ctrl+S** (oz. **Cmd+S** na Macu) med urejanjem
+  zapisa (dodajanje ali urejanje, oba modula): shrani vnesene spremembe,
+  obrazec pa ostane odprt namesto da se zapre — enako kot doslej klik na
+  gumb "Shrani", le brez zapiranja. Prepreči privzeto "Shrani stran"
+  vedenje brskalnika.
+- Če je Ctrl+S prvič pritisnjen na povsem NOVEM zapisu (še ni bil nikoli
+  shranjen), se ta ustvari, obrazec pa od tega trenutka naprej velja za
+  UREJANJE tega istega zapisa — vsak naslednji Ctrl+S ga posodobi, ne
+  ustvari podvojenega zapisa. Naslov modalnega okna in besedilo gumba se
+  ob tem samodejno posodobita ("Shrani spremembe").
+- Enaka validacija kot pri navadni oddaji (obvezna polja, pravilo "vsaj
+  eno od dveh" pri viru dokumentacijske enote) velja tudi pri Ctrl+S —
+  obrazec se ob napaki ne shrani in ne zapre, skoči na ustrezen zavihek.
+- Gumb "Shrani" ima zdaj naslov (tooltip) z bližnjico za odkrivnost.
+
+### Tehnično
+- `js/ui.js`: `closeModal()` zdaj ob vsakem zaprtju modalnega okna (X,
+  klik na ozadje, Escape, uspešno shranjevanje, `ui:closeModal`) odda nov
+  dogodek `ui:modalClosed`, na katerega se v `app.js` naveže čiščenje
+  notranjega stanja `FormBuilder` (`FormBuilder.destroy()`), da ne ostane
+  referenca na že zaprt/odstranjen obrazec.
+
 ## [1.3.2] — konfekcijska številka: besedilna vrednost, brez prazne enote
 
 **Status: objavljeno takoj v produkcijo (main) in razvoj — sprememba

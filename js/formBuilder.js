@@ -64,6 +64,11 @@ function autoExpandTextarea(el) {
 let currentContainer = null;
 let currentForm = null;
 
+// Ctrl+S / Cmd+S ("shrani in ostani odprto") state — glej triggerSave() in
+// markEntrySaved() na dnu datoteke ter globalno bližnjico v app.js.
+let saveKeepOpen = false;
+let liveEntryId = null;
+
 // ---------------------------------------------------------------------
 // Date field (day / month / year precision, chosen at entry time)
 // ---------------------------------------------------------------------
@@ -828,6 +833,7 @@ function build(container, config, options) {
   const isEdit = Boolean(existingEntry);
 
   currentContainer = container;
+  liveEntryId = existingEntry ? existingEntry.id : null;
 
   const existingValues = isEdit ? existingEntry.values : null;
   const existingPhotoUrlsByField = {};
@@ -879,7 +885,7 @@ function build(container, config, options) {
     <form id="mf-entry-form" novalidate>
       ${fieldsMarkup}
       <div class="mf-form-actions">
-        <button type="submit" class="mf-btn mf-btn-primary">${isEdit ? 'Shrani spremembe' : 'Shrani predmet'}</button>
+        <button type="submit" class="mf-btn mf-btn-primary" title="Bližnjica: Ctrl+S (Cmd+S na Macu)">${isEdit ? 'Shrani spremembe' : 'Shrani predmet'}</button>
         <button type="button" class="mf-btn mf-btn-ghost" id="mf-form-cancel">Prekliči</button>
       </div>
     </form>
@@ -954,6 +960,13 @@ function build(container, config, options) {
 
   currentForm.addEventListener('submit', (event) => {
     event.preventDefault();
+
+    // Ali je bila ta oddaja sprožena prek Ctrl+S/Cmd+S (glej triggerSave()
+    // spodaj)? Preberi in takoj počisti zastavico, da naslednji navaden
+    // klik na "Shrani" ne podeduje "ostani odprto" vedenja.
+    const keepOpenRequested = saveKeepOpen;
+    saveKeepOpen = false;
+
     const formData = new FormData(currentForm);
     const values = {};
 
@@ -961,7 +974,7 @@ function build(container, config, options) {
       if (field.type === 'image' || field.type === 'document') {
         const file = formData.get(field.id);
         const chosenFile = file && file.size > 0 ? file : null;
-        values[field.id] = isEdit ? chosenFile || undefined : chosenFile;
+        values[field.id] = liveEntryId ? chosenFile || undefined : chosenFile;
       } else if (field.type === 'date') {
         const raw = formData.get(field.id);
         try {
@@ -1058,7 +1071,8 @@ function build(container, config, options) {
     }
 
     const payload = { values, configVersion: config.version };
-    if (isEdit) payload.entryId = existingEntry.id;
+    if (liveEntryId) payload.entryId = liveEntryId;
+    if (keepOpenRequested) payload.keepOpen = true;
 
     EventBus.emit('form:submitted', payload);
   });
@@ -1080,8 +1094,43 @@ function destroy() {
   if (currentContainer) currentContainer.innerHTML = '';
   currentContainer = null;
   currentForm = null;
+  saveKeepOpen = false;
+  liveEntryId = null;
 }
 
-const FormBuilder = { build, reset, destroy };
+// ---------------------------------------------------------------------
+// Ctrl+S / Cmd+S: "shrani, obrazec naj ostane odprt" — glej globalno
+// bližnjico v app.js (wireGlobalKeyboardShortcuts). Ponovno uporabi
+// celotno obstoječo pot zbiranja vrednosti/validacije s tem, da sproži
+// pravi 'submit' dogodek na trenutnem obrazcu (requestSubmit prek
+// event listenerja zgoraj), namesto da bi podvajala to logiko.
+function triggerSave() {
+  if (!currentForm) return false;
+  saveKeepOpen = true;
+  if (typeof currentForm.requestSubmit === 'function') {
+    currentForm.requestSubmit();
+  } else {
+    currentForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+  }
+  return true;
+}
+
+// Kliče app.js po uspešnem "shrani in ostani odprto" shranjevanju NOVEGA
+// zapisa: obrazec od tega trenutka naprej velja za urejanje tega zapisa
+// (naslednji Ctrl+S/klik na "Shrani" ga posodobi, namesto da ustvari
+// podvojen zapis). Slikovna/dokumentna polja od zdaj upoštevajo "brez
+// nove izbrane datoteke = ne spreminjaj obstoječe" (glej liveEntryId
+// zgoraj v build()).
+function markEntrySaved(entry) {
+  liveEntryId = entry.id;
+  const submitBtn = currentForm && currentForm.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.textContent = 'Shrani spremembe';
+}
+
+function isFormOpen() {
+  return Boolean(currentForm);
+}
+
+const FormBuilder = { build, reset, destroy, triggerSave, markEntrySaved, isFormOpen };
 
 export default FormBuilder;

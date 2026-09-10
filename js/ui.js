@@ -62,6 +62,11 @@ function closeModal() {
     closeCleanupTimer = null;
   }, 180);
   document.removeEventListener('keydown', handleEscape);
+  // Emitted on EVERY close path (X gumb, klik na ozadje, Escape, uspešno
+  // shranjevanje, ui:closeModal) — omogoča drugim modulom (npr.
+  // FormBuilder), da počistijo svoje notranje stanje, ko se modalno okno
+  // dejansko zapre, ne glede na to, kako je bilo zaprto.
+  EventBus.emit('ui:modalClosed');
 }
 
 function handleEscape(event) {
