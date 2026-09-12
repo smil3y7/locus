@@ -389,6 +389,42 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   margin-bottom: 14px;
 }
 .mf-detail-rows { display: flex; flex-direction: column; }
+
+/* ---------------- Detail view: "Povezano" (izpeljane povratne povezave) ---------------- */
+
+.mf-detail-related {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mf-hairline);
+}
+.mf-detail-related-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mf-muted);
+}
+.mf-detail-related-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--mf-muted);
+}
+.mf-reference-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid var(--mf-hairline-strong);
+  border-radius: 999px;
+  background: var(--mf-surface, #fff);
+  color: var(--mf-ink, inherit);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.mf-reference-link:hover { border-color: var(--mf-brass); }
+
 .mf-detail-row {
   display: flex;
   justify-content: space-between;

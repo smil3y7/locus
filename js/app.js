@@ -87,6 +87,7 @@ Object.keys(MODULES).forEach((id) => {
 const MODULE_LIST = Object.values(MODULES);
 MODULE_LIST.forEach((m) => {
   m.storage = createStorage(m.id, m.configService);
+  m.findReverseReferences = (entryId) => findReverseReferences(m.id, entryId);
   m.viewer = createViewer(m.id, m.configService, m.storage, m);
 });
 
@@ -143,6 +144,46 @@ async function buildReferenceCandidates(config) {
     }));
   }
   return result;
+}
+
+// Reverse ("kdo se sklicuje name?") povezave — generično, config-driven,
+// brez vezave na imena konkretnih modulov ali polj. Za dani zapis preišče
+// VSE module in VSA njihova polja tipa "reference", ki kažejo na modul, v
+// katerem ta zapis živi, ter vrne seznam zapisov, ki nanj kažejo. Deluje
+// samodejno za katerikoli prihodnji modul/polje z reference tipom — nič
+// tu ni treba spreminjati, če se doda nov modul.
+async function findReverseReferences(targetModuleId, targetEntryId) {
+  const results = [];
+
+  for (const sourceModuleDef of MODULE_LIST) {
+    let sourceConfig;
+    try {
+      sourceConfig = await sourceModuleDef.configService.getLiveConfig();
+    } catch {
+      continue;
+    }
+    const refFields = sourceConfig.fields.filter((f) => f.type === 'reference' && f.targetModule === targetModuleId);
+    if (refFields.length === 0) continue;
+
+    const sourceEntries = await DB.getAllEntries(sourceModuleDef.id);
+    for (const entry of sourceEntries) {
+      const matchedField = refFields.find((field) => {
+        const refs = entry.values[field.id];
+        return Array.isArray(refs) && refs.some((r) => r && r.id === targetEntryId);
+      });
+      if (!matchedField) continue;
+      // Isti zapis lahko na en cilj kaže prek več polj — prikažemo ga
+      // samo enkrat (via prvo ujemajoče polje), da se seznam ne podvaja.
+      results.push({
+        id: entry.id,
+        module: sourceModuleDef.id,
+        label: referenceLabelForEntry(entry, sourceModuleDef),
+        viaFieldLabel: matchedField.label,
+      });
+    }
+  }
+
+  return results;
 }
 
 async function openAddEntryModal(moduleDef) {
@@ -1256,23 +1297,38 @@ function wireGlobalFormSubmission() {
     openEditEntryModal(moduleDef, entry, config);
   });
 
-  // Reference chip clicked in a detail view — jump to that entry, switching
-  // module first if it lives in a different one.
-  EventBus.on('nav:openEntry', async ({ moduleId, entryId }) => {
-    const moduleDef = MODULES[moduleId];
-    if (!moduleDef) return;
-    if (moduleId !== activeModuleId) switchActiveModule(moduleId);
-    try {
-      const [entry, config] = await Promise.all([DB.getEntry(entryId, moduleId), moduleDef.configService.getLiveConfig()]);
-      if (!entry) {
-        UI.toast({ type: 'error', message: 'Povezan zapis ne obstaja več (morda je bil izbrisan).' });
-        return;
-      }
-      moduleDef.viewer.openDetail(entry, config);
-    } catch (err) {
-      console.error('[App] Failed to open referenced entry', err);
-    }
+  // Reference chip clicked v podrobnem pregledu: skoči na tisti zapis,
+  // po potrebi preklopi modul. Če je klik prišel iz podrobnega pregleda
+  // (fromModuleId/fromEntryId priložena, glej viewer.js), si zapomni TO
+  // eno mesto ("od kod"), da lahko novo odprt pregled ponudi "← Nazaj" —
+  // en sam nivo, ne poln sklad (glej navigateToEntry spodaj).
+  EventBus.on('nav:openEntry', async ({ moduleId, entryId, fromModuleId, fromEntryId, fromLabel }) => {
+    const backTo = fromModuleId && fromEntryId ? { moduleId: fromModuleId, entryId: fromEntryId, label: fromLabel } : null;
+    await navigateToEntry(moduleId, entryId, { backTo });
   });
+
+  // "← Nazaj" klik: ista navigacija, a to PORABI zapomnjeno mesto namesto
+  // da bi ustvarila novo — s tem "nazaj" ni nekaj, od koder bi lahko šel
+  // spet "nazaj" (glej pogovor o enem nivoju).
+  EventBus.on('nav:goBack', async ({ moduleId, entryId }) => {
+    await navigateToEntry(moduleId, entryId, { backTo: null });
+  });
+}
+
+async function navigateToEntry(moduleId, entryId, { backTo = null } = {}) {
+  const moduleDef = MODULES[moduleId];
+  if (!moduleDef) return;
+  if (moduleId !== activeModuleId) switchActiveModule(moduleId);
+  try {
+    const [entry, config] = await Promise.all([DB.getEntry(entryId, moduleId), moduleDef.configService.getLiveConfig()]);
+    if (!entry) {
+      UI.toast({ type: 'error', message: 'Povezan zapis ne obstaja več (morda je bil izbrisan).' });
+      return;
+    }
+    moduleDef.viewer.openDetail(entry, config, { backTo });
+  } catch (err) {
+    console.error('[App] Failed to open referenced entry', err);
+  }
 }
 
 // Nevsiljiva vizualna oznaka razvojnega okolja: tanka pasica na vrhu strani

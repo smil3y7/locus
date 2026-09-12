@@ -139,7 +139,7 @@ function formatPartialDate(dateValue) {
 // stamped onto exported archives so it's clear which version produced them.
 // Bump this by hand when you ship a meaningful set of changes; see
 // CHANGELOG.md at the repo root for what each version contains.
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 // Okolje se ugotovi samodejno iz domene (window.location.hostname), zato je
 // ta koda odslej DOBESEDNO ENAKA na vejah main in razvoj — ni je več treba

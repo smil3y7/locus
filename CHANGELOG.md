@@ -10,6 +10,30 @@ arhivski datoteki (polje `lokusVersion`). Ob vsaki pomembnejši spremembi:
 1. Popravi `APP_VERSION` v `js/utils.js`.
 2. Dodaj nov razdelek spodaj (najnovejši na vrhu).
 
+## [1.6.0] — dvosmerna navigacija med povezanimi zapisi ("Povezano" + Nazaj)
+
+**Status: objavljeno takoj v produkcijo (main) in razvoj — sprememba je
+splošna infrastruktura (generična, config-driven), ne posega v shemo ali
+obstoječe podatke. V produkciji trenutno brez vidnega učinka za modul
+Dokumentacija (ni omogočen), takoj koristna za obstoječe polje "Povezava
+na dokumentacijo pridobitve" v Inventarni knjigi, ko/če bo v prihodnje
+uporabljeno v obratni smeri.**
+
+### Dodano
+- Podroben pregled zapisa zdaj prikaže razdelek **"Povezano"** — seznam
+  vseh zapisov (v katerem koli modulu), ki se prek polja tipa "Povezava"
+  sklicujejo NA ta zapis. Ni novo shranjeno polje: izračuna se sproti ob
+  vsakem odprtju, zato ne more postati neusklajen z dejanskimi povezavami
+  na drugi strani (en sam vir resnice — polje na strani, ki povezavo
+  dejansko vzdržuje).
+- Mehanizem je popolnoma generičen (poganja ga shema, ne trdo kodirana
+  imena modulov/polj) — samodejno zajame vsak prihodnji modul ali polje
+  tipa "Povezava", brez sprememb kode.
+- Ko klikneš na povezan zapis v drugem modulu, se novo odprt pregled
+  spomni, od kod si prišel (en sam nivo, ne poln sklad), in ponudi gumb
+  **"← Nazaj na ..."**, ki te vrne natanko tja. Klik na "Nazaj" ne ustvari
+  novega mesta za "nazaj" — torej ne moreš iti "nazaj od nazaj".
+
 ## [1.5.0] — shranjevanje vedno pusti obrazec odprt, dodan Ctrl+E
 
 **Status: objavljeno takoj v produkcijo (main) in razvoj — sprememba je

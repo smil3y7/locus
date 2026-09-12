@@ -252,9 +252,11 @@ function createViewer(moduleId, configService, storage, moduleDef) {
     `;
   }
 
-  function openDetail(entry, config) {
+  function openDetail(entry, config, options = {}) {
+    const backTo = options.backTo || null;
     const imgUrl = blobUrl(findPrimaryImageBlob(entry, config));
     const rows = tabbedDetailHtml(entry, config);
+    const title = primaryFieldValue(entry, config, moduleDef.titleFieldIds || ['title', 'naziv']) || 'Podrobnosti zapisa';
     const lastEditedLine = entry.updatedAt
       ? `<div class="mf-detail-meta">Nazadnje uredil: ${Utils.escapeHtml(entry.updatedBy || '—')} · ${Utils.formatDateTime(entry.updatedAt)}</div>`
       : '';
@@ -263,6 +265,12 @@ function createViewer(moduleId, configService, storage, moduleDef) {
     content.className = 'mf-detail';
     content.innerHTML = `
       <div class="mf-detail-actions-top">
+        ${backTo ? `
+          <button type="button" class="mf-btn mf-btn-ghost mf-btn-compact" data-nav-back data-back-module="${Utils.escapeHtml(backTo.moduleId)}" data-back-id="${Utils.escapeHtml(backTo.entryId)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            Nazaj na "${Utils.escapeHtml(backTo.label || '')}"
+          </button>
+        ` : ''}
         <button type="button" class="mf-btn mf-btn-ghost mf-btn-compact" id="mf-edit-entry">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           Uredi
@@ -282,9 +290,14 @@ function createViewer(moduleId, configService, storage, moduleDef) {
       </div>
       ${lastEditedLine}
       <div class="mf-detail-rows">${rows}</div>
+      ${moduleDef.findReverseReferences ? `
+        <div class="mf-detail-related" id="mf-detail-related">
+          <h4 class="mf-detail-related-title">Povezano</h4>
+          <div class="mf-detail-related-body" id="mf-detail-related-body">Nalagam povezave …</div>
+        </div>
+      ` : ''}
     `;
 
-    const title = primaryFieldValue(entry, config, moduleDef.titleFieldIds || ['title', 'naziv']) || 'Podrobnosti zapisa';
     UI.openModal({ title: Utils.escapeHtml(title), content, wide: true, closeOnBackdrop: false });
     UI.tabify(content);
 
@@ -304,11 +317,30 @@ function createViewer(moduleId, configService, storage, moduleDef) {
       UI.printHtml(printCardHtml(entry, config));
     });
 
-    // Reference chips: jump to the linked entry, possibly in another module.
-    content.querySelectorAll('[data-ref-id]').forEach((btn) => {
-      btn.addEventListener('click', () => {
+    // "Nazaj" gumb: uporabi isto navigacijo kot reference chip spodaj, le
+    // da app.js ve, da gre za "nazaj" (glej nav:goBack) in si NE zapomni
+    // novega mesta — s tem ostane en sam nivo, ne poln sklad.
+    const backBtn = content.querySelector('[data-nav-back]');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
         EventBus.emit('ui:closeModal');
-        EventBus.emit('nav:openEntry', { moduleId: btn.dataset.refModule || moduleId, entryId: btn.dataset.refId });
+        EventBus.emit('nav:goBack', { moduleId: backBtn.dataset.backModule, entryId: backBtn.dataset.backId });
+      });
+    }
+
+    // Reference chipi: skoči na povezan zapis, po potrebi v drug modul.
+    // Delegirano na `content` (ne posamezni gumbi), da to samodejno zajame
+    // tudi kasneje dinamično dodane chipe (glej "Povezano" spodaj).
+    content.addEventListener('click', (event) => {
+      const refBtn = event.target.closest('[data-ref-id]');
+      if (!refBtn) return;
+      EventBus.emit('ui:closeModal');
+      EventBus.emit('nav:openEntry', {
+        moduleId: refBtn.dataset.refModule || moduleId,
+        entryId: refBtn.dataset.refId,
+        fromModuleId: moduleId,
+        fromEntryId: entry.id,
+        fromLabel: title,
       });
     });
 
@@ -320,6 +352,39 @@ function createViewer(moduleId, configService, storage, moduleDef) {
         UI.openLightbox({ src: el.dataset.lightboxSrc, kind: el.dataset.lightboxKind || 'image' });
       });
     });
+
+    // "Povezano": kdo (v katerem koli modulu) se prek reference polja
+    // sklicuje na TA zapis — izpeljano ob vsakem odprtju, ne shranjeno v
+    // shemi, zato nikoli ne more postati neusklajeno z dejanskimi
+    // povezavami na drugi strani. Naložijo se po odprtju okna (ne
+    // blokira), da odpiranje ostane hitro tudi če je modulov/zapisov več.
+    if (moduleDef.findReverseReferences) {
+      moduleDef
+        .findReverseReferences(entry.id)
+        .then((refs) => {
+          const section = content.querySelector('#mf-detail-related');
+          const body = content.querySelector('#mf-detail-related-body');
+          if (!section || !body) return; // okno je bilo medtem zaprto/zamenjano
+          if (refs.length === 0) {
+            section.remove();
+            return;
+          }
+          body.innerHTML = refs
+            .map(
+              (r) => `
+              <button type="button" class="mf-reference-link" data-ref-id="${Utils.escapeHtml(r.id)}" data-ref-module="${Utils.escapeHtml(r.module)}">
+                ${Utils.escapeHtml(r.label)}
+              </button>
+            `
+            )
+            .join(' ');
+        })
+        .catch((err) => {
+          console.error(`[Viewer:${moduleId}] Failed to load related entries`, err);
+          const body = content.querySelector('#mf-detail-related-body');
+          if (body) body.textContent = 'Povezav ni bilo mogoče naložiti.';
+        });
+    }
   }
 
   function setContainer(container) {
